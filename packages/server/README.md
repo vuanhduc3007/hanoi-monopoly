@@ -1,0 +1,48 @@
+# @hanoi-monopoly/server
+
+Colyseus 0.16 game server. Room rules live in `src/controller.ts` (no Colyseus dependency, tested with a fake clock); `src/GameRoom.ts` only adapts joins / leaves / messages.
+
+```bash
+npx -y pnpm@9.15.0 server            # ws://localhost:2567  (PORT, BOT_DELAY_MS, LOG_DIR env vars)
+```
+
+## Joining
+
+```ts
+import { Client } from 'colyseus.js';
+const client = new Client('ws://localhost:2567');
+const room = await client.create('hanoi', { name });            // host; room.roomId is the 6-char code
+const room2 = await client.joinById(code, { name });           // player (lobby) or spectator (game started / full)
+const watch = await client.joinById(code, { spectator: true });
+const again = await client.reconnect(room.reconnectionToken);  // after a dropped connection
+```
+
+## Client → server messages
+
+| Type | Payload | When |
+| --- | --- | --- |
+| `setName` | `{ name }` | any time |
+| `ready` | `{ ready: boolean }` | lobby |
+| `setConfig` | `{ mode?, characters?, scholarshipFund?, buildingLimit?, maxPlayers?, allowSpectators? }` | lobby, host |
+| `start` | `{}` | lobby, host (≥ 2 players, all ready) |
+| `rematch` | `{}` | game over, host — back to the lobby with the connected players |
+| `pick` | `{ character: 'C01'… }` | picking, your turn to pick |
+| `action` | `{ action }` — an engine `Action`; `player` is filled in by the server | playing |
+| `chat` | `{ text }` | any time (≤ 200 chars, 1 / 0.5 s) |
+| `emote` | `{ emote }` | any time |
+
+`timeout`, `closeAuction` and `endGame` are server-only.
+
+## Server → client messages
+
+| Type | Payload |
+| --- | --- |
+| `joined` | `{ role: 'player' \| 'spectator', code }` |
+| `room` | `{ code, phase, settings, you, seats[], spectators, picking: { order, current, available, clock } \| null }` |
+| `turnOrder` | `{ order, rolls }` |
+| `picked` | `{ seat, character, random }` |
+| `game` | `{ state: PublicState, events: GameEvent[], clock: { kind, deadline } \| null }` |
+| `botTakeover` | `{ seat, reason: 'disconnect' \| 'afk' \| 'left' }` |
+| `gameOver` | `{ winner, ranking, seed, stats: { rentPaid, rentEarned, rentByTile }, log }` |
+| `chat` / `emote` | `{ from, spectator, text \| emote, at }` |
+| `error` | `{ code, message }` — codes in `ErrorCode` (`controller.ts`) |

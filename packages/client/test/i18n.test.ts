@@ -1,0 +1,77 @@
+import { describe, expect, it } from 'vitest';
+import { applyActionInPlace, botAction, createGame, defaultData as D, type GameEvent } from '@hanoi-monopoly/engine';
+import { describeCard, describeCharacter, describeEffect, ENGINE_EVENT_TYPES_HANDLED, formatEvent, money } from '../src/i18n/vi';
+import { tileCell } from '../src/lib/board';
+
+const who = { name: (id: string) => `[${id}]`, character: () => 'C02' };
+
+describe('vi.ts', () => {
+  it('formats money with the currency from economy.json', () => {
+    expect(money(1500)).toBe('1.500 tỷ');
+  });
+
+  it('describes every card from its effect data (no raw effect types)', () => {
+    for (const id of Object.keys(D.cards)) {
+      const text = describeCard(id);
+      expect(text).not.toMatch(/undefined|NaN|_/);
+      expect(text).not.toBe(D.cards[id].effect.type);
+    }
+    expect(describeCard('CH01')).toContain('Hồ Gươm');
+    expect(describeCard('EV02')).toContain('+50%');
+    expect(describeCard('EV02')).toContain('⏳');
+    expect(describeEffect(D.cards.EV10.effect)).toContain('Thiếu gia Vin 20%');
+  });
+
+  it('describes every character trait with the numbers from characters.json', () => {
+    for (const id of Object.keys(D.characters)) {
+      const c = describeCharacter(id);
+      for (const line of [...c.passives, ...c.drawbacks, c.skill]) expect(line).not.toMatch(/undefined|NaN|_/);
+    }
+    expect(describeCharacter('C07').drawbacks).toContain('Bắt đầu 1.400 tỷ');
+    expect(describeCharacter('C03').passives[0]).toContain('tối đa 3 lần/ván');
+    expect(describeCharacter('C01').drawbacks[1]).toBe('Thuế thu nhập cá nhân trả 300 tỷ');
+  });
+
+  it('formats every event a real game produces, without crashing or leaking placeholders', () => {
+    const seen = new Set<string>();
+    for (let seed = 1; seed <= 6; seed++) {
+      const players = ['C01', 'C02', 'C03', 'C04', 'C05', 'C06'].slice(0, 2 + (seed % 5)).map((c, i) => ({ id: `p${i}`, character: c }));
+      const created = createGame({ players, seed });
+      const s = created.state;
+      const all: GameEvent[] = [...created.events];
+      for (let k = 0; k < 4000 && s.status === 'playing'; k++) all.push(...applyActionInPlace(s, botAction(s)!).events);
+      for (const e of all) {
+        seen.add(e.type);
+        const line = formatEvent(e, who);
+        if (line) expect(line, e.type).not.toMatch(/undefined|NaN|\[object/);
+      }
+    }
+    for (const type of seen) expect(ENGINE_EVENT_TYPES_HANDLED).toContain(type);
+  });
+});
+
+describe('board layout', () => {
+  it('places 40 tiles on distinct border cells, GO bottom-left, counter-clockwise', () => {
+    const cells = new Set<string>();
+    for (let p = 0; p < 40; p++) {
+      const { row, col } = tileCell(p);
+      expect(row === 0 || row === 10 || col === 0 || col === 10).toBe(true);
+      cells.add(`${row},${col}`);
+    }
+    expect(cells.size).toBe(40);
+    expect(tileCell(0)).toMatchObject({ row: 10, col: 0 });
+    expect(tileCell(1)).toMatchObject({ row: 10, col: 1 });
+    expect(tileCell(10)).toMatchObject({ row: 10, col: 10 });
+    expect(tileCell(11)).toMatchObject({ row: 9, col: 10 });
+    expect(tileCell(39)).toMatchObject({ row: 9, col: 0 });
+  });
+});
+
+describe('trade summary', () => {
+  it('lists each side once', async () => {
+    const { bundleText } = await import('../src/components/Trade');
+    expect(bundleText({ cash: 120, properties: [], jailCards: [] })).toBe('120 tỷ');
+    expect(bundleText({ cash: 0, properties: ['P03'], jailCards: ['CH11'] })).toBe('Hoàng Mai, Giấy tờ xe (CH11)');
+    expect(bundleText({ cash: 0, properties: [], jailCards: [] })).toBe('Không có');
+  });
+});

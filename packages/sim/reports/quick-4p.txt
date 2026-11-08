@@ -1,0 +1,86 @@
+# Hanoi Monopoly — Nhanh, 4 người, có nhân vật, seed 1
+10.000 ván trong 4.4s (2295 ván/s)
+Số người: 4 người: 10.000
+Kết thúc: còn 1 người 0.0%, phá sản thứ 2 (Nhanh) 32.8%, chạm giới hạn vòng 67.2%
+Độ dài: trung bình 150 lượt (38 vòng), trung vị 161, p90 161
+
+## Tỉ lệ thắng theo nhân vật (mục tiêu ±3 điểm % quanh mức công bằng)
+ID   Nhân vật         Ván  Thắng  Công bằng  Lệch (đ%)  ±95%  Hạng TB    
+---  -------------  -----  -----  ---------  ---------  ----  -------  --
+C01  Thiếu gia Vin  5.054  27.1%      25.0%       +2.1   1.2     2.43  OK
+C05  Cò đất         5.024  26.4%      25.0%       +1.4   1.2     2.48  OK
+C08  Nô lệ tư bản   5.054  24.6%      25.0%       -0.4   1.2     2.54  OK
+C07  SVBK           5.006  24.5%      25.0%       -0.5   1.2     2.51  OK
+C06  Nghiện Tarot   4.903  24.4%      25.0%       -0.6   1.2     2.50  OK
+C02  Ninja Lead     4.998  24.3%      25.0%       -0.7   1.2     2.51  OK
+C03  Tài xế Grab    4.941  24.3%      25.0%       -0.7   1.2     2.50  OK
+C04  Idol TikTok    5.020  24.3%      25.0%       -0.7   1.2     2.54  OK
+→ Mọi nhân vật nằm trong ngưỡng.
+
+## Tỉ lệ thắng theo vị trí đi
+Vị trí     Ván  Thắng  Công bằng
+------  ------  -----  ---------
+     1  10.000  29.5%      25.0%
+     2  10.000  26.6%      25.0%
+     3  10.000  23.1%      25.0%
+     4  10.000  20.8%      25.0%
+
+## Lợi nhuận theo nhóm
+Nhóm        Tần suất dừng  Thuê/ván  Đầu tư/ván  Thuê/đầu tư
+----------  -------------  --------  ----------  -----------
+Nâu                  4.5%       232         322         0.72
+Xanh nhạt            7.5%       342         474         0.72
+Hồng                 7.4%       391         690         0.57
+Cam                  8.3%       551         821         0.67
+Đỏ                   8.1%       472         989         0.48
+Vàng                 7.6%       521       1.144         0.46
+Xanh lá              7.5%       464       1.278         0.36
+Xanh đậm             4.3%       704       1.322         0.53
+Giao thông          10.3%       531         796         0.67
+Tiện ích             5.1%       206         299         0.69
+
+## Tần suất dừng từng ô
+ Ô  ID        Tên                       Tỉ lệ
+--  --------  ------------------------  -----
+ 0  GO        Cửa Ô Quan Chưởng         2.76%
+ 1  P01       Đông Anh                  2.13%
+ 2  CD        Cộng đồng                 2.20%
+ 3  P02       Gia Lâm                   2.33%
+ 4  TAX1      Thuế thu nhập cá nhân     2.37%
+ 5  T01       Bến xe Mỹ Đình            2.43%
+ 6  P03       Hoàng Mai                 2.49%
+ 7  CH        Cơ hội                    2.51%
+ 8  P04       Hà Đông                   2.54%
+ 9  P05       Bắc Từ Liêm               2.44%
+10  JAIL      Bãi giữ xe vi phạm        2.34%
+11  P06       Thanh Xuân                2.65%
+12  U01       Điện lực Hà Nội           2.48%
+13  P07       Mỹ Đình                   2.31%
+14  P08       Cầu Giấy                  2.43%
+15  T02       Metro Cát Linh – Hà Đông  2.77%
+16  P09       Long Biên                 2.67%
+17  EV        Hanoi Event               2.68%
+18  P10       Vinhomes Ocean Park       2.76%
+19  P11       Vinhomes Riverside        2.84%
+20  PARK      Văn Miếu – Quốc Tử Giám   3.06%
+21  P12       Hai Bà Trưng              2.66%
+22  CH        Cơ hội                    2.66%
+23  P13       Times City                2.89%
+24  P14       Royal City                2.58%
+25  T03       Ga Hà Nội                 2.85%
+26  P15       Vincom Center Bà Triệu    2.58%
+27  P16       Lotte Center Hanoi        2.54%
+28  U02       Nước sạch Hà Nội          2.61%
+29  P17       Keangnam Landmark 72      2.43%
+30  GOTOJAIL  CSGT thổi còi             2.38%
+31  P18       Đống Đa                   2.48%
+32  P19       Ba Đình                   2.41%
+33  CD        Cộng đồng                 2.34%
+34  P20       Hồ Tây                    2.61%
+35  T04       Sân bay Nội Bài           2.24%
+36  EV        Hanoi Event               2.15%
+37  P21       Phố cổ Hà Nội             2.02%
+38  TAX2      Phí gửi xe Phố cổ         2.03%
+39  P22       Hồ Gươm                   2.32%
+
+Đã ghi reports/quick-4p.json

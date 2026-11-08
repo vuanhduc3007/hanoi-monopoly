@@ -1,0 +1,470 @@
+{
+  "options": {
+    "games": 10000,
+    "seed": 1,
+    "players": 4,
+    "mode": "quick",
+    "characters": true,
+    "maxRounds": 200,
+    "quickRounds": 40,
+    "tolerance": 3
+  },
+  "seconds": 4.358,
+  "games": 10000,
+  "byPlayers": {
+    "4": 10000
+  },
+  "endedBy": {
+    "lastStanding": 0,
+    "quickBankrupt": 3284,
+    "roundLimit": 6716
+  },
+  "length": {
+    "avgTurns": 149.5345,
+    "medianTurns": 161,
+    "p90Turns": 161,
+    "avgRounds": 38.0104,
+    "medianRounds": 41
+  },
+  "tolerancePP": 3,
+  "characters": [
+    {
+      "id": "C01",
+      "games": 5054,
+      "winRate": 0.2710724178868223,
+      "fairRate": 0.25,
+      "diffPP": 2.107241788682229,
+      "ci95": 1.225528200820858,
+      "avgRank": 2.434903047091413,
+      "balanced": true,
+      "name": "Thiếu gia Vin"
+    },
+    {
+      "id": "C05",
+      "games": 5024,
+      "winRate": 0.26413216560509556,
+      "fairRate": 0.25,
+      "diffPP": 1.413216560509556,
+      "ci95": 1.219106963584824,
+      "avgRank": 2.4751194267515926,
+      "balanced": true,
+      "name": "Cò đất"
+    },
+    {
+      "id": "C08",
+      "games": 5054,
+      "winRate": 0.24594380688563514,
+      "fairRate": 0.25,
+      "diffPP": -0.40561931143648644,
+      "ci95": 1.1872939469356112,
+      "avgRank": 2.5399683419074,
+      "balanced": true,
+      "name": "Nô lệ tư bản"
+    },
+    {
+      "id": "C07",
+      "games": 5006,
+      "winRate": 0.24530563324011187,
+      "fairRate": 0.25,
+      "diffPP": -0.469436675988813,
+      "ci95": 1.1919278396772686,
+      "avgRank": 2.5059928086296446,
+      "balanced": true,
+      "name": "SVBK"
+    },
+    {
+      "id": "C06",
+      "games": 4903,
+      "winRate": 0.2435243728329594,
+      "fairRate": 0.25,
+      "diffPP": -0.6475627167040587,
+      "ci95": 1.2014171069054245,
+      "avgRank": 2.4978584540077504,
+      "balanced": true,
+      "name": "Nghiện Tarot"
+    },
+    {
+      "id": "C02",
+      "games": 4998,
+      "winRate": 0.24349739895958383,
+      "fairRate": 0.25,
+      "diffPP": -0.6502601040416167,
+      "ci95": 1.1898996080451363,
+      "avgRank": 2.5056022408963585,
+      "balanced": true,
+      "name": "Ninja Lead"
+    },
+    {
+      "id": "C03",
+      "games": 4941,
+      "winRate": 0.2434729811778992,
+      "fairRate": 0.25,
+      "diffPP": -0.65270188221008,
+      "ci95": 1.1967026499271294,
+      "avgRank": 2.498482088646023,
+      "balanced": true,
+      "name": "Tài xế Grab"
+    },
+    {
+      "id": "C04",
+      "games": 5020,
+      "winRate": 0.24262948207171314,
+      "fairRate": 0.25,
+      "diffPP": -0.7370517928286857,
+      "ci95": 1.185851196324264,
+      "avgRank": 2.5422310756972113,
+      "balanced": true,
+      "name": "Idol TikTok"
+    }
+  ],
+  "seats": [
+    {
+      "seat": 0,
+      "games": 10000,
+      "winRate": 0.2946,
+      "fairRate": 0.25
+    },
+    {
+      "seat": 1,
+      "games": 10000,
+      "winRate": 0.2661,
+      "fairRate": 0.25
+    },
+    {
+      "seat": 2,
+      "games": 10000,
+      "winRate": 0.231,
+      "fairRate": 0.25
+    },
+    {
+      "seat": 3,
+      "games": 10000,
+      "winRate": 0.2083,
+      "fairRate": 0.25
+    }
+  ],
+  "tiles": [
+    {
+      "position": 0,
+      "ref": "GO",
+      "name": "Cửa Ô Quan Chưởng",
+      "share": 0.027565901354548863
+    },
+    {
+      "position": 1,
+      "ref": "P01",
+      "name": "Đông Anh",
+      "share": 0.021262158648327752
+    },
+    {
+      "position": 2,
+      "ref": "CD",
+      "name": "Cộng đồng",
+      "share": 0.021998798588764832
+    },
+    {
+      "position": 3,
+      "ref": "P02",
+      "name": "Gia Lâm",
+      "share": 0.02333896436095357
+    },
+    {
+      "position": 4,
+      "ref": "TAX1",
+      "name": "Thuế thu nhập cá nhân",
+      "share": 0.023737178601342987
+    },
+    {
+      "position": 5,
+      "ref": "T01",
+      "name": "Bến xe Mỹ Đình",
+      "share": 0.024322091019592026
+    },
+    {
+      "position": 6,
+      "ref": "P03",
+      "name": "Hoàng Mai",
+      "share": 0.0249391538793456
+    },
+    {
+      "position": 7,
+      "ref": "CH",
+      "name": "Cơ hội",
+      "share": 0.025143901427874434
+    },
+    {
+      "position": 8,
+      "ref": "P04",
+      "name": "Hà Đông",
+      "share": 0.02544228008674979
+    },
+    {
+      "position": 9,
+      "ref": "P05",
+      "name": "Bắc Từ Liêm",
+      "share": 0.024447872571443076
+    },
+    {
+      "position": 10,
+      "ref": "JAIL",
+      "name": "Bãi giữ xe vi phạm",
+      "share": 0.023397624815628498
+    },
+    {
+      "position": 11,
+      "ref": "P06",
+      "name": "Thanh Xuân",
+      "share": 0.026481246985896108
+    },
+    {
+      "position": 12,
+      "ref": "U01",
+      "name": "Điện lực Hà Nội",
+      "share": 0.02478686231432415
+    },
+    {
+      "position": 13,
+      "ref": "P07",
+      "name": "Mỹ Đình",
+      "share": 0.023065403586748377
+    },
+    {
+      "position": 14,
+      "ref": "P08",
+      "name": "Cầu Giấy",
+      "share": 0.024317578676924724
+    },
+    {
+      "position": 15,
+      "ref": "T02",
+      "name": "Metro Cát Linh – Hà Đông",
+      "share": 0.027700143548901105
+    },
+    {
+      "position": 16,
+      "ref": "P09",
+      "name": "Long Biên",
+      "share": 0.026735066260931854
+    },
+    {
+      "position": 17,
+      "ref": "EV",
+      "name": "Hanoi Event",
+      "share": 0.02679485480127361
+    },
+    {
+      "position": 18,
+      "ref": "P10",
+      "name": "Vinhomes Ocean Park",
+      "share": 0.02764035500855935
+    },
+    {
+      "position": 19,
+      "ref": "P11",
+      "name": "Vinhomes Riverside",
+      "share": 0.028437911575005005
+    },
+    {
+      "position": 20,
+      "ref": "PARK",
+      "name": "Văn Miếu – Quốc Tử Giám",
+      "share": 0.030628089897146788
+    },
+    {
+      "position": 21,
+      "ref": "P12",
+      "name": "Hai Bà Trưng",
+      "share": 0.026600824066579615
+    },
+    {
+      "position": 22,
+      "ref": "CH",
+      "name": "Cơ hội",
+      "share": 0.02660364428074668
+    },
+    {
+      "position": 23,
+      "ref": "P13",
+      "name": "Times City",
+      "share": 0.02886827625689895
+    },
+    {
+      "position": 24,
+      "ref": "P14",
+      "name": "Royal City",
+      "share": 0.025846698798306745
+    },
+    {
+      "position": 25,
+      "ref": "T03",
+      "name": "Ga Hà Nội",
+      "share": 0.028524774171350572
+    },
+    {
+      "position": 26,
+      "ref": "P15",
+      "name": "Vincom Center Bà Triệu",
+      "share": 0.025810600056968325
+    },
+    {
+      "position": 27,
+      "ref": "P16",
+      "name": "Lotte Center Hanoi",
+      "share": 0.025423102630413752
+    },
+    {
+      "position": 28,
+      "ref": "U02",
+      "name": "Nước sạch Hà Nội",
+      "share": 0.026081340617006454
+    },
+    {
+      "position": 29,
+      "ref": "P17",
+      "name": "Keangnam Landmark 72",
+      "share": 0.024291068663754325
+    },
+    {
+      "position": 30,
+      "ref": "GOTOJAIL",
+      "name": "CSGT thổi còi",
+      "share": 0.023789634584850373
+    },
+    {
+      "position": 31,
+      "ref": "P18",
+      "name": "Đống Đa",
+      "share": 0.02476655677232129
+    },
+    {
+      "position": 32,
+      "ref": "P19",
+      "name": "Ba Đình",
+      "share": 0.024052478545220725
+    },
+    {
+      "position": 33,
+      "ref": "CD",
+      "name": "Cộng đồng",
+      "share": 0.02340777758662993
+    },
+    {
+      "position": 34,
+      "ref": "P20",
+      "name": "Hồ Tây",
+      "share": 0.026056522732336294
+    },
+    {
+      "position": 35,
+      "ref": "T04",
+      "name": "Sân bay Nội Bài",
+      "share": 0.02243649582749314
+    },
+    {
+      "position": 36,
+      "ref": "EV",
+      "name": "Hanoi Event",
+      "share": 0.02147705896785802
+    },
+    {
+      "position": 37,
+      "ref": "P21",
+      "name": "Phố cổ Hà Nội",
+      "share": 0.020213603021013417
+    },
+    {
+      "position": 38,
+      "ref": "TAX2",
+      "name": "Phí gửi xe Phố cổ",
+      "share": 0.02033712840153081
+    },
+    {
+      "position": 39,
+      "ref": "P22",
+      "name": "Hồ Gươm",
+      "share": 0.023228976008438082
+    }
+  ],
+  "groups": [
+    {
+      "key": "brown",
+      "name": "Nâu",
+      "landingShare": 0.044601123009281325,
+      "rentPerGame": 231.5964,
+      "investedPerGame": 321.636,
+      "roi": 0.7200574562548968
+    },
+    {
+      "key": "lightblue",
+      "name": "Xanh nhạt",
+      "landingShare": 0.07482930653753846,
+      "rentPerGame": 342.0137,
+      "investedPerGame": 474.376,
+      "roi": 0.7209759768622359
+    },
+    {
+      "key": "pink",
+      "name": "Hồng",
+      "landingShare": 0.07386422924956922,
+      "rentPerGame": 390.7756,
+      "investedPerGame": 690.2554,
+      "roi": 0.5661318984248439
+    },
+    {
+      "key": "orange",
+      "name": "Cam",
+      "landingShare": 0.08281333284449621,
+      "rentPerGame": 550.6233,
+      "investedPerGame": 821.0804,
+      "roi": 0.67060826199237
+    },
+    {
+      "key": "red",
+      "name": "Đỏ",
+      "landingShare": 0.08131579912178531,
+      "rentPerGame": 471.9468,
+      "investedPerGame": 988.8516,
+      "roi": 0.4772675697748783
+    },
+    {
+      "key": "yellow",
+      "name": "Vàng",
+      "landingShare": 0.0755247713511364,
+      "rentPerGame": 520.9175,
+      "investedPerGame": 1144.361,
+      "roi": 0.4552038211718155
+    },
+    {
+      "key": "green",
+      "name": "Xanh lá",
+      "landingShare": 0.0748755580498783,
+      "rentPerGame": 464.0688,
+      "investedPerGame": 1277.629,
+      "roi": 0.3632265704676397
+    },
+    {
+      "key": "darkblue",
+      "name": "Xanh đậm",
+      "landingShare": 0.0434425790294515,
+      "rentPerGame": 704.3921,
+      "investedPerGame": 1321.621,
+      "roi": 0.5329758682708583
+    },
+    {
+      "key": "transport",
+      "name": "Giao thông",
+      "landingShare": 0.10298350456733685,
+      "rentPerGame": 531.2879,
+      "investedPerGame": 796.087,
+      "roi": 0.66737416890365
+    },
+    {
+      "key": "utility",
+      "name": "Tiện ích",
+      "landingShare": 0.050868202931330604,
+      "rentPerGame": 205.8678,
+      "investedPerGame": 298.954,
+      "roi": 0.6886270128514754
+    }
+  ]
+}

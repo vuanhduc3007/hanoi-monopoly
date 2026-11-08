@@ -1,0 +1,88 @@
+# Hanoi Monopoly — Truyền thống, 2-6 người, có nhân vật, seed 1
+10.000 ván trong 10.0s (997 ván/s)
+Số người: 2 người: 2.001, 3 người: 1.997, 4 người: 2.002, 5 người: 2.001, 6 người: 1.999
+Kết thúc: còn 1 người 70.9%, phá sản thứ 2 (Nhanh) 0.0%, chạm giới hạn vòng 29.1%
+Độ dài: trung bình 465 lượt (105 vòng), trung vị 255, p90 1201
+
+## Tỉ lệ thắng theo nhân vật (mục tiêu ±3 điểm % quanh mức công bằng)
+ID   Nhân vật         Ván  Thắng  Công bằng  Lệch (đ%)  ±95%  Hạng TB    
+---  -------------  -----  -----  ---------  ---------  ----  -------  --
+C07  SVBK           4.944  27.4%      24.9%       +2.5   1.2     2.58  OK
+C03  Tài xế Grab    5.005  26.4%      24.8%       +1.7   1.2     2.68  OK
+C01  Thiếu gia Vin  5.023  25.9%      25.1%       +0.8   1.2     2.73  OK
+C05  Cò đất         5.038  25.3%      25.2%       +0.2   1.2     2.78  OK
+C06  Nghiện Tarot   4.947  24.1%      24.9%       -0.8   1.2     2.73  OK
+C02  Ninja Lead     5.025  24.0%      25.1%       -1.0   1.2     2.81  OK
+C04  Idol TikTok    5.021  23.8%      25.0%       -1.2   1.2     2.81  OK
+C08  Nô lệ tư bản   4.997  23.1%      25.1%       -2.0   1.2     2.88  OK
+→ Mọi nhân vật nằm trong ngưỡng.
+
+## Tỉ lệ thắng theo vị trí đi
+Vị trí     Ván  Thắng  Công bằng
+------  ------  -----  ---------
+     1  10.000  32.1%      29.0%
+     2  10.000  32.0%      29.0%
+     3   7.999  22.2%      23.7%
+     4   6.002  16.1%      20.6%
+     5   4.000  14.9%      18.3%
+     6   1.999  12.2%      16.7%
+
+## Lợi nhuận theo nhóm
+Nhóm        Tần suất dừng  Thuê/ván  Đầu tư/ván  Thuê/đầu tư
+----------  -------------  --------  ----------  -----------
+Nâu                  4.5%       690         358         1.93
+Xanh nhạt            7.1%     1.006         556         1.81
+Hồng                 7.2%     1.538         801         1.92
+Cam                  8.2%     1.908         990         1.93
+Đỏ                   8.1%     1.898       1.199         1.58
+Vàng                 7.6%     2.035       1.423         1.43
+Xanh lá              7.6%     2.019       1.613         1.25
+Xanh đậm             4.5%     3.062       1.498         2.04
+Giao thông          10.2%     1.915         777         2.46
+Tiện ích             5.1%       722         293         2.46
+
+## Tần suất dừng từng ô
+ Ô  ID        Tên                       Tỉ lệ
+--  --------  ------------------------  -----
+ 0  GO        Cửa Ô Quan Chưởng         2.84%
+ 1  P01       Đông Anh                  2.18%
+ 2  CD        Cộng đồng                 2.25%
+ 3  P02       Gia Lâm                   2.31%
+ 4  TAX1      Thuế thu nhập cá nhân     2.42%
+ 5  T01       Bến xe Mỹ Đình            2.36%
+ 6  P03       Hoàng Mai                 2.38%
+ 7  CH        Cơ hội                    2.38%
+ 8  P04       Hà Đông                   2.40%
+ 9  P05       Bắc Từ Liêm               2.33%
+10  JAIL      Bãi giữ xe vi phạm        2.25%
+11  P06       Thanh Xuân                2.55%
+12  U01       Điện lực Hà Nội           2.51%
+13  P07       Mỹ Đình                   2.24%
+14  P08       Cầu Giấy                  2.43%
+15  T02       Metro Cát Linh – Hà Đông  2.68%
+16  P09       Long Biên                 2.65%
+17  EV        Hanoi Event               2.61%
+18  P10       Vinhomes Ocean Park       2.76%
+19  P11       Vinhomes Riverside        2.78%
+20  PARK      Văn Miếu – Quốc Tử Giám   3.13%
+21  P12       Hai Bà Trưng              2.60%
+22  CH        Cơ hội                    2.75%
+23  P13       Times City                2.91%
+24  P14       Royal City                2.59%
+25  T03       Ga Hà Nội                 2.90%
+26  P15       Vincom Center Bà Triệu    2.58%
+27  P16       Lotte Center Hanoi        2.57%
+28  U02       Nước sạch Hà Nội          2.64%
+29  P17       Keangnam Landmark 72      2.44%
+30  GOTOJAIL  CSGT thổi còi             2.48%
+31  P18       Đống Đa                   2.51%
+32  P19       Ba Đình                   2.45%
+33  CD        Cộng đồng                 2.39%
+34  P20       Hồ Tây                    2.66%
+35  T04       Sân bay Nội Bài           2.30%
+36  EV        Hanoi Event               2.20%
+37  P21       Phố cổ Hà Nội             2.09%
+38  TAX2      Phí gửi xe Phố cổ         2.11%
+39  P22       Hồ Gươm                   2.42%
+
+Đã ghi reports/classic-2-6p.json

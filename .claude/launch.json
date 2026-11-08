@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "server",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "pnpm@9.15.0", "--filter", "@hanoi-monopoly/server", "start"],
+      "port": 2567
+    },
+    {
+      "name": "client",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "pnpm@9.15.0", "--filter", "@hanoi-monopoly/client", "dev"],
+      "port": 5173
+    }
+  ]
+}

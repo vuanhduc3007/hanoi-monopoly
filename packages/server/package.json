@@ -1,0 +1,27 @@
+{
+  "name": "@hanoi-monopoly/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "esbuild src/main.ts --bundle --platform=node --format=esm --target=node20 --external:@colyseus/* --outfile=dist/server.mjs --log-level=warning",
+    "start": "pnpm run build && node dist/server.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "dev": "pnpm run start"
+  },
+  "dependencies": {
+    "@colyseus/core": "0.16.26",
+    "@colyseus/schema": "3.0.76",
+    "@colyseus/ws-transport": "0.16.5",
+    "@hanoi-monopoly/engine": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "20.17.6",
+    "colyseus.js": "0.16.22",
+    "esbuild": "0.24.0",
+    "typescript": "5.6.3",
+    "vitest": "2.1.8"
+  }
+}

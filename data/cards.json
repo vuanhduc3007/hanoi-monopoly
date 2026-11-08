@@ -1,0 +1,691 @@
+{
+  "rules": {
+    "unownedPaymentsGoTo": "bank",
+    "selfPaymentSkipped": true,
+    "cardPaymentsToBankGoToFundWhenEnabled": true,
+    "durationEndsAt": "drawer_next_turn_start",
+    "tripleDoubleDrawsEvent": true
+  },
+  "chance": [
+    {
+      "id": "CH01",
+      "name": "Bắt Grab ra Bờ Hồ",
+      "effect": {
+        "type": "move_to",
+        "position": 39
+      }
+    },
+    {
+      "id": "CH02",
+      "name": "Về lại Cửa Ô",
+      "effect": {
+        "type": "move_to",
+        "position": 0
+      }
+    },
+    {
+      "id": "CH03",
+      "name": "Hẹn cà phê Hồ Tây",
+      "effect": {
+        "type": "move_to",
+        "position": 34
+      }
+    },
+    {
+      "id": "CH04",
+      "name": "Đi Times City xem phim",
+      "effect": {
+        "type": "move_to",
+        "position": 23
+      }
+    },
+    {
+      "id": "CH05",
+      "name": "Bắt xe buýt về Thanh Xuân",
+      "effect": {
+        "type": "move_to",
+        "position": 11
+      }
+    },
+    {
+      "id": "CH06",
+      "name": "Ra sân bay đón người thân",
+      "effect": {
+        "type": "move_to_nearest",
+        "target": "transport",
+        "rentMultiplier": 2
+      }
+    },
+    {
+      "id": "CH07",
+      "name": "Đi tàu điện",
+      "effect": {
+        "type": "move_to_nearest",
+        "target": "transport",
+        "rentMultiplier": 2
+      }
+    },
+    {
+      "id": "CH08",
+      "name": "Đóng tiền điện nước",
+      "effect": {
+        "type": "move_to_nearest",
+        "target": "utility",
+        "rollRentMultiplier": 10
+      }
+    },
+    {
+      "id": "CH09",
+      "name": "Lạc đường, quay đầu xe",
+      "effect": {
+        "type": "move_relative",
+        "steps": -3
+      }
+    },
+    {
+      "id": "CH10",
+      "name": "Vượt đèn đỏ",
+      "effect": {
+        "type": "go_to_jail"
+      }
+    },
+    {
+      "id": "CH11",
+      "name": "Giấy tờ xe đầy đủ",
+      "effect": {
+        "type": "jail_free_card"
+      },
+      "keep": true
+    },
+    {
+      "id": "CH12",
+      "name": "Trúng hợp đồng kinh doanh",
+      "effect": {
+        "type": "gain",
+        "amount": 150
+      }
+    },
+    {
+      "id": "CH13",
+      "name": "Cổ phiếu chia cổ tức",
+      "effect": {
+        "type": "gain",
+        "amount": 50
+      }
+    },
+    {
+      "id": "CH14",
+      "name": "Phạt quá tốc độ trên Vành đai 3",
+      "effect": {
+        "type": "pay_bank",
+        "amount": 15
+      }
+    },
+    {
+      "id": "CH15",
+      "name": "Cải tạo toàn bộ công trình",
+      "effect": {
+        "type": "repairs",
+        "perHouse": 25,
+        "perHotel": 100
+      }
+    },
+    {
+      "id": "CH16",
+      "name": "Làm tổ trưởng dân phố, khao cả xóm",
+      "effect": {
+        "type": "pay_each_player",
+        "amount": 50
+      }
+    },
+    {
+      "id": "CH17",
+      "name": "Tham quan Hoàng thành Thăng Long",
+      "effect": {
+        "type": "move_to",
+        "position": 20
+      }
+    }
+  ],
+  "community": [
+    {
+      "id": "CD01",
+      "name": "Ngân hàng chuyển nhầm vào tài khoản bạn",
+      "effect": {
+        "type": "gain",
+        "amount": 200
+      }
+    },
+    {
+      "id": "CD02",
+      "name": "Lì xì Tết từ ông bà",
+      "effect": {
+        "type": "gain",
+        "amount": 100
+      }
+    },
+    {
+      "id": "CD03",
+      "name": "Nhận thừa kế",
+      "effect": {
+        "type": "gain",
+        "amount": 100
+      }
+    },
+    {
+      "id": "CD04",
+      "name": "Bảo hiểm đáo hạn",
+      "effect": {
+        "type": "gain",
+        "amount": 100
+      }
+    },
+    {
+      "id": "CD05",
+      "name": "Thanh lý đồ cũ trên chợ online",
+      "effect": {
+        "type": "gain",
+        "amount": 50
+      }
+    },
+    {
+      "id": "CD06",
+      "name": "Cho sinh viên thuê phòng trọ",
+      "effect": {
+        "type": "gain",
+        "amount": 50
+      }
+    },
+    {
+      "id": "CD07",
+      "name": "Nhận phí tư vấn",
+      "effect": {
+        "type": "gain",
+        "amount": 25
+      }
+    },
+    {
+      "id": "CD08",
+      "name": "Được hoàn thuế thu nhập",
+      "effect": {
+        "type": "gain",
+        "amount": 20
+      }
+    },
+    {
+      "id": "CD09",
+      "name": "Giải nhì thi gói bánh chưng",
+      "effect": {
+        "type": "gain",
+        "amount": 10
+      }
+    },
+    {
+      "id": "CD10",
+      "name": "Sinh nhật bạn",
+      "effect": {
+        "type": "collect_from_each",
+        "amount": 10
+      }
+    },
+    {
+      "id": "CD11",
+      "name": "Khám bệnh định kỳ",
+      "effect": {
+        "type": "pay_bank",
+        "amount": 50
+      }
+    },
+    {
+      "id": "CD12",
+      "name": "Đóng học phí",
+      "effect": {
+        "type": "pay_bank",
+        "amount": 50
+      }
+    },
+    {
+      "id": "CD13",
+      "name": "Ủng hộ đồng bào vùng lũ",
+      "effect": {
+        "type": "pay_bank",
+        "amount": 50
+      }
+    },
+    {
+      "id": "CD14",
+      "name": "Phường thu phí chỉnh trang đô thị",
+      "effect": {
+        "type": "repairs",
+        "perHouse": 40,
+        "perHotel": 115
+      }
+    },
+    {
+      "id": "CD15",
+      "name": "Về quê ăn Tết, khởi hành từ Cửa Ô",
+      "effect": {
+        "type": "move_to",
+        "position": 0
+      }
+    },
+    {
+      "id": "CD16",
+      "name": "Quên khóa xe, bị cẩu",
+      "effect": {
+        "type": "go_to_jail"
+      }
+    }
+  ],
+  "event": [
+    {
+      "id": "EV01",
+      "name": "Tết Nguyên Đán",
+      "effect": {
+        "type": "bank_pays_all",
+        "amount": 50
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV02",
+      "name": "Mùa du lịch",
+      "effect": {
+        "type": "rent_multiplier",
+        "properties": [
+          "P21",
+          "P22",
+          "P20"
+        ],
+        "multiplier": 1.5
+      },
+      "kind": "duration"
+    },
+    {
+      "id": "EV03",
+      "name": "Mưa lớn ngập phố",
+      "effect": {
+        "type": "repairs_all",
+        "perHouse": 15,
+        "perHotel": 50
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV04",
+      "name": "Phố đi bộ cuối tuần",
+      "effect": {
+        "type": "bank_pays_owners",
+        "properties": [
+          "P21",
+          "P22"
+        ],
+        "amountPerProperty": 50
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV05",
+      "name": "Tắc đường giờ cao điểm",
+      "effect": {
+        "type": "single_die",
+        "exceptJailRolls": true,
+        "immune": [
+          "C02",
+          "C03"
+        ]
+      },
+      "kind": "duration"
+    },
+    {
+      "id": "EV06",
+      "name": "Lễ hội Thăng Long",
+      "effect": {
+        "type": "rent_multiplier",
+        "groups": [
+          "green",
+          "darkblue"
+        ],
+        "multiplier": 1.5
+      },
+      "kind": "duration"
+    },
+    {
+      "id": "EV07",
+      "name": "Trung thu phố Hàng Mã",
+      "effect": {
+        "type": "all_pay_owner",
+        "property": "P21",
+        "amount": 10
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV08",
+      "name": "Sốt đất ven đô",
+      "effect": {
+        "type": "rent_multiplier",
+        "groups": [
+          "brown",
+          "lightblue"
+        ],
+        "multiplier": 2
+      },
+      "kind": "duration"
+    },
+    {
+      "id": "EV09",
+      "name": "Khánh thành tuyến Metro mới",
+      "effect": {
+        "type": "bank_pays_owners",
+        "properties": [
+          "T01",
+          "T02",
+          "T03",
+          "T04"
+        ],
+        "amountPerProperty": 50
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV10",
+      "name": "Thanh tra thuế",
+      "effect": {
+        "type": "pay_percent_cash",
+        "percent": 0.1,
+        "roundDownTo": 10,
+        "overrides": {
+          "C01": 0.2
+        }
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV11",
+      "name": "Rét đậm, điện tăng giá",
+      "effect": {
+        "type": "all_pay_owner",
+        "property": "U01",
+        "amount": 20
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV12",
+      "name": "Black Friday",
+      "effect": {
+        "type": "bank_pays_owners",
+        "properties": [
+          "P13",
+          "P14",
+          "P15",
+          "P16",
+          "P17"
+        ],
+        "amountPerProperty": 30
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV13",
+      "name": "Nước sông Hồng lên",
+      "effect": {
+        "type": "owners_pay_bank",
+        "groups": [
+          "orange"
+        ],
+        "amountPerProperty": 20
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV14",
+      "name": "Ngân hàng hạ lãi suất",
+      "effect": {
+        "type": "unmortgage_interest",
+        "value": 0.0
+      },
+      "kind": "duration"
+    },
+    {
+      "id": "EV15",
+      "name": "Đóng băng thị trường BĐS",
+      "effect": {
+        "type": "build_freeze"
+      },
+      "kind": "duration"
+    },
+    {
+      "id": "EV16",
+      "name": "Khai giảng năm học",
+      "effect": {
+        "type": "rent_multiplier",
+        "groups": [
+          "pink"
+        ],
+        "multiplier": 1.5
+      },
+      "kind": "duration"
+    },
+    {
+      "id": "EV17",
+      "name": "Chung cư mất điện cả ngày",
+      "effect": {
+        "type": "owners_pay_bank",
+        "groups": [
+          "red"
+        ],
+        "amountPerProperty": 20
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV18",
+      "name": "Vùng phát thải thấp",
+      "effect": {
+        "type": "landing_fee",
+        "properties": [
+          "P21",
+          "P22",
+          "P19"
+        ],
+        "amount": 20,
+        "to": "fund",
+        "immune": [
+          "C03"
+        ]
+      },
+      "kind": "duration"
+    },
+    {
+      "id": "EV19",
+      "name": "Ra quân kiểm tra nồng độ cồn",
+      "effect": {
+        "type": "each_roll_one_die",
+        "onFace": 1,
+        "then": "go_to_jail",
+        "immune": [
+          "C02"
+        ]
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV20",
+      "name": "Countdown Hồ Gươm",
+      "effect": {
+        "type": "all_pay_owner",
+        "property": "P22",
+        "amount": 20
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV21",
+      "name": "Khởi công đại lộ sông Hồng",
+      "effect": {
+        "type": "rent_multiplier",
+        "groups": [
+          "orange"
+        ],
+        "multiplier": 1.5
+      },
+      "kind": "duration"
+    },
+    {
+      "id": "EV22",
+      "name": "Sốt giá vàng",
+      "effect": {
+        "type": "richest_cash_gain",
+        "amount": 100,
+        "tieSplit": true
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV23",
+      "name": "Tuyển Việt Nam vô địch, đi bão Bờ Hồ",
+      "effect": {
+        "type": "composite",
+        "effects": [
+          {
+            "type": "bank_pays_all",
+            "amount": 30
+          },
+          {
+            "type": "bank_pays_owners",
+            "properties": [
+              "P22"
+            ],
+            "amountPerProperty": 50
+          }
+        ]
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV24",
+      "name": "Lễ hội Áo dài Hà Nội",
+      "effect": {
+        "type": "composite",
+        "effects": [
+          {
+            "type": "bank_pays_owners",
+            "properties": [
+              "P21",
+              "P20"
+            ],
+            "amountPerProperty": 30
+          },
+          {
+            "type": "bank_to_fund",
+            "amount": 30
+          }
+        ]
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV25",
+      "name": "Bão về, cây đổ",
+      "effect": {
+        "type": "repairs_all",
+        "perHouse": 0,
+        "perHotel": 50
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV26",
+      "name": "Phạt nguội camera AI",
+      "effect": {
+        "type": "each_roll_one_die",
+        "onFace": 6,
+        "then": {
+          "type": "pay",
+          "amount": 50,
+          "to": "fund"
+        },
+        "immune": []
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV27",
+      "name": "Grab tăng giá giờ cao điểm",
+      "effect": {
+        "type": "all_pay_character",
+        "character": "C03",
+        "amount": 20,
+        "fallback": {
+          "type": "all_pay",
+          "amount": 20,
+          "to": "fund"
+        }
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV28",
+      "name": "Concert lớn ở Mỹ Đình",
+      "effect": {
+        "type": "bank_pays_owners",
+        "properties": [
+          "P07"
+        ],
+        "amountPerProperty": 100,
+        "unownedGoesTo": "none"
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV29",
+      "name": "Ngân hàng tăng lãi suất",
+      "effect": {
+        "type": "unmortgage_interest",
+        "value": 0.2
+      },
+      "kind": "duration"
+    },
+    {
+      "id": "EV30",
+      "name": "Check-in phố đường tàu",
+      "effect": {
+        "type": "bank_pays_owners",
+        "properties": [
+          "T03"
+        ],
+        "amountPerProperty": 50
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV31",
+      "name": "Phiên live triệu view",
+      "effect": {
+        "type": "all_pay_character",
+        "character": "C04",
+        "amount": 20,
+        "fallback": {
+          "type": "drawer_gain",
+          "amount": 50
+        }
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV32",
+      "name": "Mùa cưới, đi ăn cỗ",
+      "effect": {
+        "type": "all_pay",
+        "amount": 30,
+        "to": "fund",
+        "overrides": {
+          "C08": 50
+        }
+      },
+      "kind": "instant"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "room": {
+    "modes": [
+      "classic",
+      "quick"
+    ],
+    "maxPlayers": 6,
+    "minPlayers": 2,
+    "defaults": {
+      "mode": "classic",
+      "characters": true,
+      "scholarshipFund": {
+        "classic": true,
+        "quick": false
+      },
+      "buildingLimit": true,
+      "allowSpectators": true
+    },
+    "roomCodeLength": 6
+  },
+  "timers": {
+    "rollSec": 15,
+    "buyDecisionSec": 20,
+    "turnSec": 90,
+    "tradeOfferSec": 30,
+    "liquidationSec": 60,
+    "disconnectBotSec": 60,
+    "afkTurnsBeforeBot": 3
+  },
+  "quickMode": {
+    "dealPropertiesPerPlayer": 2,
+    "housesForHotel": 3,
+    "jailMaxTurns": 2,
+    "timeLimitMin": 60,
+    "endWhenBankrupt": 2,
+    "scoring": "cash + list price (mortgaged 50%) + build cost"
+  },
+  "fund": {
+    "inflows": [
+      "TAX1",
+      "TAX2",
+      "jailFine",
+      "cardPaymentsToBank",
+      "characterFees"
+    ],
+    "payout": "land_exactly_on_position_20",
+    "start": 0
+  }
+}

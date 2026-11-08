@@ -1,0 +1,22 @@
+{
+  "name": "@hanoi-monopoly/sim",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "esbuild src/cli.ts --bundle --platform=node --format=esm --target=node20 --outfile=dist/sim.mjs --log-level=warning",
+    "sim": "pnpm run build && node dist/sim.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@hanoi-monopoly/engine": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "20.17.6",
+    "esbuild": "0.24.0",
+    "typescript": "5.6.3",
+    "vitest": "2.1.8"
+  }
+}

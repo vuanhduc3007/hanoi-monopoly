@@ -1,0 +1,229 @@
+{
+  "rules": {
+    "pickOrder": "reverse_turn_order",
+    "unique": true,
+    "pickTimerSec": 20,
+    "skillUsesPerGame": 1,
+    "discountsApplyTo": "bank_list_price_only"
+  },
+  "characters": [
+    {
+      "id": "C01",
+      "name": "Thiếu gia Vin",
+      "passives": [
+        {
+          "type": "go_salary",
+          "value": 250
+        },
+        {
+          "type": "purchase_discount",
+          "properties": [
+            "P10",
+            "P11",
+            "P13",
+            "P14"
+          ],
+          "rate": 0.2
+        }
+      ],
+      "drawbacks": [
+        {
+          "type": "event_override",
+          "card": "EV10",
+          "percent": 0.2
+        },
+        {
+          "type": "tax_override",
+          "tax": "TAX1",
+          "amount": 300
+        }
+      ],
+      "skill": {
+        "name": "Bố ơi cứu con",
+        "type": "bailout",
+        "maxAmount": 400,
+        "trigger": "on_bankruptcy"
+      }
+    },
+    {
+      "id": "C02",
+      "name": "Ninja Lead",
+      "passives": [
+        {
+          "type": "ignore_go_to_jail_tile"
+        },
+        {
+          "type": "immune_events",
+          "cards": [
+            "EV05",
+            "EV19"
+          ]
+        }
+      ],
+      "drawbacks": [
+        {
+          "type": "landing_fee",
+          "properties": [
+            "P21",
+            "P22"
+          ],
+          "amount": 30,
+          "to": "fund"
+        }
+      ],
+      "skill": {
+        "name": "Ăn vạ",
+        "type": "rent_discount",
+        "rate": 0.5,
+        "trigger": "on_pay_rent"
+      }
+    },
+    {
+      "id": "C03",
+      "name": "Tài xế Grab",
+      "passives": [
+        {
+          "type": "adjust_roll",
+          "delta": 1,
+          "perLap": 1,
+          "maxUses": 3
+        },
+        {
+          "type": "immune_events",
+          "cards": [
+            "EV05",
+            "EV18"
+          ]
+        }
+      ],
+      "drawbacks": [
+        {
+          "type": "go_salary",
+          "value": 150
+        }
+      ],
+      "skill": {
+        "name": "Chạy cuốc đêm",
+        "type": "reroll",
+        "trigger": "after_roll"
+      }
+    },
+    {
+      "id": "C04",
+      "name": "Idol TikTok",
+      "passives": [
+        {
+          "type": "rent_bonus_from_bank",
+          "rate": 0.1,
+          "min": 10
+        }
+      ],
+      "drawbacks": [
+        {
+          "type": "card_payment_multiplier",
+          "value": 1.5
+        }
+      ],
+      "skill": {
+        "name": "Bóc phốt",
+        "type": "block_rent",
+        "target": "opponent",
+        "duration": "user_next_turn_start"
+      }
+    },
+    {
+      "id": "C05",
+      "name": "Cò đất",
+      "passives": [
+        {
+          "type": "commission_on_opponent_bank_purchase",
+          "amount": 10
+        }
+      ],
+      "drawbacks": [
+        {
+          "type": "no_hotels"
+        }
+      ],
+      "skill": {
+        "name": "Tung tin quy hoạch",
+        "type": "rent_multiplier",
+        "target": "group",
+        "multiplier": 2,
+        "duration": "user_next_turn_start"
+      }
+    },
+    {
+      "id": "C06",
+      "name": "Nghiện Tarot",
+      "passives": [
+        {
+          "type": "draw_two_choose_one",
+          "decks": [
+            "chance",
+            "community"
+          ]
+        }
+      ],
+      "drawbacks": [
+        {
+          "type": "forbidden_properties",
+          "properties": [
+            "P08",
+            "P14",
+            "P20"
+          ]
+        }
+      ],
+      "skill": {
+        "name": "Giải hạn",
+        "type": "cancel_event_for_self"
+      }
+    },
+    {
+      "id": "C07",
+      "name": "SVBK",
+      "passives": [
+        {
+          "type": "park_bonus",
+          "amount": 100,
+          "amountWhenFundOff": 150
+        },
+        {
+          "type": "purchase_discount",
+          "groups": [
+            "pink"
+          ],
+          "rate": 0.2
+        }
+      ],
+      "drawbacks": [
+        {
+          "type": "starting_cash",
+          "value": 1400
+        }
+      ],
+      "skill": {
+        "name": "Tốt nghiệp",
+        "type": "auto_salary_upgrade",
+        "afterGoPasses": 5,
+        "value": 250
+      }
+    },
+    {
+      "id": "C08",
+      "name": "Nô lệ tư bản",
+      "passives": [
+        {
+          "type": "starting_cash",
+          "value": 1600
+        }
+      ],
+      "drawbacks": [],
+      "skill": {
+        "name": "Xin nghỉ phép",
+        "type": "free_jail_exit"
+      }
+    }
+  ]
+}

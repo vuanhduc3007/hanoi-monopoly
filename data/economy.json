@@ -1,0 +1,43 @@
+{
+  "currency": "tỷ",
+  "startingCash": 1500,
+  "goSalary": 200,
+  "taxes": {
+    "TAX1": 200,
+    "TAX2": 100
+  },
+  "jailFine": 50,
+  "jailMaxTurns": {
+    "classic": 3,
+    "quick": 2
+  },
+  "mortgageRate": 0.5,
+  "unmortgageInterest": 0.1,
+  "buildingSellRate": 0.5,
+  "monopolyBaseRentMultiplier": 2,
+  "buildingLimit": {
+    "houses": 32,
+    "hotels": 12
+  },
+  "transportRent": [
+    25,
+    50,
+    100,
+    200
+  ],
+  "utilityMultiplier": {
+    "1": 4,
+    "2": 10
+  },
+  "housesForHotel": {
+    "classic": 4,
+    "quick": 3
+  },
+  "auction": {
+    "startBid": 10,
+    "minIncrement": 10,
+    "timerSec": 10,
+    "resetSec": 5
+  },
+  "roundingRule": "percentages round up unless stated (tax inspection rounds down to tens)"
+}

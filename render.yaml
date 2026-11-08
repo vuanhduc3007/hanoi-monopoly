@@ -1,0 +1,17 @@
+# Render Blueprint — one free web service that runs the Colyseus game server
+# and serves the built React client from the same URL.
+services:
+  - type: web
+    name: hanoi-monopoly
+    runtime: node
+    region: singapore
+    plan: free
+    buildCommand: npx -y pnpm@9.15.0 install --frozen-lockfile && npx -y pnpm@9.15.0 run build
+    startCommand: node packages/server/dist/server.mjs
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: BOT_DELAY_MS
+        value: "800"

@@ -75,3 +75,14 @@ describe('trade summary', () => {
     expect(bundleText({ cash: 0, properties: [], jailCards: [] })).toBe('Không có');
   });
 });
+
+describe('server address', () => {
+  it('uses the page origin in production and port 2567 in development', async () => {
+    const { serverUrl } = await import('../src/net/connection');
+    const https = { protocol: 'https:', host: 'hanoi.onrender.com', hostname: 'hanoi.onrender.com' } as Location;
+    const dev = { protocol: 'http:', host: 'localhost:5173', hostname: 'localhost' } as Location;
+    expect(serverUrl({ PROD: true }, https)).toBe('wss://hanoi.onrender.com');
+    expect(serverUrl({ PROD: false }, dev)).toBe('ws://localhost:2567');
+    expect(serverUrl({ VITE_SERVER_URL: 'wss://x.example' }, dev)).toBe('wss://x.example');
+  });
+});

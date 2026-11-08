@@ -8,8 +8,16 @@ const NAME_KEY = 'hanoi-monopoly:name';
 /** Colyseus close code for a deliberate leave. */
 const CONSENTED = 4000;
 
-export const serverUrl = (): string =>
-  import.meta.env.VITE_SERVER_URL ?? `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.hostname}:2567`;
+/**
+ * Game server address: VITE_SERVER_URL if set; in a production build the
+ * page's own origin (the server also serves the client, e.g. on Render);
+ * in development the Vite page talks to the game server on port 2567.
+ */
+export function serverUrl(env: { VITE_SERVER_URL?: string; PROD?: boolean } = import.meta.env, loc: Location = location): string {
+  if (env.VITE_SERVER_URL) return env.VITE_SERVER_URL;
+  const ws = loc.protocol === 'https:' ? 'wss' : 'ws';
+  return env.PROD ? `${ws}://${loc.host}` : `${ws}://${loc.hostname}:2567`;
+}
 
 let client: Client | null = null;
 let room: Room | null = null;

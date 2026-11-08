@@ -7,10 +7,15 @@
     "typecheck": "pnpm -r typecheck",
     "sim": "pnpm --filter @hanoi-monopoly/sim run sim",
     "server": "pnpm --filter @hanoi-monopoly/server run start",
-    "client": "pnpm --filter @hanoi-monopoly/client run dev"
+    "client": "pnpm --filter @hanoi-monopoly/client run dev",
+    "build": "pnpm --filter @hanoi-monopoly/client run build && pnpm --filter @hanoi-monopoly/server run build",
+    "start": "node packages/server/dist/server.mjs"
   },
   "devDependencies": {
     "typescript": "5.6.3",
     "vitest": "2.1.8"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

@@ -1034,3 +1034,107 @@ h3,
     min-width: 0;
   }
 }
+
+/* ---- 3D layer over the 2D board ---- */
+.board {
+  position: relative;
+}
+.board-3d {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: 5;
+}
+.board-3d-on .tile-tokens,
+.board-3d-on .tile-buildings {
+  display: none;
+}
+
+/* ---- purchase / build pop-up ---- */
+.celebration {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  z-index: 6;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 10px 16px 12px;
+  background: rgba(251, 244, 227, 0.96);
+  border: 2.5px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 6px 6px 0 rgba(43, 37, 34, 0.8);
+  animation: celebrate 2.4s ease-out both;
+  cursor: pointer;
+  overflow: hidden;
+}
+.celebration-band {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 10px;
+  border-bottom: 2px solid var(--ink);
+}
+.celebration-text {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: clamp(14px, 1.6vw, 20px);
+  border-bottom: 3px solid;
+  padding: 0 4px 2px;
+  text-align: center;
+}
+.model-fallback {
+  display: grid;
+  place-items: center;
+  min-width: 120px;
+  min-height: 110px;
+}
+@keyframes celebrate {
+  0% {
+    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 0;
+  }
+  12% {
+    transform: translate(-50%, -50%) scale(1.06);
+    opacity: 1;
+  }
+  20% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(0.96);
+    opacity: 0;
+  }
+}
+
+/* ---- character preview (S3) and own piece (2D fallback) ---- */
+.pick-preview {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.pick-preview h2 {
+  margin: 0 0 4px;
+}
+.character.previewing {
+  outline: 3px solid var(--red);
+  outline-offset: 2px;
+}
+.token-me {
+  outline: 3px solid var(--ink);
+  outline-offset: 1px;
+  z-index: 3;
+}
+
+@media (max-width: 900px) {
+  .celebration {
+    position: fixed;
+    top: 40%;
+    z-index: 30;
+  }
+}

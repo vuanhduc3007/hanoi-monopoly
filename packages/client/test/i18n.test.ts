@@ -51,7 +51,7 @@ describe('vi.ts', () => {
 });
 
 describe('board layout', () => {
-  it('places 40 tiles on distinct border cells, GO bottom-left, counter-clockwise', () => {
+  it('places 40 tiles on distinct border cells: GO bottom-right, then left, up, right, down', () => {
     const cells = new Set<string>();
     for (let p = 0; p < 40; p++) {
       const { row, col } = tileCell(p);
@@ -59,11 +59,14 @@ describe('board layout', () => {
       cells.add(`${row},${col}`);
     }
     expect(cells.size).toBe(40);
-    expect(tileCell(0)).toMatchObject({ row: 10, col: 0 });
-    expect(tileCell(1)).toMatchObject({ row: 10, col: 1 });
-    expect(tileCell(10)).toMatchObject({ row: 10, col: 10 });
-    expect(tileCell(11)).toMatchObject({ row: 9, col: 10 });
-    expect(tileCell(39)).toMatchObject({ row: 9, col: 0 });
+    expect(tileCell(0)).toMatchObject({ row: 10, col: 10 });
+    expect(tileCell(1)).toMatchObject({ row: 10, col: 9, side: 'bottom' });
+    expect(tileCell(10)).toMatchObject({ row: 10, col: 0 });
+    expect(tileCell(11)).toMatchObject({ row: 9, col: 0, side: 'left' });
+    expect(tileCell(20)).toMatchObject({ row: 0, col: 0 });
+    expect(tileCell(21)).toMatchObject({ row: 0, col: 1, side: 'top' });
+    expect(tileCell(30)).toMatchObject({ row: 0, col: 10 });
+    expect(tileCell(39)).toMatchObject({ row: 9, col: 10, side: 'right' });
   });
 });
 

@@ -78,7 +78,7 @@ Mỗi phương án chạy 10.000 ván × 3 cấu hình (Truyền thống 4 ngư�
 
 ## Client (Bước 4)
 
-- Bàn cờ: Cửa Ô ở góc dưới trái, đi ngược chiều kim đồng hồ trên màn hình (dọc cạnh dưới sang phải, lên cạnh phải, sang trái cạnh trên, xuống cạnh trái).
+- Bàn cờ (đổi theo góp ý người chơi, thay cho "ngược chiều kim đồng hồ" ở GDD §2): Cửa Ô ở góc dưới phải, đi sang trái dọc cạnh dưới, lên cạnh trái, sang phải cạnh trên, xuống cạnh phải — bố cục quen thuộc của cờ tỷ phú. Thứ tự ô và luật không đổi.
 - Mô tả thẻ và nhân vật sinh tự động từ `effect.type` + số trong JSON, nên chỉnh số liệu không phải sửa chữ.
 - Giao diện là bản chức năng dùng bảng màu §8.2; tranh Đông Hồ, font tiêu đề, âm thanh để Bước 5.
 - Mobile: bàn cờ rộng hết màn hình, các panel xếp dưới (chưa có ngăn kéo kéo lên / zoom bàn cờ — để Bước 5).
@@ -92,3 +92,12 @@ Mỗi phương án chạy 10.000 ván × 3 cấu hình (Truyền thống 4 ngư�
 - Âm thanh tổng hợp bằng Web Audio (không cần file): xúc xắc trong bát, còi CSGT, chuông xe đạp, "ting ting", trống hội, pháo hoa; thêm tiếng lật thẻ và tiếng gõ mõ khi đến lượt mình. Nút tắt tiếng nhớ lựa chọn. Trình duyệt chỉ phát sau lần bấm đầu tiên.
 - Mobile: bàn cờ phóng to / thu nhỏ (1×–2,5×, cuộn được), panel người chơi / nhật ký / chat thành ngăn kéo bên dưới.
 - Tôn trọng `prefers-reduced-motion` (tắt hoạt ảnh).
+
+## 2D + 3D (góp ý sau khi chơi thử)
+
+- Bàn cờ, thẻ, bảng điều khiển vẫn là 2D. Một lớp WebGL (three.js 0.170) trong suốt phủ lên bàn cờ, vẽ **nhân vật 3D** và **nhà / khách sạn 3D** đứng đúng trên ô (vị trí lấy từ ô 2D, chiếu xuống mặt phẳng nhìn nghiêng 55°).
+- Nhân vật 3D low-poly kiểu Đông Hồ (tô màu phẳng + viền mực), mỗi người một phụ kiện: vương miện (Vin), mũ bảo hiểm đỏ + khẩu trang (Ninja), mũ xanh (Grab), điện thoại (Idol), cờ (Cò đất), mũ chóp tím (Tarot), mũ tốt nghiệp (SVBK), cặp táp (Nô lệ tư bản). Đế quân mang màu người chơi.
+- Dễ nhận ra quân của mình: quân của bạn to hơn, có mũi tên + nhãn "BẠN" lơ lửng; người đang đến lượt có vòng vàng nhấp nháy; quân nhảy từng ô theo đường đi (vào tù / thẻ đi xa thì nhảy thẳng).
+- Mua đất / xây nhà / lên khách sạn: bảng nổi giữa bàn với mô hình 3D xoay (mảnh đất có nhà + cờ màu người mua, nhà ống, tòa cao tầng) trong khoảng 2,4 giây; nhà trên bàn mọc lên có hiệu ứng nảy.
+- Màn hình chọn nhân vật có xem trước nhân vật 3D.
+- Máy không có WebGL: tự dùng lại quân cờ và nhà 2D như trước.

@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { defaultData as D } from '@hanoi-monopoly/engine';
 import { Avatar } from '../art/icons';
 import { Clock } from '../components/Side';
 import { describeCharacter, t } from '../i18n/vi';
-import { nameOf } from '../lib/selectors';
+import { colorOf, nameOf } from '../lib/selectors';
+import { makeCharacter } from '../three/models';
+import { Model3D } from '../three/Model3D';
 import { send } from '../net/connection';
 import type { RoomView } from '../net/protocol';
 import { useStore } from '../store';
@@ -11,7 +14,9 @@ import { useStore } from '../store';
 export function Pick({ room }: { room: RoomView }) {
   const turnOrder = useStore((s) => s.turnOrder);
   const pick = room.picking;
+  const [preview, setPreview] = useState(Object.keys(D.characters)[0]);
   if (!pick) return null;
+  const myColor = colorOf(room, room.you ?? '');
   const mine = pick.current === room.you;
   const takenBy = (id: string) => room.seats.find((s) => s.character === id);
   return (
@@ -32,13 +37,31 @@ export function Pick({ room }: { room: RoomView }) {
             .join(', ')}
         </p>
       )}
+      <section className="pick-preview panel" aria-label={t.pick3d}>
+        <Model3D
+          id={preview}
+          make={() => makeCharacter(preview, myColor)}
+          size={190}
+          fallback={<Avatar character={preview} size={120} label={describeCharacter(preview).name} />}
+        />
+        <div>
+          <h2>{describeCharacter(preview).name}</h2>
+          <p className="muted">{describeCharacter(preview).skill}</p>
+        </div>
+      </section>
       <div className="characters">
         {Object.keys(D.characters).map((id) => {
           const c = describeCharacter(id);
           const owner = takenBy(id);
           const free = pick.available.includes(id);
           return (
-            <article key={id} className={`character${owner ? ' taken' : ''}`}>
+            <article
+              key={id}
+              className={`character${owner ? ' taken' : ''}${preview === id ? ' previewing' : ''}`}
+              onMouseEnter={() => setPreview(id)}
+              onFocus={() => setPreview(id)}
+              onClick={() => setPreview(id)}
+            >
               <header className="character-head">
                 <Avatar character={id} size={56} label={c.name} />
                 <h3>

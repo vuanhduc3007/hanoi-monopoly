@@ -240,6 +240,12 @@ export const t = {
   } as Record<string, string>,
 
   sound: { mute: 'Tắt tiếng', unmute: 'Bật tiếng' },
+  celebrate: {
+    bought: (name: string, tile: string) => `${name} mua ${tile}`,
+    house: (name: string, tile: string) => `${name} xây nhà ở ${tile}`,
+    hotel: (name: string, tile: string) => `${name} lên khách sạn ở ${tile}`,
+  },
+  pick3d: 'Xem nhân vật',
   mobile: { zoomIn: 'Phóng to bàn cờ', zoomOut: 'Thu nhỏ bàn cờ', more: 'Người chơi · Nhật ký · Trò chuyện', less: 'Thu gọn' },
   botReason: { disconnect: 'mất kết nối', afk: 'treo máy', left: 'đã rời ván' } as Record<string, string>,
   clockKind: {

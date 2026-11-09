@@ -13,7 +13,7 @@ Tạo phòng, gửi mã 6 ký tự hoặc link mời cho bạn bè, chọn nhân
 - **8 nhân vật**, mỗi người có nội tại, điểm yếu và một kỹ năng dùng một lần mỗi ván. Tỉ lệ thắng đã được cân bằng bằng mô phỏng 10.000 ván bot.
 - **Hai chế độ**: Truyền thống (người cuối cùng không phá sản thắng) và Nhanh (chia đất đầu ván, tài sản cao nhất khi hết 60 phút thắng).
 - **Chơi online**: mua đất, đấu giá, xây nhà, thế chấp, giao dịch. Mỗi quyết định có đồng hồ đếm ngược. Người mất kết nối được bot chơi thay và có thể quay lại bất cứ lúc nào. Có khán giả và chat.
-- **Phong cách Đông Hồ** hiện đại, âm thanh (xúc xắc trong bát, còi CSGT, chuông xe đạp, trống hội…), chơi được trên điện thoại.
+- **Phong cách Đông Hồ, kết hợp 2D và 3D**: bàn cờ 2D, nhân vật và nhà cửa 3D đứng trên bàn, mô hình nhà 3D hiện lên khi mua đất hoặc xây nhà. Có âm thanh (xúc xắc trong bát, còi CSGT, chuông xe đạp, trống hội…), chơi được trên điện thoại.
 
 ## Công nghệ
 
@@ -23,7 +23,7 @@ Monorepo TypeScript (pnpm workspaces):
 | --- | --- |
 | [`packages/engine`](packages/engine) | Rules engine thuần TypeScript: `applyAction(state, action) → { state, events }`, RNG có seed, bot |
 | [`packages/server`](packages/server) | Server [Colyseus](https://colyseus.io) 0.16: phòng, mã mời, đồng hồ, bot thay người; phục vụ luôn bản build của client |
-| [`packages/client`](packages/client) | React 18 + Vite, chữ tiếng Việt gom trong `src/i18n/vi.ts`, hình SVG kiểu Đông Hồ |
+| [`packages/client`](packages/client) | React 18 + Vite, chữ tiếng Việt gom trong `src/i18n/vi.ts`, hình SVG kiểu Đông Hồ, lớp 3D bằng three.js |
 | [`packages/sim`](packages/sim) | CLI cho bot đấu với nhau để cân bằng nhân vật |
 
 Server giữ toàn quyền: xúc xắc, xáo bài và tính tiền chỉ chạy trên server. Client chỉ gửi hành động và hiển thị. Mọi số liệu game nằm trong [`data/*.json`](data), không viết cứng trong code.

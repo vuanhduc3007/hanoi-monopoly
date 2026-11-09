@@ -8,6 +8,9 @@ import { CardBack, Hotel, House, TileIcon } from '../art/icons';
 import { artFor } from '../art/tileArt';
 import { Dice } from './Dice';
 import { Token } from './Token';
+import { useCallback, useState } from 'react';
+import { Board3D } from '../three/Board3D';
+import { Celebration } from './Celebration';
 
 interface Props {
   state: PublicState;
@@ -18,8 +21,10 @@ interface Props {
 /** S4 — 40 tiles around the centre panel. */
 export function Board({ state, room, onTile }: Props) {
   const current = currentPlayer(state).id;
+  const [threeD, setThreeD] = useState(false);
+  const onActive = useCallback((on: boolean) => setThreeD(on), []);
   return (
-    <div className="board" role="grid" aria-label={t.appTitle}>
+    <div className={`board${threeD ? ' board-3d-on' : ''}`} role="grid" aria-label={t.appTitle}>
       {D.board.map((tile) => {
         const { row, col, side } = tileCell(tile.position);
         const own = state.ownables[tile.ref];
@@ -29,6 +34,7 @@ export function Board({ state, room, onTile }: Props) {
         return (
           <button
             key={tile.position}
+            data-pos={tile.position}
             className={`tile tile-${side} tile-${tile.type}`}
             style={{ gridRow: row + 1, gridColumn: col + 1 }}
             onClick={() => onTile(tile.position)}
@@ -62,8 +68,8 @@ export function Board({ state, room, onTile }: Props) {
                     character={p.character}
                     name={nameOf(room, p.id)}
                     color={colorOf(room, p.id)}
-                    size={18}
-                    className={`${p.id === current ? 'token-current' : ''}${p.inJail ? ' token-jail' : ''}`}
+                    size={p.id === room.you ? 24 : 18}
+                    className={`${p.id === current ? 'token-current' : ''}${p.inJail ? ' token-jail' : ''}${p.id === room.you ? ' token-me' : ''}`}
                   />
                 ))}
               </span>
@@ -72,6 +78,8 @@ export function Board({ state, room, onTile }: Props) {
         );
       })}
       <Center state={state} room={room} />
+      <Board3D state={state} room={room} onActive={onActive} />
+      <Celebration state={state} room={room} />
     </div>
   );
 }

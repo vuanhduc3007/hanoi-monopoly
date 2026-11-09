@@ -70,8 +70,12 @@ interface Building {
 }
 
 interface Die {
+  /** Outer holder: position + yaw only (keeps the result face pointing up). */
   obj: THREE.Group;
+  /** Inner cube: face rotation + tumbling spin. */
+  cube: THREE.Group;
   value: number;
+  yaw: number;
   from: THREE.Vector3;
   to: THREE.Vector3;
   spin: THREE.Vector3;
@@ -79,6 +83,7 @@ interface Die {
 }
 
 const ELEVATION = THREE.MathUtils.degToRad(55);
+const DICE_STAY_MS = 3200;
 const ARREST_MS = 1500;
 
 export class BoardScene {
@@ -338,7 +343,9 @@ export class BoardScene {
       disposeObject(d.obj);
     }
     this.dice = values.map((value, i) => {
-      const obj = makeDie();
+      const cube = makeDie();
+      const obj = new THREE.Group();
+      obj.add(cube);
       const size = this.unit * 0.42;
       obj.scale.setScalar(size);
       const gap = (i - (values.length - 1) / 2) * size * 1.6;
@@ -347,7 +354,9 @@ export class BoardScene {
       const from = to.clone().add(new THREE.Vector3(-size * 2 + i * size, size * 9, -size * 3));
       const spin = new THREE.Vector3(6 + Math.random() * 4, 4 + Math.random() * 4, 5 + Math.random() * 3);
       this.scene.add(obj);
-      return { obj, value, from, to, spin, born: now + i * 90 };
+      // A little yaw so the pair looks thrown, never enough to hide the top face.
+      const yaw = (i === 0 ? -1 : 1) * 0.22;
+      return { obj, cube, value, yaw, from, to, spin, born: now + i * 90 };
     });
   }
 
@@ -359,9 +368,14 @@ export class BoardScene {
       const bounce = t < 0.6 ? 0 : Math.abs(Math.sin(((t - 0.6) / 0.4) * Math.PI * 2)) * (1 - t) * 0.9;
       d.obj.position.lerpVectors(d.from, d.to, fall);
       d.obj.position.y = d.to.y + (1 - fall) * (d.from.y - d.to.y) + bounce * d.to.y * 2;
-      const [rx, ry, rz] = dieRotationFor(d.value);
+      // Face rotation on the inner cube, yaw on the holder: composing them in one
+      // Euler tilted the result face for 2 and 5 (the "lệch" dice).
+      const [rx, , rz] = dieRotationFor(d.value);
       const left = 1 - Math.min(1, t / 0.85);
-      d.obj.rotation.set(rx + d.spin.x * left, ry + d.spin.y * left + 0.35 * (d.value % 3), rz + d.spin.z * left);
+      d.cube.rotation.set(rx + d.spin.x * left, 0, rz + d.spin.z * left);
+      d.obj.rotation.set(0, d.yaw + d.spin.y * left, 0);
+      // Clear the table a while after landing so old dice never confuse the next turn.
+      d.obj.visible = now - d.born < DICE_MS + DICE_STAY_MS;
     }
   }
 

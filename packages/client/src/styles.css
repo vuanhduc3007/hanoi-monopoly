@@ -1402,3 +1402,36 @@ button.pay {
   font-size: 12px;
   color: var(--muted);
 }
+
+/* ---- dice result ---- */
+.dice-result {
+  position: absolute;
+  left: 50%;
+  top: 66%;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: grid;
+  justify-items: center;
+  padding: 6px 16px;
+  background: #fffaf0;
+  border: 2.5px solid var(--ink);
+  border-radius: 99px;
+  box-shadow: 4px 4px 0 rgba(43, 37, 34, 0.8);
+  font-weight: 800;
+  font-size: clamp(15px, 1.6vw, 22px);
+  white-space: nowrap;
+  animation: card-in 0.3s ease-out both;
+}
+.dice-result strong {
+  color: var(--red);
+  font-size: 0.8em;
+}
+
+.clock-paused {
+  color: var(--indigo);
+}
+.clock-extra {
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--green);
+}

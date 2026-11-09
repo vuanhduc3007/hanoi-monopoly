@@ -132,3 +132,35 @@ describe('money reasons', () => {
     expect(moneyReason(events, 'z')).toBe('');
   });
 });
+
+describe('dice faces', () => {
+  it('the rolled value faces up for every value and any yaw on the holder', async () => {
+    const THREE = await import('three');
+    const { DIE_FACES, dieRotationFor } = await import('../src/three/models');
+    const normals = [
+      new THREE.Vector3(1, 0, 0),
+      new THREE.Vector3(-1, 0, 0),
+      new THREE.Vector3(0, 1, 0),
+      new THREE.Vector3(0, -1, 0),
+      new THREE.Vector3(0, 0, 1),
+      new THREE.Vector3(0, 0, -1),
+    ];
+    for (const yaw of [0, 0.22, -0.22, 1.3]) {
+      for (let value = 1; value <= 6; value++) {
+        const holder = new THREE.Group();
+        const cube = new THREE.Group();
+        holder.add(cube);
+        const [rx, , rz] = dieRotationFor(value);
+        cube.rotation.set(rx, 0, rz);
+        holder.rotation.set(0, yaw, 0);
+        holder.updateMatrixWorld(true);
+        const q = new THREE.Quaternion();
+        cube.getWorldQuaternion(q);
+        const up = normals.map((n) => n.clone().applyQuaternion(q).y);
+        const top = up.indexOf(Math.max(...up));
+        expect(DIE_FACES[top], `value ${value} yaw ${yaw}`).toBe(value);
+        expect(Math.max(...up)).toBeCloseTo(1, 5);
+      }
+    }
+  });
+});

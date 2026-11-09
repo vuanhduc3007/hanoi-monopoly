@@ -80,9 +80,43 @@ describe('Colyseus room (real server)', () => {
     expect(snapshot.you).toBe('u2');
     await hc.next('game');
 
+    // Reload on a proxied host: the old socket is still open when the page comes back.
+    const zombieWatch = inbox(back);
+    void zombieWatch;
+    const again = await new Client(url).joinById(code, { secret: 'g'.repeat(32), resume: true }).catch((e) => e);
+    expect(String(again)).toMatch(/NO_SEAT/);
+
     hostRoom.send('chat', { text: 'chào' });
     await hc.next('chat', (m) => m.text === 'chào');
     await back.leave();
     await hostRoom.leave();
+  }, 20_000);
+
+  it('reload with the seat secret while the old socket is still open', async () => {
+    const url = `ws://localhost:${PORT}`;
+    const host = await new Client(url).create(ROOM_NAME, { name: 'A', secret: 'a'.repeat(32) });
+    const code = host.roomId;
+    const b = await new Client(url).joinById(code, { name: 'B', secret: 'b'.repeat(32) });
+    const hb = inbox(b);
+    const ha = inbox(host);
+    await hb.next('room', (m) => m.seats.length === 2);
+    host.send('setConfig', { characters: false });
+    b.send('ready', { ready: true });
+    await ha.next('room', (m) => m.seats[1]?.ready && m.settings.characters === false);
+    host.send('start', {});
+    await ha.next('game');
+    let kicked = false;
+    b.onLeave(() => (kicked = true));
+    // The "reloaded page": new connection, same secret, old one never closed.
+    const b2 = await new Client(url).joinById(code, { secret: 'b'.repeat(32), resume: true });
+    const h2 = inbox(b2);
+    const room = await h2.next('room');
+    expect(room.you).toBe('u2');
+    expect(room.phase).toBe('playing');
+    await h2.next('game');
+    await new Promise((r) => setTimeout(r, 300));
+    expect(kicked).toBe(true);
+    await b2.leave();
+    await host.leave();
   }, 20_000);
 });

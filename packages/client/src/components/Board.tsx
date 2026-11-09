@@ -11,7 +11,7 @@ import { Token } from './Token';
 import { useCallback, useState } from 'react';
 import { Board3D } from '../three/Board3D';
 import { Celebration } from './Celebration';
-import { ArrestBanner, CardDraw, MoneyFloaters, useMoneyChanges } from './BoardFx';
+import { ArrestBanner, CardDraw, DiceResult, MoneyFloaters, useMoneyChanges } from './BoardFx';
 
 interface Props {
   state: PublicState;
@@ -84,6 +84,7 @@ export function Board({ state, room, onTile }: Props) {
       <Celebration state={state} room={room} />
       <CardDraw state={state} room={room} />
       <ArrestBanner room={room} />
+      <DiceResult room={room} />
       <MoneyFloaters state={state} room={room} />
     </div>
   );

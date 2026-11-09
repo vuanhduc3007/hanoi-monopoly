@@ -18,6 +18,8 @@ export class GameRoom extends Room {
   maxClients = defaultData.config.room.maxPlayers + SPECTATOR_SLOTS;
   private ctl!: GameController;
   private timers = new Set<NodeJS.Timeout>();
+  /** Pending reconnection holds, by session. */
+  private holds = new Map<string, { reject: Function }>();
 
   onCreate(options: GameRoomOptions = {}): void {
     this.roomId = allocateCode(defaultData.config.room.roomCodeLength);
@@ -46,6 +48,12 @@ export class GameRoom extends Room {
         broadcast: (type, message) => this.broadcast(type, message),
       },
       onFinished: (log) => this.saveLog(log),
+      onReplaced: (old) => {
+        // The player reloaded and took the seat back: forget the old connection.
+        this.holds.get(old)?.reject(new Error('replaced'));
+        this.holds.delete(old);
+        this.clients.getById(old)?.leave(4000);
+      },
     });
     this.onMessage('*', (client, type, message) => {
       try {
@@ -57,7 +65,7 @@ export class GameRoom extends Room {
     });
   }
 
-  onJoin(client: Client, options: { name?: unknown; spectator?: unknown } = {}): void {
+  onJoin(client: Client, options: { name?: unknown; spectator?: unknown; secret?: unknown; resume?: unknown } = {}): void {
     try {
       const role = this.ctl.join(client.sessionId, options);
       client.send('joined', { role, code: this.roomId });
@@ -70,11 +78,15 @@ export class GameRoom extends Room {
   async onLeave(client: Client, consented?: boolean): Promise<void> {
     const hold = this.ctl.leave(client.sessionId, !!consented);
     if (hold === 0) return;
+    const deferred = this.allowReconnection(client, hold === 'forever' ? 'manual' : hold);
+    this.holds.set(client.sessionId, deferred);
     try {
-      await this.allowReconnection(client, hold === 'forever' ? 'manual' : hold);
+      await deferred;
       this.ctl.rejoin(client.sessionId);
     } catch {
       this.ctl.dropSeat(client.sessionId);
+    } finally {
+      this.holds.delete(client.sessionId);
     }
   }
 

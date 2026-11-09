@@ -111,3 +111,9 @@ Mỗi phương án chạy 10.000 ván × 3 cấu hình (Truyền thống 4 ngư�
 - **Hoạt cảnh**: xúc xắc 3D rơi giữa bàn (~1,1 giây) rồi quân mới đi; quân đi đủ đường (kể cả khi thẻ đưa đi); vào ô CSGT thổi còi thì đi tới ô 30, dừng với đèn còi xanh đỏ + bảng "CSGT thổi còi!" + tiếng còi, rồi mới bị đưa sang Bãi giữ xe. Nút quyết định, thẻ, bảng mua nhà chỉ hiện khi quân đã tới nơi.
 - **Tiền thay đổi**: số "−… tỷ" (đỏ) / "+… tỷ" (xanh) kèm tên người và lý do bay lên trên quân cờ, và hiện cạnh tiền trong danh sách người chơi (dòng người bị trừ rung nhẹ).
 - **Xây nhà**: cửa sổ Tài sản có mục "Khi nào được xây nhà?" và ghi lý do từng ô chưa xây được (engine `whyCantBuild`).
+
+## Góp ý chơi thử lần 3
+
+- **Xúc xắc bị lệch**: lỗi ghép phép quay — xoay ngang và xoay lật mặt nằm chung một Euler làm mặt 2 và 5 bị nghiêng, nhìn thấy số khác. Giờ tách hai lớp (ngoài chỉ xoay ngang, trong chỉ lật mặt), có test cho mọi mặt × mọi góc. Thêm dòng chữ lớn "X tung 3 + 4 = 7" (và "Đôi! Được tung tiếp"); xúc xắc tự biến mất sau ~3 giây để không lẫn với lượt sau.
+- **Thời gian suy nghĩ**: mở **Tài sản** → đồng hồ của người đang phải quyết định được cộng thêm 2 phút (`assetsExtraSec`, một lần mỗi quyết định). Mở **Giao dịch** → đồng hồ đó tạm dừng cho đến khi đóng cửa sổ; đề nghị giao dịch gửi tới người đang mở Giao dịch cũng không tự hủy.
+- **Tải lại trang bị văng ra**: trên Render, proxy chưa báo socket cũ đã đóng nên server từ chối nối lại bằng token. Mỗi tab giờ có một mã bí mật (chỉ server biết); tải lại trang thì vào lại phòng bằng mã đó, server trả lại đúng chỗ ngồi (kể cả khi bot đang chơi thay vì mất kết nối) và đóng kết nối cũ. Mở tab mới vẫn là người chơi mới.

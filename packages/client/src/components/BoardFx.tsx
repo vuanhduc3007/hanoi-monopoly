@@ -12,6 +12,7 @@ import { act } from '../net/connection';
 import type { RoomView } from '../net/protocol';
 import { play } from '../sound/sound';
 import { store, useAnimSettled, useStore, type MoneyChange } from '../store';
+import { DICE_MS } from '../three/path';
 
 // ---------------------------------------------------------------- cards
 
@@ -217,6 +218,39 @@ export function MoneyFloaters({ state, room }: { state: PublicState; room: RoomV
             </div>
           );
         })}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- dice result
+
+const RESULT_MS = 2600;
+
+/** "Lan tung 3 + 4 = 7" in big type once the dice have landed (no misreading the 3D dice). */
+export function DiceResult({ room }: { room: RoomView }) {
+  const game = useStore((s) => s.game);
+  const board3d = useStore((s) => s.board3d);
+  const [shown, setShown] = useState<{ player: string; dice: number[]; at: number } | null>(null);
+  useEffect(() => {
+    const roll = [...(game?.events ?? [])]
+      .reverse()
+      .find((e) => e.type === 'diceRolled' && ['normal', 'jail', 'reroll'].includes(String(e.purpose)));
+    if (!roll) return;
+    const show = setTimeout(() => setShown({ player: roll.player as string, dice: roll.dice as number[], at: Date.now() }), board3d ? DICE_MS : 0);
+    return () => clearTimeout(show);
+  }, [game, board3d]);
+  useEffect(() => {
+    if (!shown) return;
+    const hide = setTimeout(() => setShown(null), RESULT_MS);
+    return () => clearTimeout(hide);
+  }, [shown?.at]);
+  if (!shown) return null;
+  const sum = shown.dice.reduce((a, b) => a + b, 0);
+  const doubles = shown.dice.length === 2 && shown.dice[0] === shown.dice[1];
+  return (
+    <div className="dice-result" key={shown.at} role="status">
+      <span>{t.diceResult(nameOf(room, shown.player), shown.dice, sum)}</span>
+      {doubles && <strong>{t.doubles}</strong>}
     </div>
   );
 }

@@ -1,10 +1,14 @@
 import { Client, type Room } from 'colyseus.js';
 import { pushToast, receiveGame, store } from '../store';
-import type { ChatMsg, ClientAction, GameOverMsg, RoomView } from './protocol';
+import type { ChatMsg, ClientAction, ClockInfo, GameOverMsg, RoomView } from './protocol';
 
 const ROOM_NAME = 'hanoi';
 const TOKEN_KEY = 'hanoi-monopoly:reconnect';
 const NAME_KEY = 'hanoi-monopoly:name';
+/** Per-tab player secret: lets a reloaded page take its seat back. */
+const SECRET_KEY = 'hanoi-monopoly:secret';
+/** Last room + secret, for browsers that lose sessionStorage on reload (in-app webviews). */
+const LAST_KEY = 'hanoi-monopoly:last';
 /** Colyseus close code for a deliberate leave. */
 const CONSENTED = 4000;
 
@@ -35,6 +39,61 @@ function storage(): Storage | null {
   }
 }
 
+function local(): Storage | null {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function randomSecret(): string {
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** This tab's secret (created on first use). */
+export function mySecret(): string {
+  const ss = storage();
+  let secret = ss?.getItem(SECRET_KEY) ?? null;
+  if (!secret) {
+    secret = randomSecret();
+    ss?.setItem(SECRET_KEY, secret);
+  }
+  return secret;
+}
+
+/** Where to go back to after a reload: this tab's room, else the last room in this browser. */
+export function resumeTarget(): { code: string; secret: string } | null {
+  const token = storage()?.getItem(TOKEN_KEY);
+  const secret = storage()?.getItem(SECRET_KEY);
+  if (token && secret) return { code: token.split(':')[0], secret };
+  // The browser-wide fallback is only for a real reload — a new tab is a new player.
+  if (!wasReload()) return null;
+  try {
+    const last = JSON.parse(local()?.getItem(LAST_KEY) ?? 'null') as { code?: string; secret?: string } | null;
+    if (last?.code && last.secret) return { code: last.code, secret: last.secret };
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+function wasReload(): boolean {
+  try {
+    const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    return nav?.type === 'reload';
+  } catch {
+    return false;
+  }
+}
+
+function forget(): void {
+  storage()?.removeItem(TOKEN_KEY);
+  local()?.removeItem(LAST_KEY);
+}
+
 export function savedName(): string {
   try {
     return localStorage.getItem(NAME_KEY) ?? '';
@@ -51,9 +110,11 @@ function saveName(name: string): void {
   }
 }
 
-function attach(r: Room): void {
+function attach(r: Room, secret: string = mySecret()): void {
   room = r;
   storage()?.setItem(TOKEN_KEY, r.reconnectionToken);
+  storage()?.setItem(SECRET_KEY, secret);
+  local()?.setItem(LAST_KEY, JSON.stringify({ code: r.roomId, secret }));
   r.onMessage('joined', (m: { role: 'player' | 'spectator' }) => store.set({ role: m.role }));
   r.onMessage('room', (m: RoomView) =>
     store.set((s) =>
@@ -63,6 +124,7 @@ function attach(r: Room): void {
     ),
   );
   r.onMessage('game', receiveGame);
+  r.onMessage('clock', (m: { clock: ClockInfo | null }) => store.set({ clock: m.clock }));
   r.onMessage('turnOrder', (m: { order: string[]; rolls: Record<string, number[][]> }) => store.set({ turnOrder: m }));
   r.onMessage('picked', () => undefined);
   r.onMessage('botTakeover', () => undefined);
@@ -90,7 +152,7 @@ export async function createRoom(name: string): Promise<void> {
   saveName(name);
   store.set({ conn: 'connecting' });
   try {
-    attach(await getClient().create(ROOM_NAME, { name }));
+    attach(await getClient().create(ROOM_NAME, { name, secret: mySecret() }));
   } catch (e) {
     failed(e);
   }
@@ -100,7 +162,7 @@ export async function joinRoom(code: string, name: string, spectator = false): P
   saveName(name);
   store.set({ conn: 'connecting' });
   try {
-    attach(await getClient().joinById(code.trim().toUpperCase(), { name, spectator }));
+    attach(await getClient().joinById(code.trim().toUpperCase(), { name, spectator, secret: mySecret() }));
   } catch (e) {
     failed(e);
   }
@@ -121,26 +183,40 @@ export function reconnect(attempts = 5): Promise<boolean> {
 
 async function doReconnect(attempts: number): Promise<boolean> {
   const token = storage()?.getItem(TOKEN_KEY);
-  if (!token || store.get().conn === 'connected') return !!token;
+  const target = resumeTarget();
+  if ((!token && !target) || store.get().conn === 'connected') return !!(token || target);
   store.set({ conn: 'reconnecting' });
   for (let i = 0; i < attempts; i++) {
-    try {
-      attach(await getClient().reconnect(token));
-      return true;
-    } catch {
-      // Right after a reload the server may not have seen the old socket close yet.
-      await new Promise((r) => setTimeout(r, 700 * (i + 1)));
-      if (store.get().conn === 'connected') return true;
+    // 1. Colyseus reconnection token (works when the server already saw the old socket close).
+    if (token) {
+      try {
+        attach(await getClient().reconnect(token));
+        return true;
+      } catch {
+        /* fall through */
+      }
     }
+    // 2. Take the seat back with this player's secret. Behind a proxy (Render) the
+    //    old socket can look alive for a while, which blocks plain reconnection.
+    if (target) {
+      try {
+        attach(await getClient().joinById(target.code, { secret: target.secret, resume: true }), target.secret);
+        return true;
+      } catch (e) {
+        if (String((e as Error)?.message ?? e).includes('NO_SEAT')) break;
+      }
+    }
+    if (store.get().conn === 'connected') return true;
+    await new Promise((r) => setTimeout(r, 700 * (i + 1)));
   }
   if (room || store.get().conn === 'connected') return true;
-  storage()?.removeItem(TOKEN_KEY);
+  forget();
   store.reset();
   return false;
 }
 
 export async function leaveRoom(): Promise<void> {
-  storage()?.removeItem(TOKEN_KEY);
+  forget();
   const r = room;
   room = null;
   store.reset();

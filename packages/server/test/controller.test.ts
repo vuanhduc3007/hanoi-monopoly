@@ -281,6 +281,96 @@ describe('end of game', () => {
   });
 });
 
+describe('thinking time', () => {
+  it('opening Tài sản adds 2 minutes to your clock, once per decision', () => {
+    const h = started(2);
+    const cur = currentSession(h);
+    const before = h.ctl.clockInfo()!.deadline;
+    h.ctl.message(cur, 'thinking', { mode: 'assets' });
+    expect(h.ctl.clockInfo()!.deadline - before).toBe(sec(T.assetsExtraSec));
+    expect(h.out.last('clock').clock).toMatchObject({ extended: true });
+    h.ctl.message(cur, 'thinking', { mode: null });
+    h.ctl.message(cur, 'thinking', { mode: 'assets' });
+    expect(h.ctl.clockInfo()!.deadline - before).toBe(sec(T.assetsExtraSec)); // not twice
+    h.clock.advance(sec(T.rollSec));
+    expect(h.ctl.state!.turn.dice).toBeNull(); // still thinking
+    h.clock.advance(sec(T.assetsExtraSec));
+    expect(h.ctl.state!.turn.dice).not.toBeNull(); // then the roll clock fires
+  });
+
+  it('opening Giao dịch pauses your clock until you close it', () => {
+    const h = started(2);
+    const cur = currentSession(h);
+    h.ctl.message(cur, 'thinking', { mode: 'trade' });
+    expect(h.out.last('clock').clock).toMatchObject({ paused: true });
+    h.clock.advance(sec(600));
+    expect(h.ctl.state!.turn.dice).toBeNull();
+    h.ctl.message(cur, 'thinking', { mode: null });
+    h.clock.advance(sec(T.rollSec) - 100);
+    expect(h.ctl.state!.turn.dice).toBeNull();
+    h.clock.advance(200);
+    expect(h.ctl.state!.turn.dice).not.toBeNull();
+  });
+
+  it('only the player on the clock bends it; offers wait while the recipient is in Giao dịch', () => {
+    const h = started(2);
+    const cur = currentSession(h);
+    const other = cur === 's1' ? 's2' : 's1';
+    const before = h.ctl.clockInfo()!.deadline;
+    h.ctl.message(other, 'thinking', { mode: 'assets' });
+    expect(h.ctl.clockInfo()!.deadline).toBe(before);
+    h.ctl.message(cur, 'action', {
+      action: { type: 'proposeTrade', to: h.ctl.seatBySession(other)!.id, offer: { cash: 10 }, request: {} },
+    });
+    h.ctl.message(other, 'thinking', { mode: 'trade' });
+    h.ctl.message(cur, 'thinking', { mode: 'trade' });
+    h.clock.advance(sec(T.tradeOfferSec) * 3);
+    expect(h.ctl.state!.trades).toHaveLength(1);
+    h.ctl.message(other, 'thinking', { mode: null });
+    h.clock.advance(sec(T.tradeOfferSec));
+    expect(h.ctl.state!.trades).toHaveLength(0);
+  });
+});
+
+describe('page reload', () => {
+  it('the same secret takes the seat back on a new connection, even mid-game', () => {
+    const replaced: string[] = [];
+    const h = harness({ onReplaced: (old) => replaced.push(old) });
+    h.ctl.join('s1', { secret: 'a'.repeat(32) });
+    h.ctl.join('s2', { secret: 'b'.repeat(32) });
+    h.ctl.message('s1', 'setConfig', { characters: false });
+    h.ctl.message('s2', 'ready', { ready: true });
+    h.ctl.message('s1', 'start', {});
+    // Old socket still "alive" (proxy did not report the close yet): reload joins with the secret.
+    expect(h.ctl.join('s2-new', { secret: 'b'.repeat(32), resume: true })).toBe('player');
+    expect(replaced).toEqual(['s2']);
+    expect(h.ctl.seats.find((x) => x.id === 'u2')).toMatchObject({ sessionId: 's2-new', connected: true });
+    expect(h.out.last('room', 's2-new').you).toBe('u2');
+    expect(h.out.last('game', 's2-new')).toBeTruthy();
+    // The old connection closing later changes nothing.
+    expect(h.ctl.leave('s2', false)).toBe(0);
+  });
+
+  it('resume with an unknown secret is refused (no seat stolen, no spectator)', () => {
+    const h = started(2);
+    expect(() => h.ctl.join('x', { secret: 'z'.repeat(32), resume: true })).toThrow(RoomError);
+  });
+
+  it('a player replaced by a bot after disconnecting gets control back', () => {
+    const h = harness();
+    h.ctl.join('s1', { secret: 'a'.repeat(32) });
+    h.ctl.join('s2', { secret: 'b'.repeat(32) });
+    h.ctl.message('s1', 'setConfig', { characters: false });
+    h.ctl.message('s2', 'ready', { ready: true });
+    h.ctl.message('s1', 'start', {});
+    h.ctl.leave('s2', false);
+    h.clock.advance(sec(T.disconnectBotSec));
+    expect(h.ctl.seats[1].control === 'bot' || h.ctl.seats[0].control === 'bot').toBe(true);
+    h.ctl.join('s2b', { secret: 'b'.repeat(32), resume: true });
+    expect(h.ctl.seats.find((x) => x.sessionId === 's2b')).toMatchObject({ control: 'human', botReason: null });
+  });
+});
+
 describe('chat', () => {
   it('trims, limits length and rate', () => {
     const { ctl, out, clock } = harness();

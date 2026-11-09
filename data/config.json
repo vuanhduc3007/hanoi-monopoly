@@ -24,6 +24,7 @@
     "revealCardSec": 8,
     "payRentSec": 15,
     "turnSec": 90,
+    "assetsExtraSec": 120,
     "tradeOfferSec": 30,
     "liquidationSec": 60,
     "disconnectBotSec": 60,

@@ -12,7 +12,8 @@ npx -y pnpm@9.15.0 server            # ws://localhost:2567  (PORT, BOT_DELAY_MS,
 import { Client } from 'colyseus.js';
 const client = new Client('ws://localhost:2567');
 const room = await client.create('hanoi', { name });            // host; room.roomId is the 6-char code
-const room2 = await client.joinById(code, { name });           // player (lobby) or spectator (game started / full)
+const room2 = await client.joinById(code, { name, secret });   // player (lobby) or spectator (game started / full)
+const again2 = await client.joinById(code, { secret, resume: true }); // after a reload: take the same seat back
 const watch = await client.joinById(code, { spectator: true });
 const again = await client.reconnect(room.reconnectionToken);  // after a dropped connection
 ```
@@ -22,6 +23,7 @@ const again = await client.reconnect(room.reconnectionToken);  // after a droppe
 | Type | Payload | When |
 | --- | --- | --- |
 | `setName` | `{ name }` | any time |
+| `thinking` | `{ mode: 'assets' \| 'trade' \| null }` — open panel: Tài sản adds time once, Giao dịch pauses your clock | playing |
 | `ready` | `{ ready: boolean }` | lobby |
 | `setConfig` | `{ mode?, characters?, scholarshipFund?, buildingLimit?, maxPlayers?, allowSpectators? }` | lobby, host |
 | `start` | `{}` | lobby, host (≥ 2 players, all ready) |
@@ -41,6 +43,7 @@ const again = await client.reconnect(room.reconnectionToken);  // after a droppe
 | `room` | `{ code, phase, settings, you, seats[], spectators, picking: { order, current, available, clock } \| null }` |
 | `turnOrder` | `{ order, rolls }` |
 | `picked` | `{ seat, character, random }` |
+| `clock` | `{ clock }` — the clock changed without a game update (paused / extended) |
 | `game` | `{ state: PublicState, events: GameEvent[], clock: { kind, deadline } \| null }` — clock kinds: roll, buy, decision, reveal, rent, auction, turn, liquidation, pick; a face-down card has `pending.cardId = ''` |
 | `botTakeover` | `{ seat, reason: 'disconnect' \| 'afk' \| 'left' }` |
 | `gameOver` | `{ winner, ranking, seed, stats: { rentPaid, rentEarned, rentByTile }, log }` |

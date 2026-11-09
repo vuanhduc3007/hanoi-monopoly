@@ -4,6 +4,10 @@ import type { Action, GameEvent, PublicState } from '@hanoi-monopoly/engine';
 export interface ClockInfo {
   kind: string;
   deadline: number;
+  /** Giao dịch open: the clock is stopped at `deadline - now`. */
+  paused?: boolean;
+  /** Tài sản already added its extra time. */
+  extended?: boolean;
 }
 
 export interface SeatView {

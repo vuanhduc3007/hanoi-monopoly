@@ -105,6 +105,8 @@ export const t = {
     botPlaying: 'Bot đang chơi thay',
     assets: 'Tài sản',
     trade: 'Giao dịch',
+    clockPaused: 'Đồng hồ tạm dừng khi giao dịch',
+    clockExtended: `(+${Math.round((D.config.timers.assetsExtraSec ?? 120) / 60)} phút suy nghĩ)`,
     seconds: (n: number) => (n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}` : `${n}s`),
     until: (name: string) => `đến lượt kế của ${name}`,
     blockRent: 'đất của đối thủ không thu thuê',
@@ -273,6 +275,8 @@ export const t = {
     hotel: (name: string, tile: string) => `${name} lên khách sạn ở ${tile}`,
   },
   pick3d: 'Xem nhân vật',
+  diceResult: (name: string, dice: number[], sum: number) => `${name} tung ${dice.join(' + ')}${dice.length > 1 ? ` = ${sum}` : ''}`,
+  doubles: 'Đôi! Được tung tiếp',
   cardDraw: {
     title: 'Rút thẻ',
     flip: 'Bấm vào lá bài để lật!',

@@ -56,6 +56,10 @@ export interface Seat {
   /** Consecutive own turns in which a timer ran out. */
   afkTurns: number;
   timedOutThisTurn: boolean;
+  /** Per-player secret from the browser; lets a reloaded page take its seat back. Never sent to clients. */
+  secret: string | null;
+  /** Panel the player has open: Tài sản (+2 min once) or Giao dịch (clock paused). */
+  thinking: 'assets' | 'trade' | null;
 }
 
 export interface GameStats {
@@ -92,7 +96,8 @@ export type ErrorCode =
   | 'BOT_CONTROLLED'
   | 'WRONG_PHASE'
   | 'RULE'
-  | 'RATE_LIMIT';
+  | 'RATE_LIMIT'
+  | 'NO_SEAT';
 
 export class RoomError extends Error {
   constructor(public code: ErrorCode, message?: string) {
@@ -112,6 +117,8 @@ export interface ControllerOptions {
   /** End a running game (ranked by net worth) when nobody has been connected this long. Default 10 min. */
   abandonAfterMs?: number;
   onFinished?: (log: GameLog) => void;
+  /** A seat moved to a new connection (page reload): drop the old one. */
+  onReplaced?: (oldSessionId: string) => void;
 }
 
 type TimerKind = 'roll' | 'buy' | 'decision' | 'auction' | 'turn' | 'liquidation' | 'pick' | 'reveal' | 'rent';
@@ -143,7 +150,18 @@ export class GameController {
   private pickIndex = 0;
 
   // clocks
-  private decision: { key: string; kind: TimerKind; deadline: number; timer: Timer } | null = null;
+  private decision: {
+    key: string;
+    kind: TimerKind;
+    deadline: number;
+    timer: Timer | null;
+    fire: () => void;
+    /** Seat whose clock this is (for Tài sản / Giao dịch). */
+    actor: string | null;
+    extended: boolean;
+    /** Remaining ms while paused (Giao dịch open). */
+    paused: number | null;
+  } | null = null;
   private tradeTimers = new Map<string, Timer>();
   private disconnectTimers = new Map<string, Timer>();
   private botTimer: Timer | null = null;
@@ -179,7 +197,17 @@ export class GameController {
   // ------------------------------------------------------------ membership
 
   /** Returns the role given to the new connection. Throws RoomError to refuse it. */
-  join(sessionId: string, options: { name?: unknown; spectator?: unknown } = {}): 'player' | 'spectator' {
+  join(
+    sessionId: string,
+    options: { name?: unknown; spectator?: unknown; secret?: unknown; resume?: unknown } = {},
+  ): 'player' | 'spectator' {
+    const secret = cleanSecret(options.secret);
+    const mine = secret ? this.seats.find((s) => s.secret === secret) : undefined;
+    if (mine) {
+      this.takeOver(mine, sessionId);
+      return 'player';
+    }
+    if (options.resume === true) throw new RoomError('NO_SEAT');
     const wantsSpectator = options.spectator === true;
     if (!wantsSpectator && this.phase === 'lobby') {
       if (this.seats.length >= this.settings.maxPlayers) {
@@ -197,6 +225,8 @@ export class GameController {
           botReason: null,
           afkTurns: 0,
           timedOutThisTurn: false,
+          secret,
+          thinking: null,
         });
         this.broadcastRoom();
         return 'player';
@@ -234,6 +264,10 @@ export class GameController {
     }
     if (this.phase === 'over') return 0;
     seat.connected = false;
+    if (seat.thinking) {
+      seat.thinking = null;
+      this.applyThinking();
+    }
     if (consented) {
       this.toBot(seat, 'left');
     } else {
@@ -253,6 +287,14 @@ export class GameController {
   dropSeat(sessionId: string): void {
     const seat = this.seatBySession(sessionId);
     if (seat && this.phase === 'lobby') this.removeSeat(seat);
+  }
+
+  /** The same player came back on a new connection (page reload): give them their seat. */
+  private takeOver(seat: Seat, sessionId: string): void {
+    const old = seat.sessionId;
+    seat.sessionId = sessionId;
+    if (old !== sessionId) this.o.onReplaced?.(old);
+    this.rejoin(sessionId);
   }
 
   rejoin(sessionId: string): void {
@@ -322,6 +364,12 @@ export class GameController {
     const seat = this.seatBySession(sessionId);
     if (!seat) throw new RoomError('NOT_A_PLAYER');
     switch (type) {
+      case 'thinking': {
+        const mode = m.mode === 'assets' || m.mode === 'trade' ? m.mode : null;
+        seat.thinking = mode;
+        this.applyThinking();
+        return;
+      }
       case 'setName':
         seat.name = cleanName(m.name);
         return this.broadcastRoom();
@@ -573,12 +621,23 @@ export class GameController {
       if (this.tradeTimers.has(id)) continue;
       this.tradeTimers.set(
         id,
-        this.clock.setTimeout(() => {
-          this.tradeTimers.delete(id);
-          this.systemAction({ type: 'cancelTrade', tradeId: id });
-        }, this.timers.tradeOfferSec * 1000),
+        this.tradeExpiry(id),
       );
     }
+  }
+
+  /** Offers lapse after tradeOfferSec — but never while the recipient has Giao dịch open. */
+  private tradeExpiry(id: string): Timer {
+    return this.clock.setTimeout(() => {
+      const t = this.state?.trades.find((x) => x.id === id);
+      const to = t && this.seats.find((x) => x.id === t.to);
+      if (to?.thinking === 'trade') {
+        this.tradeTimers.set(id, this.tradeExpiry(id));
+        return;
+      }
+      this.tradeTimers.delete(id);
+      this.systemAction({ type: 'cancelTrade', tradeId: id });
+    }, this.timers.tradeOfferSec * 1000);
   }
 
   /** One decision clock at a time; it only restarts when the decision changes. */
@@ -631,20 +690,69 @@ export class GameController {
   private setDecision(key: string, kind: TimerKind, ms: number, fire: () => void): void {
     if (this.decision?.key === key) return;
     this.clearDecision();
-    const timer = this.clock.setTimeout(() => {
+    const actor =
+      this.phase === 'picking' ? (this.currentPicker()?.id ?? null) : this.state ? actorOf(this.state) : null;
+    this.decision = { key, kind, deadline: this.clock.now() + ms, timer: null, fire, actor, extended: false, paused: null };
+    this.armDecision();
+    this.applyThinking(false);
+  }
+
+  private armDecision(): void {
+    const d = this.decision;
+    if (!d) return;
+    d.timer?.clear();
+    const key = d.key;
+    d.timer = this.clock.setTimeout(() => {
       if (this.decision?.key === key) this.decision = null;
-      fire();
-    }, ms);
-    this.decision = { key, kind, deadline: this.clock.now() + ms, timer };
+      d.fire();
+    }, Math.max(0, d.deadline - this.clock.now()));
+  }
+
+  /**
+   * The actor's open panel bends their clock: Tài sản adds assetsExtraSec once
+   * per decision, Giao dịch pauses it until the panel closes.
+   */
+  private applyThinking(announce = true): void {
+    const d = this.decision;
+    if (!d || !d.actor) return;
+    const mode = this.seats.find((x) => x.id === d.actor)?.thinking ?? null;
+    const now = this.clock.now();
+    let changed = false;
+    if (mode === 'trade' && d.paused === null) {
+      d.timer?.clear();
+      d.timer = null;
+      d.paused = Math.max(0, d.deadline - now);
+      changed = true;
+    } else if (mode !== 'trade' && d.paused !== null) {
+      d.deadline = now + d.paused;
+      d.paused = null;
+      this.armDecision();
+      changed = true;
+    }
+    if (mode === 'assets' && !d.extended && d.paused === null) {
+      d.extended = true;
+      d.deadline += (this.timers.assetsExtraSec ?? 120) * 1000;
+      if (d.kind === 'turn') this.turnStartedAt += (this.timers.assetsExtraSec ?? 120) * 1000;
+      this.armDecision();
+      changed = true;
+    }
+    if (changed && announce) this.out.broadcast('clock', { clock: this.clockInfo() });
   }
 
   private clearDecision(): void {
-    this.decision?.timer.clear();
+    this.decision?.timer?.clear();
     this.decision = null;
   }
 
-  clockInfo(): { kind: TimerKind; deadline: number } | null {
-    return this.decision ? { kind: this.decision.kind, deadline: this.decision.deadline } : null;
+  clockInfo(): { kind: TimerKind; deadline: number; paused?: boolean; extended?: boolean } | null {
+    const d = this.decision;
+    if (!d) return null;
+    return {
+      kind: d.kind,
+      deadline: d.paused !== null ? this.clock.now() + d.paused : d.deadline,
+      ...(d.paused !== null ? { paused: true } : {}),
+      ...(d.extended ? { extended: true } : {}),
+    };
   }
 
   // ------------------------------------------------------------ bots
@@ -785,6 +893,10 @@ export class GameController {
     this.out.send(sessionId, 'room', this.roomView(sessionId));
     if (this.state) this.out.send(sessionId, 'game', { state: publicView(this.state), events: [], clock: this.clockInfo() });
   }
+}
+
+function cleanSecret(raw: unknown): string | null {
+  return typeof raw === 'string' && raw.length >= 16 && raw.length <= 128 ? raw : null;
 }
 
 function cleanName(raw: unknown): string | null {

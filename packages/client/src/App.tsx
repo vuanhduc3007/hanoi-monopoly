@@ -16,7 +16,7 @@ export function App() {
   }, []);
   return (
     <>
-      {conn === 'reconnecting' && room && <div className="banner">{t.home.reconnecting}</div>}
+      {conn === 'reconnecting' && <div className="banner">{t.home.reconnecting}</div>}
       {!room && <Home />}
       {room?.phase === 'lobby' && <Lobby room={room} />}
       {room?.phase === 'picking' && <Pick room={room} />}

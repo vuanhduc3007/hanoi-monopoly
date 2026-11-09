@@ -108,10 +108,12 @@ export function Clock({ clock }: { clock: ClockInfo | null }) {
     return () => clearInterval(id);
   }, []);
   if (!clock) return null;
+  if (clock.paused) return <div className="clock clock-paused">⏸ {t.board.clockPaused}</div>;
   const left = Math.max(0, Math.ceil((clock.deadline - now) / 1000));
   return (
     <div className={`clock${left <= 5 ? ' clock-low' : ''}`}>
       ⏱ {t.clockKind[clock.kind] ?? ''} {t.board.seconds(left)}
+      {clock.extended && <span className="clock-extra"> {t.board.clockExtended}</span>}
     </div>
   );
 }

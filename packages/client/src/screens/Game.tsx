@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Assets } from '../components/Assets';
 import { Board } from '../components/Board';
 import { Decision } from '../components/Decision';
@@ -7,7 +7,7 @@ import { TileDetail } from '../components/TileDetail';
 import { Trade } from '../components/Trade';
 import { t } from '../i18n/vi';
 import { me } from '../lib/selectors';
-import { leaveRoom } from '../net/connection';
+import { leaveRoom, send } from '../net/connection';
 import type { RoomView } from '../net/protocol';
 import { useStore } from '../store';
 import { GameOver } from './GameOver';
@@ -24,6 +24,10 @@ export function Game({ room }: { room: RoomView }) {
   const [drawer, setDrawer] = useState(false);
   const [zoom, setZoom] = useState(1);
   useGameSounds(room.you);
+  // Tài sản → +2 minutes on your clock; Giao dịch → your clock waits (server side).
+  useEffect(() => {
+    send('thinking', { mode: panel });
+  }, [panel]);
   if (!game) return null;
   const state = game.state;
   const self = me(room, state);

@@ -39,6 +39,8 @@ export interface BuildingView {
   position: number;
   houses: number;
   hotel: boolean;
+  /** Owner's player colour (roofs / tower). */
+  color: string;
 }
 
 /** What happened in one server update, for choreography. */
@@ -311,7 +313,7 @@ export class BoardScene {
     const want = new Map(list.map((b) => [b.id, b]));
     for (const [id, b] of this.buildings) {
       const v = want.get(id);
-      if (!v || `${v.houses}:${v.hotel}` !== b.key) {
+      if (!v || `${v.houses}:${v.hotel}:${v.color}` !== b.key) {
         this.scene.remove(b.obj);
         disposeObject(b.obj);
         this.buildings.delete(id);
@@ -324,14 +326,14 @@ export class BoardScene {
       const group = new THREE.Group();
       const count = v.hotel ? 1 : v.houses;
       for (let i = 0; i < count; i++) {
-        const m = v.hotel ? makeHotel() : makeHouse();
+        const m = v.hotel ? makeHotel(v.color) : makeHouse(v.color);
         const spread = count > 1 ? (i - (count - 1) / 2) * (a.w * 0.2) : 0;
         m.position.copy(this.groundAt(a.x + spread, a.y - a.h * 0.18));
         m.scale.setScalar(this.unit * (v.hotel ? 0.42 : 0.34));
         group.add(m);
       }
       this.scene.add(group);
-      this.buildings.set(v.id, { key: `${v.houses}:${v.hotel}`, obj: group, born: animate ? performance.now() : -1e9 });
+      this.buildings.set(v.id, { key: `${v.houses}:${v.hotel}:${v.color}`, obj: group, born: animate ? performance.now() : -1e9 });
     }
   }
 

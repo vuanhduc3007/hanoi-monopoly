@@ -303,11 +303,9 @@ export class GameController {
     seat.connected = true;
     this.disconnectTimers.get(seat.id)?.clear();
     this.disconnectTimers.delete(seat.id);
-    if (seat.botReason === 'disconnect') {
-      seat.control = 'human';
-      seat.botReason = null;
-      seat.afkTurns = 0;
-    }
+    // The player is back: they play again, whatever made the bot take over
+    // (disconnect, AFK timeouts, or an earlier "Rời phòng").
+    this.reclaim(seat, false);
     this.syncAbandonTimer();
     this.broadcastRoom();
     this.sendSnapshot(sessionId);
@@ -364,6 +362,10 @@ export class GameController {
     const seat = this.seatBySession(sessionId);
     if (!seat) throw new RoomError('NOT_A_PLAYER');
     switch (type) {
+      case 'reclaim':
+        if (this.phase !== 'playing' && this.phase !== 'picking') throw new RoomError('WRONG_PHASE');
+        this.reclaim(seat);
+        return;
       case 'thinking': {
         const mode = m.mode === 'assets' || m.mode === 'trade' ? m.mode : null;
         seat.thinking = mode;
@@ -553,8 +555,20 @@ export class GameController {
     this.afterChange(created.events);
   }
 
+  /** Hand a seat back from the bot to its (connected) human. */
+  private reclaim(seat: Seat, announce = true): void {
+    if (seat.control !== 'bot') return;
+    seat.control = 'human';
+    seat.botReason = null;
+    seat.afkTurns = 0;
+    seat.timedOutThisTurn = false;
+    this.out.broadcast('humanBack', { seat: seat.id });
+    if (announce) this.broadcastRoom();
+  }
+
   private playerAction(seat: Seat, raw: unknown): void {
-    if (seat.control === 'bot') throw new RoomError('BOT_CONTROLLED');
+    // Acting in the game means the player is here again.
+    if (seat.control === 'bot') this.reclaim(seat);
     if (!raw || typeof raw !== 'object' || typeof (raw as { type?: unknown }).type !== 'string') {
       throw new RoomError('BAD_MESSAGE');
     }

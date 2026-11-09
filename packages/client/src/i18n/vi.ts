@@ -159,6 +159,8 @@ export const t = {
     rentDiscountUse: (amount: string) => `Ăn vạ: chỉ trả ${amount}`,
     flipHint: 'Bấm vào lá bài giữa bàn để lật thẻ',
     moving: 'Đang di chuyển…',
+    botPlaying: (why: string) => `Bot đang chơi thay bạn${why ? ` (${why})` : ''}.`,
+    reclaim: 'Tôi chơi tiếp',
     useSkill: 'Dùng kỹ năng',
     skip: 'Bỏ qua',
     eventCancel: (card: string) => `Dùng Giải hạn để hủy "${card}" với bạn?`,

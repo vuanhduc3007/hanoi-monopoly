@@ -150,26 +150,30 @@ function gableRoof(width: number, depth: number, height: number, color: number):
   return inked(geo, color, 0.04);
 }
 
-/** Nhà ống mái ngói: narrow tall house with a red tiled gable roof. Origin at the base. */
-export function makeHouse(): THREE.Group {
+/**
+ * Nhà ống mái ngói: narrow tall house with a gable roof. The roof (and a band
+ * on the wall) take the owner's colour so everyone sees whose houses they are.
+ */
+export function makeHouse(ownerColor: number | string = COLORS.red): THREE.Group {
   const g = new THREE.Group();
   g.name = 'house';
   g.add(at(inked(new THREE.BoxGeometry(0.32, 0.5, 0.4), COLORS.paper), 0, 0.25, 0));
-  g.add(at(gableRoof(0.32, 0.4, 0.2, COLORS.red), 0, 0.5, 0));
+  g.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.33, 0.06, 0.41), toon(ownerColor)), 0, 0.45, 0));
+  g.add(at(gableRoof(0.32, 0.4, 0.2, new THREE.Color(ownerColor).getHex()), 0, 0.5, 0));
   g.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.17, 0.01), toon(COLORS.brown)), 0, 0.085, 0.205));
   g.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.08, 0.01), toon(COLORS.sky)), 0, 0.33, 0.205));
   return g;
 }
 
-/** Tòa cao tầng: indigo tower with gold window bands and a red cap. */
-export function makeHotel(): THREE.Group {
+/** Tòa cao tầng in the owner's colour, gold window bands, dark cap. */
+export function makeHotel(ownerColor: number | string = COLORS.indigo): THREE.Group {
   const g = new THREE.Group();
   g.name = 'hotel';
-  g.add(at(inked(new THREE.BoxGeometry(0.46, 1.1, 0.46), COLORS.indigo), 0, 0.55, 0));
+  g.add(at(inked(new THREE.BoxGeometry(0.46, 1.1, 0.46), ownerColor), 0, 0.55, 0));
   for (let i = 0; i < 4; i++) {
     g.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.47, 0.05, 0.47), toon(COLORS.gold)), 0, 0.22 + i * 0.22, 0));
   }
-  g.add(at(inked(new THREE.ConeGeometry(0.36, 0.22, 4), COLORS.red), 0, 1.21, 0));
+  g.add(at(inked(new THREE.ConeGeometry(0.36, 0.22, 4), COLORS.ink), 0, 1.21, 0));
   g.children[g.children.length - 1].rotation.y = Math.PI / 4;
   return g;
 }
@@ -184,7 +188,7 @@ export function makeDeed(color: string): THREE.Group {
     g.add(at(inked(new THREE.BoxGeometry(0.04, 0.14, 0.04), COLORS.paper, 0.1), x, 0.15, 0.36));
   }
   g.add(at(inked(new THREE.BoxGeometry(1.0, 0.03, 0.03), COLORS.paper, 0.1), 0, 0.17, 0.36));
-  const house = makeHouse();
+  const house = makeHouse(color);
   house.scale.setScalar(1.35);
   house.position.set(-0.12, 0.08, -0.05);
   g.add(house);

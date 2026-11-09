@@ -463,21 +463,21 @@ export const AVATAR_IDS = Object.keys(AVATARS);
 // ---------------------------------------------------------------- buildings & cards
 
 /** Nhà ống mái ngói. */
-export function House({ size = 12 }: { size?: number }) {
+export function House({ size = 12, color = RED }: { size?: number; color?: string }) {
   return (
     <svg viewBox="0 0 12 14" width={size} height={size * (14 / 12)} className="house" aria-hidden>
       <rect x={2} y={5} width={8} height={8.5} fill={PAPER} stroke={INK} strokeWidth={1} />
-      <path d="M1 5.5 L6 1 L11 5.5 Z" fill={RED} stroke={INK} strokeWidth={1} strokeLinejoin="round" />
+      <path d="M1 5.5 L6 1 L11 5.5 Z" fill={color} stroke={INK} strokeWidth={1} strokeLinejoin="round" />
       <rect x={5} y={9} width={2} height={4.5} fill={BROWN} />
     </svg>
   );
 }
 
 /** Tòa cao tầng. */
-export function Hotel({ size = 14 }: { size?: number }) {
+export function Hotel({ size = 14, color = INDIGO }: { size?: number; color?: string }) {
   return (
     <svg viewBox="0 0 12 18" width={size * (12 / 18) * 1.4} height={size * 1.4} className="hotel" aria-hidden>
-      <rect x={2} y={2} width={8} height={15.5} fill={INDIGO} stroke={INK} strokeWidth={1} />
+      <rect x={2} y={2} width={8} height={15.5} fill={color} stroke={INK} strokeWidth={1} />
       {[4.5, 7.5, 10.5, 13.5].map((y) => (
         <line key={y} x1={3.5} y1={y} x2={8.5} y2={y} stroke={GOLD} strokeWidth={1} />
       ))}

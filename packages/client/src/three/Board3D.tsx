@@ -89,6 +89,7 @@ export function Board3D({ state, room, onActive }: { state: PublicState; room: R
         position: positionOf(id),
         houses: o.level === H ? 0 : o.level,
         hotel: o.level === H,
+        color: o.owner ? colorOf(room, o.owner) : '#B8312F',
       }));
     // Choreograph this update's events (dice first, then walking / arrests).
     const events = store.get().game?.events ?? [];

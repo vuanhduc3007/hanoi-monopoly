@@ -134,6 +134,15 @@ describe('screens', () => {
     expect(screen.getByText(t.assets.rulesTitle)).toBeTruthy();
   });
 
+  it('when a bot plays for you, "Tôi chơi tiếp" takes the seat back', () => {
+    playing();
+    const room = store.get().room!;
+    store.set({ room: { ...room, seats: room.seats.map((x) => (x.id === 'u1' ? { ...x, control: 'bot', botReason: 'afk' } : x)) } });
+    render(<App />);
+    fireEvent.click(screen.getByText(t.act.reclaim));
+    expect(sent).toContainEqual({ type: 'reclaim', payload: undefined });
+  });
+
   it('S7 trade and S8 assets open from the side panel', () => {
     playing((st) => {
       st.ownables.P01.owner = 'u1';

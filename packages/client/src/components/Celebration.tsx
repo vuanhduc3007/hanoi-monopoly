@@ -77,7 +77,7 @@ export function Celebration({ room }: { state: PublicState; room: RoomView }) {
       {group && <div className="celebration-band" style={{ background: D.groups[group].color }} />}
       <Model3D
         id={`${current.key}`}
-        make={() => (current.kind === 'buy' ? makeDeed(color) : current.kind === 'hotel' ? makeHotel() : makeHouse())}
+        make={() => (current.kind === 'buy' ? makeDeed(color) : current.kind === 'hotel' ? makeHotel(color) : makeHouse(color))}
         height={current.kind === 'hotel' ? 1.3 : current.kind === 'house' ? 0.75 : 1.05}
         size={170}
         fallback={current.kind === 'buy' ? <TileIcon kind={artFor(current.propertyId) ?? 'district'} size={96} /> : current.kind === 'hotel' ? <Hotel size={64} /> : <House size={56} />}

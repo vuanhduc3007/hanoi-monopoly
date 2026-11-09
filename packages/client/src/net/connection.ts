@@ -128,6 +128,7 @@ function attach(r: Room, secret: string = mySecret()): void {
   r.onMessage('turnOrder', (m: { order: string[]; rolls: Record<string, number[][]> }) => store.set({ turnOrder: m }));
   r.onMessage('picked', () => undefined);
   r.onMessage('botTakeover', () => undefined);
+  r.onMessage('humanBack', () => undefined);
   r.onMessage('gameOver', (m: GameOverMsg) => store.set({ gameOver: m }));
   r.onMessage('chat', (m: ChatMsg) => store.set((s) => ({ chat: [...s.chat, m].slice(-100) })));
   r.onMessage('emote', (m: ChatMsg) => store.set((s) => ({ chat: [...s.chat, m].slice(-100) })));

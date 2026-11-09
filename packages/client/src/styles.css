@@ -1435,3 +1435,8 @@ button.pay {
   font-size: 12px;
   color: var(--green);
 }
+
+.decision.bot-playing {
+  border-color: var(--gold);
+  box-shadow: 3px 3px 0 var(--gold);
+}

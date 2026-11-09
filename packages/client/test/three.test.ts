@@ -164,3 +164,21 @@ describe('dice faces', () => {
     }
   });
 });
+
+describe('owner colours', () => {
+  it('houses and hotels are painted in the owner colour', async () => {
+    const THREE = await import('three');
+    const { makeHouse, makeHotel } = await import('../src/three/models');
+    const colorsIn = (g: import('three').Object3D) => {
+      const out = new Set<string>();
+      g.traverse((o) => {
+        const m = (o as import('three').Mesh).material as { color?: import('three').Color } | undefined;
+        if (m?.color) out.add(m.color.getHexString());
+      });
+      return out;
+    };
+    expect(colorsIn(makeHouse('#2E4A7D')).has(new THREE.Color('#2E4A7D').getHexString())).toBe(true);
+    expect(colorsIn(makeHotel('#5F7F3A')).has(new THREE.Color('#5F7F3A').getHexString())).toBe(true);
+    expect(colorsIn(makeHouse('#2E4A7D')).has(new THREE.Color('#5F7F3A').getHexString())).toBe(false);
+  });
+});

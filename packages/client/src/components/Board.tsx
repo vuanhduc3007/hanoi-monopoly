@@ -59,7 +59,11 @@ export function Board({ state, room, onTile }: Props) {
             )}
             {own && own.level > 0 && (
               <span className="tile-buildings" aria-label={hotel ? t.tile.hotel : t.tile.house(own.level)}>
-                {hotel ? <Hotel /> : Array.from({ length: own.level }, (_, i) => <House key={i} />)}
+                {hotel ? (
+                  <Hotel color={colorOf(room, own.owner!)} />
+                ) : (
+                  Array.from({ length: own.level }, (_, i) => <House key={i} color={colorOf(room, own.owner!)} />)
+                )}
               </span>
             )}
             {tokens.length > 0 && (

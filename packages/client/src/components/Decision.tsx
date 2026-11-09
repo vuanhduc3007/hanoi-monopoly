@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { defaultData as D, type PublicState } from '@hanoi-monopoly/engine';
 import { cardName, describeCard, groupName, money, t, tileName } from '../i18n/vi';
 import { hasTrait, isMyTurn, me, nameOf, skillOf, unmortgageCost, waitingFor } from '../lib/selectors';
-import { act } from '../net/connection';
+import { act, send } from '../net/connection';
 import type { RoomView } from '../net/protocol';
 import { useAnimSettled } from '../store';
 
@@ -20,6 +20,17 @@ export function Decision({ state, room, openAssets, openTrade }: Props) {
   const waiting = waitingFor(state);
   const settled = useAnimSettled();
   if (state.status !== 'playing') return null;
+  const mySeat = room.seats.find((x) => x.id === room.you);
+  if (mySeat?.control === 'bot' && self && !self.bankrupt) {
+    return (
+      <section className="panel decision bot-playing">
+        <p>{t.act.botPlaying(t.botReason[mySeat.botReason ?? ''] ?? '')}</p>
+        <button className="primary" onClick={() => send('reclaim')}>
+          {t.act.reclaim}
+        </button>
+      </section>
+    );
+  }
   // Let the dice land and the piece arrive before asking anything.
   if (!settled && pend && pend.type !== 'postRoll') {
     return (

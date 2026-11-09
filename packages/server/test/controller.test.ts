@@ -201,8 +201,23 @@ describe('playing', () => {
     }
     expect(afk).toMatchObject({ control: 'bot', botReason: 'afk' });
     expect(h.out.last('botTakeover')).toEqual({ seat: afk.id, reason: 'afk' });
-    h.ctl.message(afk.sessionId, 'action', { action: { type: 'roll' } });
-    expect(h.out.errors(afk.sessionId)).toContain('BOT_CONTROLLED');
+    // Coming back and pressing anything (or "Tôi chơi tiếp") gives the seat back.
+    h.ctl.message(afk.sessionId, 'reclaim', {});
+    expect(afk).toMatchObject({ control: 'human', botReason: null, afkTurns: 0 });
+    expect(h.out.last('humanBack')).toEqual({ seat: afk.id });
+  });
+
+  it('a player who pressed Rời phòng and comes back with the same browser plays again', () => {
+    const h = harness();
+    h.ctl.join('s1', { secret: 'a'.repeat(32) });
+    h.ctl.join('s2', { secret: 'b'.repeat(32) });
+    h.ctl.message('s1', 'setConfig', { characters: false });
+    h.ctl.message('s2', 'ready', { ready: true });
+    h.ctl.message('s1', 'start', {});
+    h.ctl.leave('s2', true);
+    expect(h.ctl.seats.find((x) => x.id === 'u2')).toMatchObject({ control: 'bot', botReason: 'left' });
+    h.ctl.join('s2b', { secret: 'b'.repeat(32), resume: true });
+    expect(h.ctl.seats.find((x) => x.id === 'u2')).toMatchObject({ control: 'human', botReason: null, connected: true });
   });
 
   it('disconnect: bot after 60s, human again on reconnection', () => {

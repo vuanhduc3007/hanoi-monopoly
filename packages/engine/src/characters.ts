@@ -270,11 +270,21 @@ export function onPurchase(c: Ctx, buyerId: string): void {
   }
 }
 
+/**
+ * Most the bailout covers: `maxAmount`, or with `scaleWithBoard` grown like starting cash
+ * on bigger boards (rents there run higher), rounded up to tens.
+ */
+export function bailoutMax(d: GameData, sk: Effect): number {
+  const base = sk.maxAmount as number;
+  const m = sk.scaleWithBoard ? (d.economy.startingCashMultiplier ?? 1) : 1;
+  return m === 1 ? base : Math.ceil((base * m) / 10 - 1e-9) * 10;
+}
+
 /** Thiếu gia Vin: bank covers the shortfall (≤ max) once. Returns true if saved. */
 export function onBankrupt(c: Ctx, p: PlayerState, shortfall: number): boolean {
   const sk = skillOf(c, p);
   if (!sk || sk.type !== 'bailout' || p.skillUsed) return false;
-  if (shortfall > (sk.maxAmount as number)) return false;
+  if (shortfall > bailoutMax(c.d, sk)) return false;
   useUpSkill(c, p);
   p.cash += shortfall;
   emit(c, 'skillUsed', { player: p.id, skill: sk.type, amount: shortfall });

@@ -45,7 +45,8 @@
         "type": "bailout",
         "maxAmount": 500,
         "trigger": "on_bankruptcy",
-        "cooldownRounds": 4
+        "cooldownRounds": 4,
+        "scaleWithBoard": true
       }
     },
     {
@@ -425,10 +426,41 @@
       "skill": {
         "name": "Mở sòng",
         "type": "host_sicbo",
-        "pot": 240,
+        "pot": 560,
         "roundTo": 10,
-        "commission": 0.2
-      }
+        "commission": 0.1,
+        "cooldownRounds": 4
+      },
+      "byTableSize": [
+        {
+          "players": [
+            2
+          ],
+          "skill": {
+            "pot": 240,
+            "commission": 0.2,
+            "cooldownRounds": 3
+          }
+        },
+        {
+          "players": [
+            3
+          ],
+          "skill": {
+            "pot": 320,
+            "commission": 0.2,
+            "cooldownRounds": 3
+          }
+        },
+        {
+          "players": [
+            4
+          ],
+          "skill": {
+            "commission": 0.15
+          }
+        }
+      ]
     },
     {
       "id": "C10",
@@ -544,32 +576,42 @@
       "drawbacks": [
         {
           "type": "go_donation",
-          "amount": 20
+          "amount": 40
         }
       ],
       "skill": {
         "name": "Họp tổ dân phố",
         "type": "collect_contribution",
-        "totalToSelf": 20,
-        "totalToFund": 20
+        "totalToSelf": 45,
+        "totalToFund": 20,
+        "cooldownRounds": 5
       },
       "byTableSize": [
         {
-          "skill": {
-            "totalToSelf": 10,
-            "totalToFund": 10
-          },
           "players": [
             2
-          ]
+          ],
+          "skill": {
+            "totalToSelf": 35,
+            "totalToFund": 10
+          }
         },
         {
           "players": [
             3
           ],
           "skill": {
-            "totalToSelf": 15,
+            "totalToSelf": 35,
             "totalToFund": 15
+          }
+        },
+        {
+          "players": [
+            4
+          ],
+          "skill": {
+            "totalToSelf": 40,
+            "totalToFund": 20
           }
         }
       ]

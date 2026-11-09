@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyAction, botAction, perPlayer } from '../src';
+import { applyAction, bailoutMax, botAction, dataFor, perPlayer } from '../src';
 import { D, G, has, withCharacter } from './helpers';
 
 // Character numbers come from characters.json so balancing never breaks the tests.
@@ -78,6 +78,29 @@ describe('C01 Thiếu gia Vin', () => {
     g.setCurrent('p1').at('p1', 36).roll('p1', 1, 2); // → Hồ Gươm hotel
     g.do({ type: 'declareBankruptcy', player: 'p1' });
     expect(g.p('p1').bankrupt).toBe(true);
+  });
+
+  it('scaleWithBoard: the bailout grows like starting cash on bigger boards', () => {
+    const sk = CH.C01.skill;
+    expect(sk.scaleWithBoard).toBe(true);
+    expect(bailoutMax(D, sk)).toBe(num(sk.maxAmount));
+    for (const board of ['extended', 'large'] as const) {
+      const d = dataFor(board);
+      const m = d.economy.startingCashMultiplier!;
+      expect(bailoutMax(d, sk)).toBe(Math.ceil((num(sk.maxAmount) * m) / 10 - 1e-9) * 10);
+    }
+    // a shortfall above the 40-tile cap but within the 56-tile one is covered there
+    const big = bailoutMax(dataFor('large'), sk);
+    const g = G.create(['C01', null], { board: 'large' }).setCash('p1', 0);
+    const p = g.p('p1');
+    g.s.pending = {
+      type: 'liquidation',
+      player: 'p1',
+      task: { t: 'pay', from: 'p1', to: { kind: 'bank' }, amount: big, kind: 'other', reason: 'test' },
+    } as never;
+    g.do({ type: 'declareBankruptcy', player: 'p1' });
+    expect(p.bankrupt || g.p('p1').bankrupt).toBe(false);
+    expect(g.p('p1').skillUsed).toBe(true);
   });
 });
 

@@ -3,8 +3,8 @@
  * descriptions are generated from the JSON effect data, so numbers stay in
  * sync with data/*.json.
  */
-import { type Effect, type GameEvent } from '@hanoi-monopoly/engine';
-import { charOf, D } from '../lib/gameData';
+import { contributionShares, sicboStake, type Effect, type GameEvent } from '@hanoi-monopoly/engine';
+import { charOf, D, tablePlayers } from '../lib/gameData';
 
 const nf = new Intl.NumberFormat('vi-VN');
 export const money = (n: number) => `${nf.format(n)} ${D.economy.currency}`;
@@ -479,7 +479,9 @@ export function describeTrait(e: Effect): string {
     case 'tax_override':
       return e.amount === 0 ? `Miễn ${tileName(e.tax)}` : `${tileName(e.tax)} trả ${money(e.amount)}`;
     case 'bailout':
-      return `Khi sắp phá sản, ngân hàng trả hộ tối đa ${money(e.maxAmount)} của khoản nợ`;
+      return `Khi sắp phá sản (đã bán hết nhà, thế chấp hết đất mà vẫn thiếu), ngân hàng trả hộ phần thiếu nếu không quá ${
+        e.scaleWithBoard ? boardCash(e.maxAmount) : money(e.maxAmount)
+      }`;
     case 'ignore_go_to_jail_tile':
       return 'Dừng ô CSGT thổi còi không bị vào Bãi giữ xe';
     case 'immune_events':
@@ -523,7 +525,9 @@ export function describeTrait(e: Effect): string {
       return `Khi mua đất của ngân hàng hoặc nộp thuế, phạt, tiền thẻ từ ${money(e.minAmount ?? 0)}: được chơi tài xỉu — thắng trả bớt ${pct(e.winRate)}, thua trả thêm ${pct(e.loseRate)}, ra bão ${e.jackpotRate >= 1 ? 'khỏi trả' : `trả bớt ${pct(e.jackpotRate)}`}`;
     case 'host_sicbo':
       return `Bạn làm nhà cái tài xỉu: mọi đối thủ lần lượt đặt Tài hoặc Xỉu, ${
-        e.pot !== undefined ? `tổng tiền cược ${money(e.pot)} chia đều (làm tròn lên hàng chục)` : `mỗi người ${money(e.stake)}`
+        e.pot !== undefined
+          ? `tổng tiền cược ${money(e.pot)} chia đều (làm tròn lên hàng chục)${perOpponent((n) => money(sicboStake(e, n)))}`
+          : `mỗi người ${money(e.stake)}`
       }; người thắng nhận ${pct(1 - (e.commission ?? 0))} tiền cược, ra bão nhà cái ăn hết`;
     case 'build_discount':
       return `Xây nhà, khách sạn rẻ hơn ${pct(e.rate)}`;
@@ -539,7 +543,12 @@ export function describeTrait(e: Effect): string {
       return `Mỗi lần qua ${D.board[0].name} góp ${money(e.amount)} vào Quỹ khuyến học`;
     case 'collect_contribution':
       return e.totalToSelf !== undefined
-        ? `Các đối thủ góp tổng ${money(e.totalToSelf)} cho bạn và ${money(e.totalToFund)} vào Quỹ khuyến học (chia đều, làm tròn lên)`
+        ? `Các đối thủ góp tổng ${money(e.totalToSelf)} cho bạn và ${money(e.totalToFund)} vào Quỹ khuyến học (chia đều, làm tròn lên)${perOpponent(
+            (n) => {
+              const s = contributionShares(e, n);
+              return `${money(s.toSelf)} + ${money(s.toFund)}`;
+            },
+          )}`
         : `Mỗi đối thủ góp ${money(e.toSelf)} cho bạn và ${money(e.toFund)} vào Quỹ khuyến học`;
     default:
       return e.type;
@@ -550,6 +559,12 @@ export function describeTrait(e: Effect): string {
 export function teamName(team: number): string {
   const names = t.teams.names;
   return names[team % names.length] + (team >= names.length ? ` ${Math.floor(team / names.length) + 1}` : '');
+}
+
+/** " — bàn 8 người: mỗi đối thủ 80 tỷ" for skills split among the opponents. */
+function perOpponent(each: (opponents: number) => string): string {
+  const n = tablePlayers();
+  return n >= 2 ? ` — bàn ${n} người: mỗi đối thủ ${each(n - 1)}` : '';
 }
 
 /** Salary on the current board (longer boards multiply every salary). */

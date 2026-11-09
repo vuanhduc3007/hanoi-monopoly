@@ -13,6 +13,7 @@ export { BOARDS, autoBoard, buildGameData, characterFor, dataFor, defaultData, e
 export type { GameData, CardDef, CharacterDef, OwnableDef, TableSizeOverride, TileDef } from './data';
 export { gambleWorst, rollSicbo, sicboStake } from './sicbo';
 export { contributionShares } from './engine';
+export { bailoutMax } from './characters';
 export { EFFECT_TYPES, perPlayer } from './cards';
 export * from './types';
 export { actorOf, botAction, botActionFor, botAcceptsTrade, BOT_DEFAULTS } from './bot';

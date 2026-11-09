@@ -305,3 +305,35 @@ Chấm màu nhỏ ở góc ô được thay bằng **lá cờ cán tre** mang m�
 ### Sửa lỗi bot gửi đi gửi lại một đề nghị giao dịch
 
 Server hỏi bot theo thứ tự ghế, nên bot đề nghị đổi đất cho một người ngồi sau nó sẽ được hỏi lại trước khi người kia kịp trả lời. Kết quả là nó gửi lại đúng đề nghị đó liên tục cho đến hết đồng hồ lượt (test với số liệu giá mới làm lộ ra lỗi này). Giờ bot chờ khi còn đề nghị đang mở, và mỗi lượt chỉ đề nghị mỗi người một lần (`turn.offeredTo`).
+
+## Kỹ năng Mở sòng, Họp tổ nặng tay hơn; Bố ơi cứu con theo bàn
+
+Ở bàn đông, Mở sòng và Họp tổ chia một tổng nhỏ cho nhiều đối thủ, nên mỗi lần dùng chỉ được vài chục tỷ: bàn 8 người, Họp tổ được ~21 tỷ, Mở sòng lời trung bình ~35 tỷ. Bấm vào mà gần như không thấy gì. Hướng sửa: tăng tổng tiền cho kỹ năng có cảm giác, rồi bù bằng thời gian hồi, hoa hồng hoặc điểm yếu.
+
+| | Trước | Sau |
+| --- | --- | --- |
+| **Mở sòng** (Con bạc) | tổng cược 240, người thắng nhận 80%, hồi 3 lượt | **tổng cược 560**, người thắng nhận 90%, hồi 4 lượt. Bàn 2 người: 240 / 80% / 3 lượt; bàn 3 người: 320 / 80% / 3 lượt; bàn 4 người: người thắng nhận 85% |
+| **Họp tổ dân phố** (Tổ trưởng) | 20 cho mình + 20 vào Quỹ, hồi 3 lượt | **45 cho mình + 20 vào Quỹ**, hồi 5 lượt. Bàn 2–3 người: 35 + 10/15; bàn 4 người: 40 + 20 |
+| Điểm yếu Tổ trưởng | góp 20 vào Quỹ mỗi lần qua ô Xuất phát | **góp 40** |
+| **Bố ơi cứu con** (Thiếu gia Vin) | tối đa 500 ở mọi bàn | tăng như tiền khởi đầu (`scaleWithBoard`): **500 / 580 / 650** ở bàn 40 / 48 / 56 ô |
+
+Mỗi lần dùng ở bàn 8 người: Mở sòng mỗi đối thủ cược 80 tỷ (cả bàn 560), Họp tổ mỗi đối thủ góp 7 + 3 tỷ (được 49 tỷ). Mô tả kỹ năng trong game ghi luôn con số này theo số người ở bàn. Bố ơi cứu con ghi rõ chỉ cứu khi đã bán hết nhà, thế chấp hết đất mà vẫn thiếu.
+
+Thử 4 bộ số trên seed 901 trước khi chọn. Riêng việc tăng tổng cược mà giữ hoa hồng 20% làm Con bạc +5 điểm % ở bàn 5–6 người, nên hạ hoa hồng. Cược lớn ở bàn 2–3 người thì Con bạc thua (−7), nên bàn nhỏ giữ mức cũ. Kiểm chứng (seed 77; 12.000 / 10.000 / 8.000 / 6.000 / 6.000 / 5.000 / 5.000 ván):
+
+| | 2 người | 3 | 4 | 5 (48 ô) | 6 (48 ô) | 7 (56 ô) | 8 (56 ô) |
+|---|---|---|---|---|---|---|---|
+| C01 Thiếu gia Vin | +1,9 | +2,8 | +2,2 | +1,1 | −0,5 | −0,7 | −1,3 |
+| C02 Ninja Lead | +1,2 | +0,8 | +1,4 | +0,2 | −0,2 | −0,1 | −0,3 |
+| C03 Tài xế Grab | +0,5 | +1,0 | −0,5 | −0,6 | +0,8 | +1,1 | +0,1 |
+| C04 Idol TikTok | −2,2 | −2,1 | +0,6 | −0,2 | −0,7 | −1,1 | −0,5 |
+| C05 Cò đất | +1,0 | −1,1 | +1,1 | −0,1 | +0,2 | −0,4 | −0,4 |
+| C06 Nghiện Tarot | −0,9 | −1,0 | −2,8 | −1,2 | −0,9 | +0,8 | +2,0 |
+| C07 SVBK | +1,2 | +0,3 | −1,3 | +1,0 | +1,3 | +1,0 | −0,9 |
+| C08 Nô lệ tư bản | +0,3 | +1,7 | −0,2 | +0,4 | −0,2 | +0,3 | +0,3 |
+| C09 Con bạc | −1,6 | +0,1 | +0,0 | −0,2 | +1,0 | −1,0 | +0,5 |
+| C10 Thợ xây | −2,4 | +0,4 | +0,2 | −0,6 | −0,8 | +0,7 | +0,3 |
+| C11 F0 chứng khoán | −0,9 | −2,1 | −2,0 | −0,6 | −1,1 | −0,8 | −0,4 |
+| C12 Tổ trưởng dân phố | +1,7 | −0,5 | +1,3 | +0,7 | +1,2 | +0,1 | +0,7 |
+
+Mọi nhân vật ở mọi cỡ bàn đều trong ±2,8 điểm % (trước đó ±3,5). Người đi đầu thắng: 39,6% / 32,7% / 33,9% / 28,5% / 25,5% / 24,2% / 20,1%.

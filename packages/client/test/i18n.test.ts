@@ -143,7 +143,23 @@ describe('56-tile board and new characters', () => {
     }
     expect(describeCharacter('C09').skill).toContain('tài xỉu');
     expect(describeCharacter('C03', 2).tableNote).toBeTruthy();
-    expect(describeCharacter('C03', 5).tableNote).toBeNull();
+    expect(describeCharacter('C03', 6).tableNote).toBeNull();
     expect(describeCard('CH16')).toContain('chia đều');
+  });
+});
+
+describe('character text follows the board', () => {
+  it('salary and starting cash show the numbers of the current board', async () => {
+    const { setBoard } = await import('../src/lib/gameData');
+    const { describeCharacter, boardNote, describeCard } = await import('../src/i18n/vi');
+    setBoard('standard');
+    expect(boardNote()).toBeNull();
+    expect(describeCharacter('C01', 4).passives[0]).toBe('Lương 280 tỷ');
+    setBoard('large');
+    expect(boardNote()).toContain('lương ×1,2');
+    expect(describeCharacter('C01', 8).passives[0]).toBe('Lương 336 tỷ trên bàn này');
+    expect(describeCharacter('C08', 8).passives[0]).toBe('Bắt đầu 2.340 tỷ trên bàn này');
+    expect(describeCard('EV33')).toContain('Con bạc trả');
+    setBoard('standard');
   });
 });

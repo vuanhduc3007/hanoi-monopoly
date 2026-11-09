@@ -146,6 +146,38 @@
         "type": "move_to",
         "tile": "PARK"
       }
+    },
+    {
+      "id": "CH18",
+      "name": "Theo hội nhóm \"lùa gà\" chứng khoán, cháy tài khoản",
+      "effect": {
+        "type": "pay_bank",
+        "amount": 80
+      }
+    },
+    {
+      "id": "CH19",
+      "name": "Không đội mũ bảo hiểm, phạt theo Nghị định 168",
+      "effect": {
+        "type": "pay_bank",
+        "amount": 60
+      }
+    },
+    {
+      "id": "CH20",
+      "name": "Chốt lời cổ phiếu đúng đỉnh",
+      "effect": {
+        "type": "gain",
+        "amount": 100
+      }
+    },
+    {
+      "id": "CH21",
+      "name": "Săn được vé concert ở Mỹ Đình",
+      "effect": {
+        "type": "move_to",
+        "tile": "P07"
+      }
     }
   ],
   "community": [
@@ -276,6 +308,38 @@
       "name": "Quên khóa xe, bị cẩu",
       "effect": {
         "type": "go_to_jail"
+      }
+    },
+    {
+      "id": "CD17",
+      "name": "Trời ô nhiễm, mua máy lọc không khí",
+      "effect": {
+        "type": "pay_bank",
+        "amount": 40
+      }
+    },
+    {
+      "id": "CD18",
+      "name": "Rủ nhau chơi pickleball, sắm vợt mới",
+      "effect": {
+        "type": "pay_bank",
+        "amount": 30
+      }
+    },
+    {
+      "id": "CD19",
+      "name": "Clip review quán phở lên xu hướng",
+      "effect": {
+        "type": "gain",
+        "amount": 60
+      }
+    },
+    {
+      "id": "CD20",
+      "name": "Trúng Vietlott giải nhỏ",
+      "effect": {
+        "type": "gain",
+        "amount": 50
       }
     }
   ],
@@ -685,6 +749,116 @@
         "to": "fund",
         "overrides": {
           "C08": 50
+        }
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV33",
+      "name": "Công an phường triệt phá sòng tài xỉu",
+      "effect": {
+        "type": "character_pays",
+        "character": "C09",
+        "amount": 150,
+        "to": "fund",
+        "fallback": {
+          "type": "drawer_gain",
+          "amount": 30
+        }
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV34",
+      "name": "VN-Index lập đỉnh mới",
+      "effect": {
+        "type": "character_gain",
+        "character": "C11",
+        "amount": 150,
+        "fallback": {
+          "type": "bank_pays_all",
+          "amount": 20
+        }
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV35",
+      "name": "Chứng khoán đỏ lửa, F0 bị gọi ký quỹ",
+      "effect": {
+        "type": "character_pays",
+        "character": "C11",
+        "amount": 120,
+        "to": "bank",
+        "fallback": {
+          "type": "all_pay",
+          "amount": 10,
+          "to": "fund"
+        }
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV36",
+      "name": "Mùa sửa nhà cuối năm",
+      "effect": {
+        "type": "repairs_all",
+        "perHouse": 15,
+        "perHotel": 50,
+        "toCharacter": "C10"
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV37",
+      "name": "Tổ dân phố vận động quỹ vì người nghèo",
+      "effect": {
+        "type": "all_pay_character",
+        "character": "C12",
+        "amount": 10,
+        "fallback": {
+          "type": "all_pay",
+          "amount": 10,
+          "to": "fund"
+        }
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV38",
+      "name": "KOL bị phạt vì quảng cáo sai sự thật",
+      "effect": {
+        "type": "character_pays",
+        "character": "C04",
+        "amount": 100,
+        "to": "fund",
+        "fallback": {
+          "type": "drawer_gain",
+          "amount": 30
+        }
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV39",
+      "name": "Chỉ số AQI vượt 300, cả phố đeo khẩu trang",
+      "effect": {
+        "type": "all_pay",
+        "amount": 20,
+        "to": "fund"
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV40",
+      "name": "Công ty tăng lương cuối năm",
+      "effect": {
+        "type": "character_gain",
+        "character": "C08",
+        "amount": 100,
+        "fallback": {
+          "type": "bank_pays_all",
+          "amount": 20
         }
       },
       "kind": "instant"

@@ -139,6 +139,26 @@
               "value": 160
             }
           ]
+        },
+        {
+          "players": [
+            5
+          ],
+          "passives": [
+            {
+              "type": "adjust_roll",
+              "delta": 1,
+              "perLap": 1,
+              "maxUses": 1
+            },
+            {
+              "type": "immune_events",
+              "cards": [
+                "EV05",
+                "EV18"
+              ]
+            }
+          ]
         }
       ]
     },
@@ -173,7 +193,7 @@
           "passives": [
             {
               "type": "rent_bonus_from_bank",
-              "rate": 0.25,
+              "rate": 0.3,
               "min": 10
             }
           ],
@@ -324,7 +344,8 @@
             2
           ],
           "skill": {
-            "afterGoPasses": 3
+            "afterGoPasses": 3,
+            "value": 280
           }
         },
         {
@@ -534,8 +555,16 @@
       },
       "byTableSize": [
         {
+          "skill": {
+            "totalToSelf": 10,
+            "totalToFund": 10
+          },
           "players": [
-            2,
+            2
+          ]
+        },
+        {
+          "players": [
             3
           ],
           "skill": {

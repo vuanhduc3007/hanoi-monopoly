@@ -38,12 +38,14 @@ export function skillAvailable(c: Ctx, p: PlayerState, type: string): boolean {
 }
 
 export function startingCash(d: GameData, characterId: string | null, charactersOn: boolean, players: number): number {
+  let cash = d.economy.startingCash;
   if (charactersOn && characterId) {
     const def = characterFor(d, characterId, players);
     const t = [...def.passives, ...def.drawbacks].find((x) => x.type === 'starting_cash');
-    if (t) return t.value as number;
+    if (t) cash = t.value as number;
   }
-  return d.economy.startingCash;
+  const mult = d.economy.startingCashMultiplier ?? 1;
+  return mult === 1 ? cash : Math.ceil((cash * mult) / 10 - 1e-9) * 10;
 }
 
 export function salaryFor(c: Ctx, p: PlayerState): number {

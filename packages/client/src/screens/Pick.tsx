@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { D } from '../lib/gameData';
+import { autoBoard } from '@hanoi-monopoly/engine';
+import { D, setBoard, setTablePlayers } from '../lib/gameData';
 import { Avatar } from '../art/icons';
 import { Clock } from '../components/Side';
 import { describeCharacter, t } from '../i18n/vi';
@@ -19,8 +20,10 @@ export function Pick({ room }: { room: RoomView }) {
   const myColor = colorOf(room, room.you ?? '');
   const mine = pick.current === room.you;
   const takenBy = (id: string) => room.seats.find((s) => s.character === id);
-  // Characters have their own numbers at 2–3 player tables.
+  // Characters have their own numbers at 2–3 player tables, and bigger boards scale salary / cash.
   const players = room.seats.length;
+  setBoard(room.settings.board === 'auto' || !room.settings.board ? autoBoard(players) : room.settings.board);
+  setTablePlayers(players);
   return (
     <main className="pick">
       <header className="lobby-head">

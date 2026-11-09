@@ -16,11 +16,14 @@ describe('card data coverage', () => {
     for (const t of types) expect(EFFECT_TYPES).toContain(t);
   });
 
-  it('deck sizes match the GDD (17 / 16 / 32)', () => {
+  it('every card of cards.json is dealt into its deck (GDD 17 / 16 / 32 + new cards)', () => {
     const g = plain();
-    expect(g.s.decks.chance).toHaveLength(17);
-    expect(g.s.decks.community).toHaveLength(16);
-    expect(g.s.decks.event).toHaveLength(32);
+    expect(g.s.decks.chance).toHaveLength(D.decks.chance.length);
+    expect(g.s.decks.community).toHaveLength(D.decks.community.length);
+    expect(g.s.decks.event).toHaveLength(D.decks.event.length);
+    expect(D.decks.chance.length).toBeGreaterThanOrEqual(17);
+    expect(D.decks.community.length).toBeGreaterThanOrEqual(16);
+    expect(D.decks.event.length).toBeGreaterThanOrEqual(32);
   });
 
   it('every card resolves without error and non-kept cards return to the bottom', () => {
@@ -106,7 +109,7 @@ describe('Cơ hội / Cộng đồng effects', () => {
     g.draw('p1', 'CH11');
     expect(g.p('p1').jailCards).toEqual(['CH11']);
     expect(g.s.decks.chance).not.toContain('CH11');
-    expect(g.s.decks.chance).toHaveLength(16);
+    expect(g.s.decks.chance).toHaveLength(D.decks.chance.length - 1);
   });
 
   it('gain: CH12 +150, CD01 +200', () => {
@@ -391,5 +394,49 @@ describe('Hanoi Event ⏳ effects', () => {
     expect(g.cash('p2')).toBe(1480);
     expect(g.s.fund).toBe(20);
     expect(g.s.pending).toMatchObject({ type: 'buy', propertyId: 'P19' });
+  });
+});
+
+describe('character cards (EV33–EV40)', () => {
+  it('character_pays: EV33 the Con bạc pays into the Quỹ; without one at the table the drawer gets the fallback', () => {
+    const g = G.create([null, 'C09']);
+    const before = g.cash('p2');
+    g.draw('p1', 'EV33');
+    // A card fine: Con bạc may gamble on it first (Liều ăn nhiều) — here he pays it plainly.
+    expect(g.s.pending).toMatchObject({ type: 'gamble', player: 'p2' });
+    g.do({ type: 'gamble', player: 'p2', pick: null });
+    expect(g.cash('p2')).toBe(before - (D.cards.EV33.effect.amount as number));
+    expect(g.s.fund).toBe(D.cards.EV33.effect.amount);
+    const h = G.create([null, null]);
+    h.draw('p1', 'EV33');
+    expect(h.cash('p1')).toBe(1500 + (D.cards.EV33.effect.fallback.amount as number));
+  });
+
+  it('character_pays honours the card-payment multiplier (EV38 on Idol TikTok)', () => {
+    const g = G.create([null, 'C04']);
+    g.draw('p1', 'EV38');
+    expect(g.cash('p2')).toBe(1500 - Math.ceil((D.cards.EV38.effect.amount as number) * (D.characters.C04.drawbacks[0].value as number)));
+  });
+
+  it('character_gain: EV34 F0 gains from the bank; fallback pays everyone', () => {
+    const g = G.create([null, 'C11']);
+    g.draw('p1', 'EV34');
+    expect(g.cash('p2')).toBe(1500 + (D.cards.EV34.effect.amount as number));
+    expect(g.cash('p1')).toBe(1500);
+    const h = G.create([null, null]);
+    h.draw('p1', 'EV34');
+    expect([h.cash('p1'), h.cash('p2')]).toEqual([1520, 1520]);
+  });
+
+  it('repairs_all toCharacter: EV36 building owners pay Thợ xây; without him the bank', () => {
+    const g = G.create([null, 'C10', null]).give('p1', ['P01', 'P02'], { level: 2 }).give('p2', ['P03', 'P04', 'P05'], { level: 1 });
+    const c10 = g.cash('p2');
+    g.draw('p1', 'EV36');
+    const bill = 4 * (D.cards.EV36.effect.perHouse as number);
+    expect(g.cash('p1')).toBe(1500 - bill);
+    expect(g.cash('p2')).toBe(c10 + bill); // his own houses are free
+    const h = G.create([null, null]).give('p1', ['P01', 'P02'], { level: 2 });
+    h.draw('p1', 'EV36');
+    expect(h.cash('p1')).toBe(1500 - bill);
   });
 });

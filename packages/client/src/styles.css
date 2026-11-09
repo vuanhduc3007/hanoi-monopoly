@@ -1580,3 +1580,24 @@ button.bet {
     display: none;
   }
 }
+
+/* ---------------------------------------------------------------- in-game character sheet */
+.char-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px;
+}
+.char-card {
+  border-width: 2.5px;
+}
+.char-card h3 {
+  font-size: 1em;
+}
+.char-others {
+  margin-top: 12px;
+}
+.char-others summary {
+  cursor: pointer;
+  font-weight: 700;
+  margin-bottom: 8px;
+}

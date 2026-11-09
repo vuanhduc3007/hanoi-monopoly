@@ -150,7 +150,7 @@ describe('C03 Tài xế Grab', () => {
   });
 
   it('adjust_roll: ±1 once per lap, resets when passing GO, keeps doubles', () => {
-    const g = G.create(['C03', null]);
+    const g = G.create(['C03', null]).top('CH13'); // a harmless card on Cơ hội (7)
     g.setCurrent('p1').rig(3, 3).do({ type: 'roll', player: 'p1' });
     expect(g.s.pending?.type).toBe('postRoll');
     g.do({ type: 'adjustStep', player: 'p1', delta: 1 });

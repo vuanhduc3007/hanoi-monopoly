@@ -65,6 +65,19 @@ describe('56-tile board for 7–8 players', () => {
     ]);
   });
 
+  it('bigger boards start richer: starting cash × multiplier, rounded up to tens, character overrides too', () => {
+    const cash = (board: 'standard' | 'extended' | 'large', n: number, character: string | null = null) =>
+      createGame({ players: Array.from({ length: n }, (_, i) => ({ id: `p${i}`, character: i === 0 ? character : null })), seed: 1, config: { board } }).state.players[0].cash;
+    expect(cash('standard', 4)).toBe(defaultData.economy.startingCash);
+    for (const [board, n] of [['extended', 6], ['large', 8]] as const) {
+      const m = dataFor(board).economy.startingCashMultiplier!;
+      expect(m).toBeGreaterThan(1);
+      expect(cash(board, n)).toBe(Math.ceil((1500 * m) / 10) * 10);
+      const c08 = defaultData.characters.C08.passives[0].value as number;
+      expect(cash(board, n, 'C08')).toBe(Math.ceil((c08 * m) / 10) * 10);
+    }
+  });
+
   it('a salary multiplier makes the longer lap pay more', () => {
     expect(L.economy.goSalaryMultiplier).toBeGreaterThan(1);
   });

@@ -94,6 +94,8 @@ export interface Economy {
   goSalaryBonus?: number;
   /** Multiplies every salary (incl. character overrides) on longer boards; applied before the bonus. */
   goSalaryMultiplier?: number;
+  /** Multiplies every starting cash (incl. character overrides), rounded up to tens, on bigger boards. */
+  startingCashMultiplier?: number;
   taxes: Record<string, number>;
   jailFine: number;
   jailMaxTurns: Record<'classic' | 'quick', number>;

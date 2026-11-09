@@ -13,8 +13,8 @@ Tạo phòng, gửi mã 6 ký tự hoặc link mời cho bạn bè, chọn nhân
   | Bàn | Số người | Nội dung |
   | --- | --- | --- |
   | Tiêu chuẩn 40 ô | 2–4 | 22 bất động sản trong 8 nhóm màu, 4 ô giao thông (Bến xe Mỹ Đình, Metro Cát Linh – Hà Đông, Ga Hà Nội, Sân bay Nội Bài), 2 tiện ích |
-  | Mở rộng 48 ô | 5–6 | thêm nhóm Xanh ngọc (Linh Đàm, Văn Quán, Nghĩa Đô), nhóm Tím (Ciputra, Tây Hồ Tây, Làng đào Nhật Tân), Metro Nhổn – Ga Hà Nội |
-  | Đại 56 ô | 7–8 | thêm nhóm Bạc (Tràng Tiền, Nhà hát Lớn, Phan Đình Phùng), nhóm Mận (Hàng Ngang, Hàng Đào), Bến xe Giáp Bát |
+  | Mở rộng 48 ô | 5–6 | tiền khởi đầu ×1,15, lương ×1,2; thêm nhóm Xanh ngọc (Linh Đàm, Văn Quán, Nghĩa Đô), nhóm Tím (Ciputra, Tây Hồ Tây, Làng đào Nhật Tân), Metro Nhổn – Ga Hà Nội |
+  | Đại 56 ô | 7–8 | tiền khởi đầu ×1,3, lương ×1,2; thêm nhóm Bạc (Tràng Tiền, Nhà hát Lớn, Phan Đình Phùng), nhóm Mận (Hàng Ngang, Hàng Đào), Bến xe Giáp Bát |
 
 - **12 nhân vật**, mỗi người có nội tại, điểm yếu và một kỹ năng **hồi lại sau vài lượt** (thường là 3):
 
@@ -33,8 +33,10 @@ Tạo phòng, gửi mã 6 ký tự hoặc link mời cho bạn bè, chọn nhân
   | F0 chứng khoán | nhận cổ tức theo giá đất đang giữ, "bắt đáy" đất đang thế chấp của đối thủ |
   | Tổ trưởng dân phố | miễn phí gửi xe Phố cổ, "họp tổ" thu tiền góp của cả xóm |
 
+  Trong ván, nút **Nhân vật** cho xem lại nội tại, điểm yếu, kỹ năng của mọi người (đúng con số của bàn và số người đang chơi) và kỹ năng của ai đang hồi.
+
   Tỉ lệ thắng được cân bằng bằng mô phỏng hàng trăm nghìn ván bot cho mọi cỡ bàn 2–8 người: mỗi nhân vật lệch không quá khoảng ±3 điểm % so với mức công bằng (chi tiết trong [`docs/decisions.md`](docs/decisions.md)). Bàn 2–3 người dùng chỉ số riêng cho vài nhân vật.
-- **65 lá thẻ**: Cơ hội, Cộng đồng và bộ Hanoi Event, có thẻ tác động cả bàn và thẻ ⏳ kéo dài một vòng.
+- **81 lá thẻ**: Cơ hội, Cộng đồng và bộ Hanoi Event, có thẻ tác động cả bàn, thẻ ⏳ kéo dài một vòng, thẻ theo xu hướng (Nghị định 168, AQI, pickleball, concert Mỹ Đình…) và thẻ gắn với từng nhân vật (công an phường triệt phá sòng tài xỉu, VN-Index lập đỉnh, mùa sửa nhà…).
 - **Hai chế độ**: Truyền thống (người cuối cùng không phá sản thắng) và Nhanh (chia đất đầu ván, tài sản cao nhất khi hết 60 phút thắng). Bàn đông người nên chơi chế độ Nhanh.
 - **Chơi online**: mua đất, đấu giá, xây nhà, thế chấp, giao dịch. Mỗi quyết định có đồng hồ đếm ngược. Người mất kết nối được bot chơi thay và có thể quay lại bất cứ lúc nào, kể cả khi tải lại trang. Có khán giả và chat.
 - **Phong cách Đông Hồ, kết hợp 2D và 3D**: bàn cờ 2D, nhân vật và nhà cửa 3D đứng trên bàn (nhà mang màu người chủ), xúc xắc 3D, mô hình nhà 3D hiện lên khi mua đất hoặc xây nhà. Có âm thanh (xúc xắc trong bát, còi CSGT, chuông xe đạp, trống hội…), chơi được trên điện thoại.

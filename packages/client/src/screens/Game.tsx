@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Assets } from '../components/Assets';
+import { Characters } from '../components/Characters';
 import { Board } from '../components/Board';
 import { Decision } from '../components/Decision';
 import { Chat, Clock, Log, PlayerList } from '../components/Side';
@@ -22,6 +23,7 @@ export function Game({ room }: { room: RoomView }) {
   const [tile, setTile] = useState<number | null>(null);
   const [panel, setPanel] = useState<'assets' | 'trade' | null>(null);
   const [drawer, setDrawer] = useState(false);
+  const [chars, setChars] = useState(false);
   const [zoom, setZoom] = useState(1);
   useGameSounds(room.you);
   // Tài sản → +2 minutes on your clock; Giao dịch → your clock waits (server side).
@@ -61,6 +63,7 @@ export function Game({ room }: { room: RoomView }) {
               </button>
             </div>
           )}
+          <button onClick={() => setChars(true)}>{t.characters.button}</button>
           <MuteButton />
           <button className="link" onClick={() => void leaveRoom()}>
             {t.lobby.leave}
@@ -77,6 +80,7 @@ export function Game({ room }: { room: RoomView }) {
         </div>
       </aside>
       {tile !== null && <TileDetail pos={tile} state={state} room={room} onClose={() => setTile(null)} />}
+      {chars && <Characters state={state} room={room} onClose={() => setChars(false)} />}
       {panel === 'assets' && <Assets state={state} room={room} onClose={() => setPanel(null)} />}
       {panel === 'trade' && <Trade state={state} room={room} onClose={() => setPanel(null)} />}
       {(state.status === 'over' || over) && <GameOver room={room} />}

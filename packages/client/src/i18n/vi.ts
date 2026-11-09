@@ -93,6 +93,17 @@ export const t = {
     turnOrder: 'Thứ tự lượt',
   },
 
+  characters: {
+    button: 'Nhân vật',
+    title: 'Nhân vật trong ván',
+    others: 'Các nhân vật khác',
+    ready: 'Kỹ năng sẵn sàng',
+    cooldown: (n: number) => `Kỹ năng hồi lại sau ${n} lượt nữa`,
+    usedForGood: 'Kỹ năng đã dùng',
+    noCharacter: 'Không nhân vật',
+    off: 'Ván này tắt nhân vật.',
+  },
+
   // S4
   board: {
     fund: 'Quỹ khuyến học',
@@ -381,8 +392,16 @@ export function describeEffect(e: Effect): string {
       return `Ngân hàng lì xì mỗi người ${money(e.amount)}`;
     case 'rent_multiplier':
       return `Thuê ${target(e)} ${e.multiplier === 2 ? 'x2' : `+${Math.round((e.multiplier - 1) * 100)}%`}`;
-    case 'repairs_all':
-      return e.perHouse ? `Mỗi chủ trả ${money(e.perHouse)}/nhà, ${money(e.perHotel)}/khách sạn` : `Mỗi chủ trả ${money(e.perHotel)}/khách sạn`;
+    case 'repairs_all': {
+      const to = e.toCharacter ? ` cho ${charName(e.toCharacter)} (không có thì cho ngân hàng)` : '';
+      return e.perHouse
+        ? `Mỗi chủ trả ${money(e.perHouse)}/nhà, ${money(e.perHotel)}/khách sạn${to}`
+        : `Mỗi chủ trả ${money(e.perHotel)}/khách sạn${to}`;
+    }
+    case 'character_pays':
+      return `${charName(e.character)} trả ${money(e.amount)} ${e.to === 'fund' ? 'vào Quỹ' : 'cho ngân hàng'}; không có thì: ${describeEffect(e.fallback)}`;
+    case 'character_gain':
+      return `${charName(e.character)} nhận ${money(e.amount)} từ ngân hàng; không có thì: ${describeEffect(e.fallback)}`;
     case 'bank_pays_owners':
       return `Ngân hàng trả ${money(e.amountPerProperty)} cho chủ mỗi ô ${list(e.properties)}`;
     case 'single_die':
@@ -433,7 +452,7 @@ export function describeCard(id: string): string {
 export function describeTrait(e: Effect): string {
   switch (e.type) {
     case 'go_salary':
-      return `Lương ${money(e.value)}`;
+      return `Lương ${boardSalary(e.value)}`;
     case 'purchase_discount':
       return `Mua ${e.properties ? list(e.properties) : groups(e.groups)} giảm ${pct(e.rate)}`;
     case 'event_override':
@@ -475,9 +494,9 @@ export function describeTrait(e: Effect): string {
     case 'park_bonus':
       return `Dừng Văn Miếu nhận thêm ${money(e.amount)} (${money(e.amountWhenFundOff)} khi Quỹ tắt)`;
     case 'starting_cash':
-      return `Bắt đầu ${money(e.value)}`;
+      return `Bắt đầu ${boardCash(e.value)}`;
     case 'auto_salary_upgrade':
-      return `Tự động: từ lần qua ${D.board[0].name} thứ ${e.afterGoPasses}, lương ${money(e.value)}`;
+      return `Tự động: từ lần qua ${D.board[0].name} thứ ${e.afterGoPasses}, lương ${boardSalary(e.value)}`;
     case 'free_jail_exit':
       return 'Ra Bãi giữ xe miễn phí';
     // ---- C09–C12
@@ -506,6 +525,29 @@ export function describeTrait(e: Effect): string {
     default:
       return e.type;
   }
+}
+
+/** Salary on the current board (longer boards multiply every salary). */
+function boardSalary(value: number): string {
+  const m = D.economy.goSalaryMultiplier ?? 1;
+  const v = Math.ceil(value * m - 1e-9) + (D.economy.goSalaryBonus ?? 0);
+  return v === value ? money(value) : `${money(v)} trên bàn này`;
+}
+
+/** Starting cash on the current board (bigger boards start richer, rounded up to tens). */
+function boardCash(value: number): string {
+  const m = D.economy.startingCashMultiplier ?? 1;
+  const v = m === 1 ? value : Math.ceil((value * m) / 10 - 1e-9) * 10;
+  return v === value ? money(value) : `${money(v)} trên bàn này`;
+}
+
+/** "Bàn 56 ô: lương ×1,2, tiền khởi đầu ×1,3" — what this board changes. */
+export function boardNote(): string | null {
+  const parts: string[] = [];
+  const fmt = (x: number) => String(x).replace('.', ',');
+  if ((D.economy.goSalaryMultiplier ?? 1) !== 1) parts.push(`lương ×${fmt(D.economy.goSalaryMultiplier!)}`);
+  if ((D.economy.startingCashMultiplier ?? 1) !== 1) parts.push(`tiền khởi đầu ×${fmt(D.economy.startingCashMultiplier!)}`);
+  return parts.length ? `Bàn ${D.board.length} ô: ${parts.join(', ')} (đã tính trong các con số dưới đây)` : null;
 }
 
 const DECK_NAMES: Record<string, string> = { chance: 'Cơ hội', community: 'Cộng đồng', event: 'Hanoi Event' };

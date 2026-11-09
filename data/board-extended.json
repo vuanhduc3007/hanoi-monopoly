@@ -14,7 +14,8 @@
     "buildingLimit": {
       "houses": 40,
       "hotels": 15
-    }
+    },
+    "startingCashMultiplier": 1.15
   },
   "board": [
     {

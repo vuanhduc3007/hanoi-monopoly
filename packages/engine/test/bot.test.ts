@@ -114,7 +114,7 @@ describe('botActionFor / actorOf / publicView', () => {
     expect(v.decks).toBeUndefined();
     expect(v.rng).toBeUndefined();
     expect(v.seed).toBeNull();
-    expect(v.deckSizes).toEqual({ chance: 17, community: 16, event: 32 });
+    expect(v.deckSizes).toEqual({ chance: D.decks.chance.length, community: D.decks.community.length, event: D.decks.event.length });
     g.do({ type: 'endGame' });
     expect(publicView(g.s).seed).toBe(42);
   });

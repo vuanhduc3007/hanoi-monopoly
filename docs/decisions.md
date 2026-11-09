@@ -205,3 +205,43 @@ Lệch tỉ lệ thắng so với mức công bằng, điểm %:
 
 - **Lợi thế đi trước** lớn và tăng theo số người: người đi đầu thắng 34% ở bàn 4 người (công bằng 25%), 26% ở bàn 8 người (công bằng 12,5%). Có thể bù cho người đi sau (thêm tiền khởi đầu theo thứ tự) — cần anh/chị quyết.
 - Ván 8 người kiểu Truyền thống dài (~160 vòng, ~1.280 lượt); nên gợi ý chơi chế độ Nhanh khi đông người.
+
+## Thẻ mới, tiền khởi đầu bàn lớn, bảng nhân vật trong ván
+
+### 16 thẻ mới (65 → 81)
+
+- **Cơ hội**: CH18 theo hội nhóm "lùa gà" chứng khoán (trả 80), CH19 không đội mũ bảo hiểm — Nghị định 168 (trả 60), CH20 chốt lời đúng đỉnh (nhận 100), CH21 săn được vé concert ở Mỹ Đình (đi đến Mỹ Đình).
+- **Cộng đồng**: CD17 mua máy lọc không khí (trả 40), CD18 chơi pickleball (trả 30), CD19 clip review quán phở lên xu hướng (nhận 60), CD20 trúng Vietlott giải nhỏ (nhận 50).
+- **Hanoi Event gắn với nhân vật**: EV33 công an phường triệt phá sòng tài xỉu (Con bạc nộp 150 vào Quỹ — được chơi tài xỉu với khoản phạt này), EV34 VN-Index lập đỉnh (F0 nhận 150), EV35 F0 bị gọi ký quỹ (F0 trả 120), EV36 mùa sửa nhà cuối năm (chủ nhà trả 15/nhà, 50/khách sạn cho Thợ xây), EV37 tổ dân phố vận động quỹ (mọi người góp 10 cho Tổ trưởng), EV38 KOL bị phạt vì quảng cáo sai sự thật (Idol TikTok trả 100), EV39 AQI vượt 300 (mọi người góp 20 vào Quỹ), EV40 công ty tăng lương cuối năm (Nô lệ tư bản nhận 100). Nhân vật không có trong ván thì thẻ dùng hiệu ứng thay thế (`fallback`).
+- Hai loại hiệu ứng mới: `character_pays`, `character_gain`; `repairs_all` có thêm `toCharacter`.
+
+### Tiền khởi đầu theo bàn
+
+Lượng đất mỗi người ở bàn lớn không ít hơn (40 ô/4 người: 1.422 tỷ, 48 ô/6 người: 1.198, 56 ô/8 người: 1.137), nhưng đất bàn lớn đắt hơn và lương về chậm hơn tính theo lượt nên đầu ván mua được ít. `startingCashMultiplier` (làm tròn lên hàng chục, nhân cả tiền khởi đầu riêng của nhân vật): **×1,15 bàn 48 ô, ×1,3 bàn 56 ô** (1.500 → 1.950). Cân bằng nhân vật gần như không đổi, nhưng **lợi thế đi trước giảm rõ**: 8 người 26,5% → 18% (công bằng 12,5%), 6 người 27,8% → 23,6% (16,7%). Ván dài hơn ~6%. Bàn 40 ô giữ nguyên (×1,1 chỉ giảm 33,7% → 32,3%).
+
+### Bảng nhân vật trong ván
+
+Nút **Nhân vật** cạnh Tài sản / Giao dịch: nội tại, điểm yếu, kỹ năng của mọi người trong ván và trạng thái kỹ năng (sẵn sàng / hồi lại sau N lượt), các nhân vật còn lại xếp bên dưới. Con số đúng theo bàn (lương, tiền khởi đầu "trên bàn này") và số người (ghi "Chỉ số riêng cho bàn N người"). Màn chọn nhân vật cũng hiện số theo bàn sẽ chơi.
+
+### Chỉnh thêm sau khi có thẻ mới
+
+Bàn 2 người: Tổ trưởng góp tổng 10 + 10, SVBK tốt nghiệp sau 3 lần lương 280, Idol TikTok thưởng 30% (thẻ ×1,2). Bàn 5 người: Tài xế Grab ±1 bước tối đa 1 lần/ván.
+
+### Kiểm chứng (seed 77)
+
+| | 2 người | 3 | 4 | 5 (48 ô)* | 6 (48 ô) | 7 (56 ô) | 8 (56 ô) |
+|---|---|---|---|---|---|---|---|
+| C01 Thiếu gia Vin | +1,1 | +2,4 | +1,5 | +0,5 | −0,3 | −1,3 | −1,6 |
+| C02 Ninja Lead | +0,9 | +1,8 | +2,4 | +2,2 | +0,7 | −0,5 | +0,0 |
+| C03 Tài xế Grab | +1,5 | +0,7 | +0,6 | +0,1 | +2,1 | +1,3 | +1,4 |
+| C04 Idol TikTok | −2,5 | −2,1 | +0,4 | −0,3 | −1,0 | −0,1 | −0,7 |
+| C05 Cò đất | +0,5 | −2,1 | +1,6 | +1,0 | +0,1 | +0,4 | +0,1 |
+| C06 Nghiện Tarot | −1,6 | −0,9 | −3,1 | −2,5 | −0,2 | +1,3 | +1,4 |
+| C07 SVBK | +1,8 | −0,4 | −2,2 | +0,2 | +1,1 | −0,4 | −0,0 |
+| C08 Nô lệ tư bản | −1,0 | +1,1 | −0,2 | −0,3 | −0,7 | −0,5 | −0,6 |
+| C09 Con bạc | +1,3 | −0,8 | −1,6 | +0,2 | −0,0 | −0,4 | +0,9 |
+| C10 Thợ xây | +0,1 | +1,8 | +0,6 | −1,8 | −1,0 | −0,8 | −0,8 |
+| C11 F0 chứng khoán | −0,5 | −1,9 | −2,1 | −0,4 | −1,6 | +0,1 | −0,9 |
+| C12 Tổ trưởng dân phố | −1,6 | +0,4 | +2,2 | +1,1 | +0,8 | +0,9 | +0,7 |
+
+20.000 ván ở 2–4 người, 15.000 ở 6, 12.000 ở 7–8; *cột 5 người chạy lại 25.000 ván sau khi chỉnh Tài xế Grab. Người đi đầu thắng: 40% / 32,5% / 33,5% / 28,1% / 23,6% / 21,5% / 18,1% (công bằng 50 / 33 / 25 / 20 / 16,7 / 14,3 / 12,5%).

@@ -167,4 +167,19 @@ describe('screens', () => {
     fireEvent.click(screen.getByText(t.over.rematch));
     expect(sent).toContainEqual({ type: 'rematch', payload: undefined });
   });
+
+  it('Nhân vật button: reads every character at the table, with skill status and the duel numbers', () => {
+    playing((st) => {
+      st.players[1].skillUsed = true;
+      st.players[1].skillCooldown = 2;
+    });
+    render(<App />);
+    fireEvent.click(screen.getByText(t.characters.button));
+    expect(screen.getByText(t.characters.title)).toBeTruthy();
+    expect(screen.getAllByText(/Nô lệ tư bản|Cò đất/).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText(t.characters.cooldown(2))).toBeTruthy();
+    expect(screen.getByText(t.characters.ready)).toBeTruthy();
+    expect(screen.getAllByText('Chỉ số riêng cho bàn 2 người').length).toBeGreaterThan(0);
+    expect(screen.getByText(t.characters.others)).toBeTruthy();
+  });
 });

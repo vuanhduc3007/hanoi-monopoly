@@ -125,6 +125,16 @@ function ownerOf(c: Ctx, id: string): PlayerState | null {
   return o ? getPlayer(c, o) : null;
 }
 
+/** The active player playing `character`, if characters are on and someone has it. */
+function characterAtTable(a: EffectArgs, character: string): PlayerState | undefined {
+  if (!a.c.s.config.characters) return undefined;
+  return playersFrom(a.c, a.drawer.id).find((p) => p.character === character);
+}
+
+function fallback(a: EffectArgs): void {
+  if (a.effect.fallback) pushFront(a.c, { t: 'effect', player: a.drawer.id, cardId: a.cardId, effect: a.effect.fallback, exempt: a.exempt });
+}
+
 type Handler = (a: EffectArgs) => void;
 
 const handlers: Record<string, Handler> = {
@@ -197,13 +207,31 @@ const handlers: Record<string, Handler> = {
     pushFront(a.c, ...tasks);
   },
   repairs_all: (a) => {
+    // `toCharacter` (e.g. Thợ xây): that character is paid instead of the bank when at the table.
+    const builder = a.effect.toCharacter ? characterAtTable(a, a.effect.toCharacter) : undefined;
+    const to = builder ? { kind: 'player' as const, id: builder.id } : { kind: 'bank' as const };
     const tasks: Task[] = [];
     for (const p of affected(a)) {
+      if (builder && p.id === builder.id) continue;
       const b = countBuildings(a.c, p.id);
       const base = b.houses * a.effect.perHouse + b.hotels * a.effect.perHotel;
-      if (base > 0) tasks.push(cardPay(a.c, p, { kind: 'bank' }, base, a.cardId));
+      if (base > 0) tasks.push(builder ? cardPay(a.c, p, to, base, a.cardId, { noMultiplier: true }) : cardPay(a.c, p, to, base, a.cardId));
     }
     pushFront(a.c, ...tasks);
+  },
+  /** A named character pays (into the Quỹ / bank); without them at the table, the fallback applies. */
+  character_pays: (a) => {
+    const who = characterAtTable(a, a.effect.character);
+    if (!who) return fallback(a);
+    if (a.exempt.includes(who.id)) return;
+    const to = a.effect.to === 'fund' ? { kind: 'fund' as const } : { kind: 'bank' as const };
+    pushFront(a.c, cardPay(a.c, who, to, a.effect.amount, a.cardId));
+  },
+  /** The bank pays a named character; without them at the table, the fallback applies. */
+  character_gain: (a) => {
+    const who = characterAtTable(a, a.effect.character);
+    if (!who) return fallback(a);
+    if (!a.exempt.includes(who.id)) gain(a.c, who, a.effect.amount, a.cardId);
   },
   all_pay_owner: (a) => {
     const owner = ownerOf(a.c, a.effect.property);

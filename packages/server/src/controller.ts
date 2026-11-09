@@ -467,7 +467,7 @@ export class GameController {
     const room = this.d.config.room;
     if (this.seats.length < room.minPlayers) throw new RoomError('NOT_ENOUGH_PLAYERS');
     if (this.seats.some((s) => !s.host && !s.ready)) throw new RoomError('NOT_READY');
-    // A fixed board must seat everyone (40 and 48 tiles: up to 6, the hexagon: 8).
+    // A fixed board must seat everyone (40 and 48 tiles: up to 6, 56 tiles: 8).
     if (!this.o.data && this.seats.length > dataFor(this.resolveBoard()).maxPlayers) {
       throw new RoomError('BAD_CONFIG', 'board too small for this many players');
     }

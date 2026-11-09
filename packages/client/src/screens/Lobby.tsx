@@ -79,10 +79,10 @@ export function Lobby({ room }: { room: RoomView }) {
           </Setting>
           <Setting label={t.lobby.board}>
             <select disabled={!host} value={s.board ?? 'auto'} onChange={(e) => set({ board: e.target.value as RoomSettings['board'] })}>
-              <option value="auto">{t.lobby.boards.auto(D.config.room.autoBoardFrom.extended ?? 5, D.config.room.autoBoardFrom.hex ?? 7)}</option>
+              <option value="auto">{t.lobby.boards.auto(D.config.room.autoBoardFrom.extended ?? 5, D.config.room.autoBoardFrom.large ?? 7)}</option>
               <option value="standard">{t.lobby.boards.standard}</option>
               <option value="extended">{t.lobby.boards.extended}</option>
-              <option value="hex">{t.lobby.boards.hex}</option>
+              <option value="large">{t.lobby.boards.large}</option>
             </select>
           </Setting>
           {(['characters', 'scholarshipFund', 'buildingLimit', 'allowSpectators'] as const).map((k) => (

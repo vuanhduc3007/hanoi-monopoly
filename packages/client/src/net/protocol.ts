@@ -23,7 +23,7 @@ export interface SeatView {
 
 export interface RoomSettings {
   mode: 'classic' | 'quick';
-  board: 'auto' | 'standard' | 'extended' | 'hex';
+  board: 'auto' | 'standard' | 'extended' | 'large';
   characters: boolean;
   scholarshipFund: boolean;
   buildingLimit: boolean;

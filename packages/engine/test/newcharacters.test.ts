@@ -217,7 +217,7 @@ describe('C12 Tổ trưởng dân phố', () => {
 describe('bots with the new characters', () => {
   it('finish games using every new skill, on every board', () => {
     const used = new Set<string>();
-    for (const [board, n] of [['standard', 4], ['extended', 6], ['hex', 8]] as const) {
+    for (const [board, n] of [['standard', 4], ['extended', 6], ['large', 8]] as const) {
       for (let seed = 1; seed <= 4; seed++) {
         const chars = ['C09', 'C10', 'C11', 'C12', 'C01', 'C02', 'C03', 'C04'].slice(0, n);
         let s: GameState = createGame({ players: chars.map((c, i) => ({ id: `p${i}`, character: c })), seed, config: { board } }).state;

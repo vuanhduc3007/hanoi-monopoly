@@ -425,12 +425,12 @@ describe('board choice', () => {
   });
 });
 
-describe('eight seats and the hexagon', () => {
-  it('auto: 7–8 players get the 60-tile hexagon', () => {
+describe('eight seats and the 56-tile board', () => {
+  it('auto: 7–8 players get the 56-tile board', () => {
     const h = started(8);
-    expect(h.ctl.state!.config.board).toBe('hex');
+    expect(h.ctl.state!.config.board).toBe('large');
     expect(h.ctl.state!.players).toHaveLength(8);
-    expect(started(7).ctl.state!.config.board).toBe('hex');
+    expect(started(7).ctl.state!.config.board).toBe('large');
   });
 
   it('a fixed board too small for the table refuses to start', () => {

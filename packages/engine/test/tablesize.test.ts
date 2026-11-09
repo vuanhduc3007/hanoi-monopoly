@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { autoBoard, characterFor, createGame, dataFor, defaultData, hexData as H } from '../src';
+import { autoBoard, characterFor, createGame, dataFor, defaultData, largeData as L } from '../src';
 
 describe('character numbers by table size (byTableSize)', () => {
   it('the first matching override replaces passives / drawbacks and merges into the skill', () => {
@@ -29,22 +29,23 @@ describe('character numbers by table size (byTableSize)', () => {
   });
 });
 
-describe('60-tile hexagon board', () => {
-  it('has 60 tiles, six corners every 10 tiles, and every ref once', () => {
-    expect(H.id).toBe('hex');
-    expect(H.shape).toBe('hexagon');
-    expect(H.maxPlayers).toBe(8);
-    expect(H.board).toHaveLength(60);
-    expect([0, 10, 20, 30, 40, 50].map((i) => H.board[i].type)).toEqual(Array(6).fill('corner'));
-    expect([0, 10, 30, 40].map((i) => H.board[i].ref)).toEqual(['GO', 'JAIL', 'PARK', 'GOTOJAIL']);
-    const owned = H.board.map((t) => t.ref).filter((r) => /^[PTU]\d/.test(r));
+describe('56-tile board for 7–8 players', () => {
+  it('has 56 tiles, corners at 0 / 14 / 28 / 42, every ref once', () => {
+    expect(L.id).toBe('large');
+    expect(L.maxPlayers).toBe(8);
+    expect(L.board).toHaveLength(56);
+    expect([0, 14, 28, 42].map((i) => L.board[i].ref)).toEqual(['GO', 'JAIL', 'PARK', 'GOTOJAIL']);
+    expect(L.board.filter((t) => t.type === 'corner')).toHaveLength(4);
+    const owned = L.board.map((t) => t.ref).filter((r) => /^[PTU]\d/.test(r));
     expect(new Set(owned).size).toBe(owned.length);
-    expect(owned.sort()).toEqual(Object.keys(H.ownables).sort());
-    for (const [id, o] of Object.entries(H.ownables)) expect(H.board[o.position].ref, id).toBe(id);
+    expect(owned.sort()).toEqual(Object.keys(L.ownables).sort());
+    expect(owned).toHaveLength(41);
+    for (const [id, o] of Object.entries(L.ownables)) expect(L.board[o.position].ref, id).toBe(id);
+    for (const g of Object.values(L.groups)) for (const id of g.properties) expect(L.ownables[id].group).toBeDefined();
   });
 
   it('every card that moves to a tile finds it on every board', () => {
-    for (const d of [defaultData, dataFor('extended'), H]) {
+    for (const d of [defaultData, dataFor('extended'), L]) {
       for (const card of Object.values(d.cards)) {
         if (card.effect.type === 'move_to') expect(d.board.some((t) => t.ref === card.effect.tile), `${d.id} ${card.id}`).toBe(true);
       }
@@ -53,20 +54,18 @@ describe('60-tile hexagon board', () => {
 
   it('seats 8; the 40- and 48-tile boards stop at 6', () => {
     const players = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `p${i}` }));
-    expect(createGame({ players: players(8), seed: 1, config: { board: 'hex' } }).state.players).toHaveLength(8);
+    expect(createGame({ players: players(8), seed: 1, config: { board: 'large' } }).state.players).toHaveLength(8);
     expect(() => createGame({ players: players(7), seed: 1, config: { board: 'standard' } })).toThrow(/2-6/);
     expect(() => createGame({ players: players(7), seed: 1, config: { board: 'extended' } })).toThrow(/2-6/);
   });
 
   it("'auto' picks the board by table size", () => {
     expect([2, 3, 4, 5, 6, 7, 8].map((n) => autoBoard(n))).toEqual([
-      'standard', 'standard', 'standard', 'extended', 'extended', 'hex', 'hex',
+      'standard', 'standard', 'standard', 'extended', 'extended', 'large', 'large',
     ]);
   });
 
   it('a salary multiplier makes the longer lap pay more', () => {
-    const g = createGame({ players: [{ id: 'a' }, { id: 'b' }], seed: 3, config: { board: 'hex', characters: false } }).state;
-    expect(H.economy.goSalaryMultiplier).toBeGreaterThan(1);
-    expect(g.players[0].cash).toBe(defaultData.economy.startingCash);
+    expect(L.economy.goSalaryMultiplier).toBeGreaterThan(1);
   });
 });

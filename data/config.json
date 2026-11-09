@@ -21,11 +21,11 @@
     "boards": [
       "standard",
       "extended",
-      "hex"
+      "large"
     ],
     "autoBoardFrom": {
       "extended": 5,
-      "hex": 7
+      "large": 7
     }
   },
   "timers": {

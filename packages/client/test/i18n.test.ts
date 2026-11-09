@@ -120,29 +120,19 @@ describe('48-tile board layout', () => {
   });
 });
 
-describe('60-tile hexagon layout', () => {
-  it('places every tile inside the hexagon, corners every 10, text never upside down', async () => {
-    const { hexData: H } = await import('@hanoi-monopoly/engine');
-    const { hexPlace, HEX_H } = await import('../src/lib/board');
+describe('56-tile board and new characters', () => {
+  it('places 56 tiles on a 15×15 ring with corners at 0 / 14 / 28 / 42, every tile illustrated', async () => {
+    const { largeData: L } = await import('@hanoi-monopoly/engine');
     const { artFor } = await import('../src/art/tileArt');
-    const centres = new Set<string>();
-    for (let p = 0; p < 60; p++) {
-      const pl = hexPlace(p, 60);
-      expect(pl.corner).toBe(p % 10 === 0);
-      expect(Math.abs(pl.angle)).toBeLessThanOrEqual(90);
-      expect(pl.x).toBeGreaterThan(0);
-      expect(pl.x).toBeLessThan(1);
-      expect(pl.y).toBeGreaterThan(0);
-      expect(pl.y).toBeLessThan(HEX_H);
-      centres.add(`${pl.x.toFixed(3)},${pl.y.toFixed(3)}`);
+    const cells = new Set<string>();
+    for (let p = 0; p < 56; p++) {
+      const { row, col } = tileCell(p, 56);
+      expect(row === 0 || row === 14 || col === 0 || col === 14).toBe(true);
+      cells.add(`${row},${col}`);
     }
-    expect(centres.size).toBe(60);
-    // GO bottom-right, then left along the bottom edge.
-    expect(hexPlace(0, 60).x).toBeGreaterThan(0.5);
-    expect(hexPlace(1, 60).x).toBeGreaterThan(hexPlace(2, 60).x);
-    expect(hexPlace(5, 60).angle).toBe(0);
-    expect(hexPlace(35, 60).flip).toBe(true); // top edge reads the right way up
-    for (const t of H.board) expect(artFor(t.ref), t.ref).toBeTruthy();
+    expect(cells.size).toBe(56);
+    expect([0, 14, 28, 42].map((p) => tileCell(p, 56).side)).toEqual(['corner', 'corner', 'corner', 'corner']);
+    for (const t of L.board) expect(artFor(t.ref), t.ref).toBeTruthy();
   });
 
   it('describes the new characters and splits CH16 / CD10 by table size', async () => {

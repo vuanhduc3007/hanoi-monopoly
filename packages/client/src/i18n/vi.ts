@@ -64,10 +64,10 @@ export const t = {
     buildingLimit: 'Giới hạn số nhà / khách sạn của ngân hàng',
     board: 'Bàn cờ',
     boards: {
-      auto: (ext: number, hex: number) => `Tự động (48 ô từ ${ext} người, lục giác từ ${hex} người)`,
+      auto: (ext: number, large: number) => `Tự động (48 ô từ ${ext} người, 56 ô từ ${large} người)`,
       standard: 'Tiêu chuẩn 40 ô (tối đa 6)',
       extended: 'Mở rộng 48 ô (tối đa 6)',
-      hex: 'Lục giác 60 ô (tối đa 8)',
+      large: 'Đại 56 ô (tối đa 8)',
     },
     maxPlayers: 'Số người tối đa',
     allowSpectators: 'Cho phép khán giả',

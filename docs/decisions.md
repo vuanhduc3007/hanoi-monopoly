@@ -148,7 +148,7 @@ Mỗi phương án chạy 10.000 ván × 3 cấu hình (Truyền thống 4 ngư�
 
 - **Kết quả** (10.000 ván mỗi cấu hình, lệch tỉ lệ thắng, đ%): 4 người 40 ô — Vin +0,2, Ninja +2,0, Grab +1,9, TikTok +1,4, Cò đất +0,8, Tarot −2,9, SVBK −2,1, Nô lệ −1,5. 6 người 48 ô — tất cả trong ±2,5 **trừ Thiếu gia Vin −4,4**. Vin yếu riêng trên bàn 48 ô vì dựa vào lương mà vòng bàn dài hơn; bỏ thuế 300 của Vin trên bàn này kéo lên ~+1,3 đ% — cần anh/chị quyết định có cho nhân vật luật riêng theo bàn hay không.
 
-## 4 nhân vật mới, bàn lục giác 8 người, cân bằng lại toàn bộ
+## 4 nhân vật mới, bàn 56 ô cho 8 người, cân bằng lại toàn bộ
 
 ### Nhân vật mới (C09–C12)
 
@@ -161,12 +161,12 @@ Mỗi phương án chạy 10.000 ván × 3 cấu hình (Truyền thống 4 ngư�
 - **C11 F0 chứng khoán** — *cổ tức* 2% giá đất đang giữ (trừ đất thế chấp) mỗi lần qua Hoàng thành; *Bắt đáy* (`buy_mortgaged`): mua ngay 1 ô đối thủ đang thế chấp, trả họ giá thế chấp +10%, ô vẫn thế chấp; điểm yếu: tiền thẻ ×1,3.
 - **C12 Tổ trưởng dân phố** — miễn Phí gửi xe Phố cổ; *Họp tổ dân phố* (`collect_contribution`): các đối thủ góp tổng 20 tỷ cho tổ trưởng và 20 tỷ vào Quỹ (chia đều); điểm yếu: mỗi lần qua Hoàng thành góp 20 tỷ vào Quỹ.
 
-### Bàn lục giác 60 ô (7–8 người)
+### Bàn đại 56 ô (7–8 người)
 
-- `data/board-hex.json`, hình lục giác đầu bằng, 6 góc ở 0/10/20/30/40/50: Hoàng thành, Bãi giữ xe, **Phố đi bộ Hồ Gươm** (nghỉ chân), Văn Miếu, CSGT thổi còi, **Chợ Đồng Xuân** (nghỉ chân).
-- 41 ô sở hữu: thêm nhóm **Bạc** (P29 Phố Tràng Tiền, P30 Nhà hát Lớn, P31 Phố Phan Đình Phùng), nhóm **Mận** (P32 Phố Hàng Ngang, P33 Phố Hàng Đào), giao thông **T06 Bến xe Giáp Bát**. 3 Cơ hội, 3 Cộng đồng, 3 Event (bản đầu có 4+4 thẻ — Nghiện Tarot +6 đ% vì rút thẻ quá thường).
-- Kinh tế riêng: lương ×1,3, thuê giao thông 6 mức, kho 48 nhà / 17 khách sạn. Bàn 48 ô đổi từ "lương +40" sang **lương ×1,2**: lương riêng của nhân vật (Thiếu gia Vin, SVBK, Tài xế Grab) giờ co giãn theo độ dài vòng.
-- Mỗi bàn có `maxPlayers` (40 và 48 ô: 6; lục giác: 8); phòng tối đa 8 người. Chọn bàn Tự động: 2–4 người bàn 40 ô, 5–6 người 48 ô, 7–8 người lục giác (`config.json` → `room.autoBoardFrom`).
+- Thử bàn lục giác 60 ô trước, nhưng ô quá nhỏ và người chơi quen bàn vuông nên đổi sang **bàn vuông 56 ô** (`data/board-large.json`, mỗi cạnh 13 ô, góc ở 0 / 14 / 28 / 42).
+- 41 ô sở hữu: thêm nhóm **Bạc** (P29 Phố Tràng Tiền, P30 Nhà hát Lớn, P31 Phố Phan Đình Phùng), nhóm **Mận** (P32 Phố Hàng Ngang, P33 Phố Hàng Đào), giao thông **T06 Bến xe Giáp Bát**; 3 Cơ hội, 3 Cộng đồng, 3 Event, 2 ô thuế. Thêm nhiều ô thẻ hơn làm Nghiện Tarot quá mạnh (+6 đ% ở bản thử 4+4 thẻ).
+- Kinh tế riêng: lương ×1,2 (×1,35 cho kết quả cân bằng như nhau nhưng ván dài hơn), thuê giao thông 6 mức, kho 48 nhà / 17 khách sạn. Bàn 48 ô đổi từ "lương +40" sang **lương ×1,2**: lương riêng của nhân vật (Thiếu gia Vin, SVBK, Tài xế Grab) giờ co giãn theo độ dài vòng.
+- Mỗi bàn có `maxPlayers` (40 và 48 ô: 6; 56 ô: 8); phòng tối đa 8 người. Chọn bàn Tự động: 2–4 người bàn 40 ô, 5–6 người 48 ô, 7–8 người 56 ô (`config.json` → `room.autoBoardFrom`).
 
 ### Thẻ chia theo số người
 
@@ -184,24 +184,24 @@ Thiếu gia Vin lương 280, giảm 25% cho cả Vincom Bà Triệu; Nghiện Ta
 
 Lệch tỉ lệ thắng so với mức công bằng, điểm %:
 
-| | 2 người | 3 | 4 | 5 (48 ô) | 6 (48 ô) | 7 (lục giác) | 8 (lục giác) |
+| | 2 người | 3 | 4 | 5 (48 ô) | 6 (48 ô) | 7 (56 ô) | 8 (56 ô) |
 |---|---|---|---|---|---|---|---|
-| C01 Thiếu gia Vin | +1,9 | +2,2 | +1,0 | −0,4 | −0,7 | −2,3 | −2,4 |
-| C02 Ninja Lead | +0,3 | +1,2 | +2,4 | +0,8 | −0,4 | −0,6 | −0,3 |
-| C03 Tài xế Grab | +0,8 | −0,6 | +1,5 | +1,1 | +1,0 | −0,2 | +0,0 |
-| C04 Idol TikTok | −3,3 | −0,1 | +1,2 | −0,7 | +0,2 | −1,2 | −0,8 |
-| C05 Cò đất | +0,6 | −0,5 | +0,8 | +1,2 | −1,2 | +1,4 | +1,0 |
-| C06 Nghiện Tarot | −1,7 | −0,7 | −2,5 | −1,5 | +0,5 | +0,5 | +2,1 |
-| C07 SVBK | −0,3 | −0,5 | −1,2 | −1,1 | +1,4 | −1,3 | −0,9 |
-| C08 Nô lệ tư bản | −2,1 | +0,4 | −0,5 | +0,8 | +0,0 | +1,1 | +0,6 |
-| C09 Con bạc | +2,5 | −1,2 | −0,3 | −0,3 | +0,9 | +0,1 | +1,1 |
-| C10 Thợ xây | −1,4 | +1,3 | −0,9 | −2,2 | −1,9 | −0,7 | −0,9 |
-| C11 F0 chứng khoán | +0,1 | −0,9 | −2,9 | +0,2 | −0,7 | +0,9 | −0,5 |
-| C12 Tổ trưởng dân phố | +2,7 | −0,6 | +1,5 | +2,0 | +0,6 | +2,4 | +1,1 |
+| C01 Thiếu gia Vin | +1,9 | +2,2 | +1,0 | −0,4 | −0,7 | −1,3 | −1,9 |
+| C02 Ninja Lead | +0,3 | +1,2 | +2,4 | +0,8 | −0,4 | −0,7 | −0,5 |
+| C03 Tài xế Grab | +0,8 | −0,6 | +1,5 | +1,1 | +1,0 | −1,2 | −0,8 |
+| C04 Idol TikTok | −3,3 | −0,1 | +1,2 | −0,7 | +0,2 | −0,2 | −0,1 |
+| C05 Cò đất | +0,6 | −0,5 | +0,8 | +1,2 | −1,2 | +1,6 | +0,4 |
+| C06 Nghiện Tarot | −1,7 | −0,7 | −2,5 | −1,5 | +0,5 | +2,0 | +2,1 |
+| C07 SVBK | −0,3 | −0,5 | −1,2 | −1,1 | +1,4 | +0,3 | −1,0 |
+| C08 Nô lệ tư bản | −2,1 | +0,4 | −0,5 | +0,8 | +0,0 | +0,8 | +1,2 |
+| C09 Con bạc | +2,5 | −1,2 | −0,3 | −0,3 | +0,9 | +0,2 | +0,8 |
+| C10 Thợ xây | −1,4 | +1,3 | −0,9 | −2,2 | −1,9 | −1,0 | −0,4 |
+| C11 F0 chứng khoán | +0,1 | −0,9 | −2,9 | +0,2 | −0,7 | −0,5 | −0,5 |
+| C12 Tổ trưởng dân phố | +2,7 | −0,6 | +1,5 | +2,0 | +0,6 | +0,1 | +0,7 |
 
-20.000 ván ở 2–4 người, 15.000 ở 5–6, 12.000 ở 7–8 (bot theo GDD 7.4, nhân vật chia ngẫu nhiên). Tất cả trong ±3,3 đ%.
+20.000 ván ở 2–4 người, 15.000 ở 5–6, 12.000 ở 7–8 (bot theo GDD 7.4, nhân vật chia ngẫu nhiên). Tất cả trong ±3,3 đ%. (Cột 7–8 người chạy lại sau khi đổi sang bàn vuông 56 ô.)
 
 ### Chưa xử lý (đề xuất)
 
-- **Lợi thế đi trước** lớn và tăng theo số người: người đi đầu thắng 34% ở bàn 4 người (công bằng 25%), 27% ở bàn 8 người (công bằng 12,5%). Có thể bù cho người đi sau (thêm tiền khởi đầu theo thứ tự) — cần anh/chị quyết.
-- Ván 8 người kiểu Truyền thống dài (~160 vòng, ~1.270 lượt); nên gợi ý chơi chế độ Nhanh khi đông người.
+- **Lợi thế đi trước** lớn và tăng theo số người: người đi đầu thắng 34% ở bàn 4 người (công bằng 25%), 26% ở bàn 8 người (công bằng 12,5%). Có thể bù cho người đi sau (thêm tiền khởi đầu theo thứ tự) — cần anh/chị quyết.
+- Ván 8 người kiểu Truyền thống dài (~160 vòng, ~1.280 lượt); nên gợi ý chơi chế độ Nhanh khi đông người.

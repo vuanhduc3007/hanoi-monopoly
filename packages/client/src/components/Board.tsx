@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 import { type PublicState } from '@hanoi-monopoly/engine';
 import { D } from '../lib/gameData';
 import { cardName, describeCard, describeEffect, groupName, money, t } from '../i18n/vi';
-import { groupColor, HEX_H, hexPlace, sideLength, tileCell } from '../lib/board';
+import { groupColor, sideLength, tileCell } from '../lib/board';
 import { colorOf, currentPlayer, hotelLevel, nameOf } from '../lib/selectors';
 import type { RoomView } from '../net/protocol';
 import { useStore } from '../store';
@@ -21,23 +21,21 @@ interface Props {
   onTile: (pos: number) => void;
 }
 
-/** S4 — the tiles around the centre panel: a square (40 / 48 tiles) or a hexagon (60 tiles). */
+/** S4 — the tiles around the centre panel (40, 48 or 56). */
 export function Board({ state, room, onTile }: Props) {
   const current = currentPlayer(state).id;
   const [threeD, setThreeD] = useState(false);
   const onActive = useCallback((on: boolean) => setThreeD(on), []);
   useMoneyChanges(state);
-  const hex = D.shape === 'hexagon';
   return (
     <div
-      className={`board board-${D.id}${hex ? ' board-hex' : ''}${threeD ? ' board-3d-on' : ''}`}
-      style={hex ? undefined : ({ '--side': sideLength() } as CSSProperties)}
+      className={`board board-${D.id}${threeD ? ' board-3d-on' : ''}`}
+      style={{ '--side': sideLength() } as CSSProperties}
       role="grid"
       aria-label={t.appTitle}
     >
       {D.board.map((tile) => {
-        const { row, col, side } = hex ? { row: 0, col: 0, side: 'hex' } : tileCell(tile.position);
-        const place = hex ? hexPlace(tile.position) : null;
+        const { row, col, side } = tileCell(tile.position);
         const own = state.ownables[tile.ref];
         const def = D.ownables[tile.ref];
         const tokens = state.players.filter((p) => !p.bankrupt && p.position === tile.position);
@@ -46,18 +44,8 @@ export function Board({ state, room, onTile }: Props) {
           <button
             key={tile.position}
             data-pos={tile.position}
-            className={`tile tile-${place?.corner ? 'corner' : side} tile-${tile.type}${place?.flip ? ' tile-flip' : ''}`}
-            style={
-              place
-                ? {
-                    left: `${place.x * 100}%`,
-                    top: `${(place.y / HEX_H) * 100}%`,
-                    width: `${place.w * 100}%`,
-                    height: `${(place.h / HEX_H) * 100}%`,
-                    transform: `translate(-50%, -50%) rotate(${place.angle}deg)`,
-                  }
-                : { gridRow: row + 1, gridColumn: col + 1 }
-            }
+            className={`tile tile-${side} tile-${tile.type}`}
+            style={{ gridRow: row + 1, gridColumn: col + 1 }}
             onClick={() => onTile(tile.position)}
             title={tile.name}
           >

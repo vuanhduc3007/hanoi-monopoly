@@ -11,7 +11,7 @@ Tạo phòng, gửi mã 6 ký tự hoặc link mời cho bạn bè, chọn nhân
 - **Bàn cờ 40 ô** với địa danh Hà Nội: 22 bất động sản trong 8 nhóm màu, 4 ô giao thông (Bến xe Mỹ Đình, Metro Cát Linh – Hà Đông, Ga Hà Nội, Sân bay Nội Bài), 2 tiện ích, ô Quỹ khuyến học ở Văn Miếu.
 - **Bàn mở rộng 48 ô** cho 5–6 người (tự chọn theo số người, hoặc chủ phòng chọn): thêm nhóm Xanh ngọc (Linh Đàm, Văn Quán, Nghĩa Đô), nhóm Tím (Ciputra, Tây Hồ Tây, Làng đào Nhật Tân) và Metro Nhổn – Ga Hà Nội.
 - **Kỹ năng nhân vật hồi lại** sau vài lượt (mặc định 3, tùy nhân vật) thay vì chỉ 1 lần mỗi ván.
-- **Bàn lục giác 60 ô** cho 7–8 người (6 góc, thêm nhóm Bạc, nhóm Mận, Bến xe Giáp Bát).
+- **Bàn đại 56 ô** cho 7–8 người: thêm nhóm Bạc (Tràng Tiền, Nhà hát Lớn, Phan Đình Phùng), nhóm Mận (Hàng Ngang, Hàng Đào) và Bến xe Giáp Bát.
 - **12 nhân vật**, thêm Con bạc (tài xỉu, mở sòng làm nhà cái), Thợ xây, F0 chứng khoán, Tổ trưởng dân phố — cân bằng bằng mô phỏng bot cho mọi cỡ bàn 2–8 người.
 - **65 lá thẻ**: Cơ hội, Cộng đồng và bộ Hanoi Event, có thẻ tác động cả bàn và thẻ ⏳ kéo dài một vòng.
 - Mỗi nhân vật có nội tại, điểm yếu và một kỹ năng; tỉ lệ thắng được cân bằng bằng mô phỏng hàng chục nghìn ván bot (`--board`, `--players 2-8`, `--pool`, `--patch`).

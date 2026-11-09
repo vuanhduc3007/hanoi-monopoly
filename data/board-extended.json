@@ -1,7 +1,6 @@
 {
   "id": "extended",
   "name": "Mở rộng 48 ô",
-  "shape": "square",
   "maxPlayers": 6,
   "economy": {
     "goSalaryMultiplier": 1.2,

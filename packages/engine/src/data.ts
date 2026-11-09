@@ -1,6 +1,6 @@
 import boardJson from '../../../data/board.json';
 import boardExtendedJson from '../../../data/board-extended.json';
-import boardHexJson from '../../../data/board-hex.json';
+import boardLargeJson from '../../../data/board-large.json';
 import economyJson from '../../../data/economy.json';
 import cardsJson from '../../../data/cards.json';
 import charactersJson from '../../../data/characters.json';
@@ -147,12 +147,9 @@ export interface RoomConfigData {
   fund: { inflows: string[]; payout: string; start: number };
 }
 
-export type BoardShape = 'square' | 'hexagon';
-
 export interface GameData {
   /** Which board this data describes. */
   id: BoardId;
-  shape: BoardShape;
   /** Most players this board seats. */
   maxPlayers: number;
   board: TileDef[];
@@ -189,7 +186,6 @@ export interface RawData {
 export function buildGameData(raw: RawData): GameData {
   const board = raw.board as {
     id?: BoardId;
-    shape?: BoardShape;
     maxPlayers?: number;
     /** Board-specific economy overrides (salary, transport rents, building stock). */
     economy?: Partial<Economy>;
@@ -223,7 +219,6 @@ export function buildGameData(raw: RawData): GameData {
 
   return {
     id: board.id ?? 'standard',
-    shape: board.shape ?? 'square',
     maxPlayers: board.maxPlayers ?? (raw.config as RoomConfigData).room.maxPlayers,
     board: board.board,
     groups: board.groups,
@@ -255,16 +250,16 @@ export const extendedData: GameData = buildGameData({
   config: configJson,
 });
 
-/** 60-tile hexagon for 7–8 players: six corners, eleven colour groups, six transports. */
-export const hexData: GameData = buildGameData({
-  board: boardHexJson,
+/** 56-tile board for 7–8 players: twelve colour groups, six transports. */
+export const largeData: GameData = buildGameData({
+  board: boardLargeJson,
   economy: economyJson,
   cards: cardsJson,
   characters: charactersJson,
   config: configJson,
 });
 
-export const BOARDS: Record<BoardId, GameData> = { standard: defaultData, extended: extendedData, hex: hexData };
+export const BOARDS: Record<BoardId, GameData> = { standard: defaultData, extended: extendedData, large: largeData };
 
 /** Board 'auto' resolves to for a table of `seats` players. */
 export function autoBoard(seats: number, d: GameData = defaultData): BoardId {

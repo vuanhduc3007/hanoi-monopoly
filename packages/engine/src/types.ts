@@ -1,8 +1,8 @@
 export type PlayerId = string;
 export type DeckName = 'chance' | 'community' | 'event';
 export type Mode = 'classic' | 'quick';
-/** standard = 40 tiles (GDD §2), extended = 48 tiles for bigger tables. */
-export type BoardId = 'standard' | 'extended' | 'hex';
+/** standard = 40 tiles (GDD §2), extended = 48 tiles for 5–6 players, large = 56 tiles for 7–8. */
+export type BoardId = 'standard' | 'extended' | 'large';
 /** Tài xỉu bet. */
 export type SicboPick = 'tai' | 'xiu';
 

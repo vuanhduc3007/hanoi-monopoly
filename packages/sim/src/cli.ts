@@ -11,7 +11,7 @@ const HELP = `Hanoi Monopoly — mô phỏng bot vs bot
   --games N          số ván (mặc định 10000)
   --players N|A-B    số người mỗi ván, hoặc khoảng ngẫu nhiên (mặc định 4)
   --mode M           classic | quick (mặc định classic)
-  --board B          standard (40 ô) | extended (48 ô) | hex (60 ô, lục giác) (mặc định standard)
+  --board B          standard (40 ô) | extended (48 ô) | large (56 ô) (mặc định standard)
   --seed S           seed ván đầu; ván i dùng S+i (mặc định 1)
   --max-rounds R     Truyền thống: dừng sau R vòng, xếp hạng theo tài sản (mặc định 200)
   --quick-rounds R   Nhanh: số vòng thay cho 60 phút (mặc định 40)
@@ -72,7 +72,7 @@ function parseArgs(argv: string[]): CliOptions {
       }
       case '--board': {
         const b = v();
-        if (b !== 'standard' && b !== 'extended' && b !== 'hex') throw new Error('--board must be standard, extended or hex');
+        if (b !== 'standard' && b !== 'extended' && b !== 'large') throw new Error('--board must be standard, extended or large');
         o.board = b;
         break;
       }

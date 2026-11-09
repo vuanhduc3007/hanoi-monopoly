@@ -26,7 +26,7 @@ afterEach(() => {
 const seats = (n: number, you = 'u1'): RoomView => ({
   code: 'ABC234',
   phase: 'playing',
-  settings: { mode: 'classic', characters: true, scholarshipFund: true, buildingLimit: true, maxPlayers: 6, allowSpectators: true },
+  settings: { mode: 'classic', board: 'auto', characters: true, scholarshipFund: true, buildingLimit: true, maxPlayers: 6, allowSpectators: true },
   you,
   seats: Array.from({ length: n }, (_, i) => ({
     id: `u${i + 1}`,

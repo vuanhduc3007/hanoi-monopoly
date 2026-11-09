@@ -1,7 +1,7 @@
 export { applyAction, applyActionInPlace, createGame, defaultConfig, rollTurnOrder, whyCantBuild } from './engine';
 export type { BuildBlock } from './engine';
 export type { CreateGameOptions, NewPlayer } from './engine';
-export { buildGameData, defaultData } from './data';
+export { BOARDS, buildGameData, dataFor, defaultData, extendedData } from './data';
 export type { GameData, CardDef, CharacterDef, OwnableDef, TileDef } from './data';
 export { EFFECT_TYPES } from './cards';
 export * from './types';

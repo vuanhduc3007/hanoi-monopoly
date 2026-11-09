@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { defaultData as D, type GameEvent, type PublicState } from '@hanoi-monopoly/engine';
+import { type GameEvent, type PublicState } from '@hanoi-monopoly/engine';
+import { D } from '../lib/gameData';
 import { Hotel, House, TileIcon } from '../art/icons';
 import { artFor } from '../art/tileArt';
 import { money, t, tileName } from '../i18n/vi';

@@ -1,9 +1,13 @@
 export type PlayerId = string;
 export type DeckName = 'chance' | 'community' | 'event';
 export type Mode = 'classic' | 'quick';
+/** standard = 40 tiles (GDD §2), extended = 48 tiles for bigger tables. */
+export type BoardId = 'standard' | 'extended';
 
 export interface GameConfig {
   mode: Mode;
+  /** Board layout (default standard). */
+  board?: BoardId;
   /** Character system on/off ("Cổ điển" = off). */
   characters: boolean;
   /** Quỹ khuyến học. */

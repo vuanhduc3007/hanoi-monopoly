@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { defaultData as D } from '@hanoi-monopoly/engine';
+import { D } from '../lib/gameData';
 import { Chat } from '../components/Side';
 import { Token } from '../components/Token';
 import { MuteButton } from '../sound/MuteButton';
@@ -75,6 +75,13 @@ export function Lobby({ room }: { room: RoomView }) {
             <select disabled={!host} value={s.mode} onChange={(e) => set({ mode: e.target.value as 'classic' | 'quick' })}>
               <option value="classic">{t.lobby.modes.classic}</option>
               <option value="quick">{t.lobby.modes.quick}</option>
+            </select>
+          </Setting>
+          <Setting label={t.lobby.board}>
+            <select disabled={!host} value={s.board ?? 'auto'} onChange={(e) => set({ board: e.target.value as RoomSettings['board'] })}>
+              <option value="auto">{t.lobby.boards.auto(D.config.room.extendedBoardFromPlayers)}</option>
+              <option value="standard">{t.lobby.boards.standard}</option>
+              <option value="extended">{t.lobby.boards.extended}</option>
             </select>
           </Setting>
           {(['characters', 'scholarshipFund', 'buildingLimit', 'allowSpectators'] as const).map((k) => (

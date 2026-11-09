@@ -1,4 +1,4 @@
-import { defaultData, type BotOptions, type CharacterDef, type GameData, type Mode } from '@hanoi-monopoly/engine';
+import { dataFor, defaultData, type BoardId, type BotOptions, type CharacterDef, type GameData, type Mode } from '@hanoi-monopoly/engine';
 import { runGame } from './runGame';
 import { addRecord, newTotals, type Totals } from './stats';
 
@@ -9,6 +9,8 @@ export interface BatchOptions {
   /** Fixed count, or [min, max] picked per game from the seed. */
   players: number | [number, number];
   mode: Mode;
+  /** Board layout (default standard). */
+  board?: BoardId;
   characters: boolean;
   maxRounds: number;
   quickRounds: number;
@@ -39,8 +41,8 @@ export function playersFor(o: BatchOptions, gameSeed: number): number {
 
 /** Runs games [from, to) of a batch and returns their totals. */
 export function simulateRange(o: BatchOptions, from: number, to: number): Totals {
-  const t = newTotals();
-  const d = patchedData(o.patch);
+  const d = patchedData(o.patch, dataFor(o.board));
+  const t = newTotals(d.board.length);
   for (let i = from; i < to; i++) {
     const seed = (o.seed + i) >>> 0;
     addRecord(

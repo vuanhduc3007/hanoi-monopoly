@@ -1,4 +1,5 @@
-import { defaultData as D, type PlayerState, type PublicState } from '@hanoi-monopoly/engine';
+import { type PlayerState, type PublicState } from '@hanoi-monopoly/engine';
+import { D } from './gameData';
 import { t, type Who } from '../i18n/vi';
 import type { RoomView } from '../net/protocol';
 import { PLAYER_COLORS } from './board';

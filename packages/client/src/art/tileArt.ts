@@ -37,6 +37,14 @@ export const TILE_ART: Record<string, string> = {
   P20: 'westlake',
   P21: 'oldquarter',
   P22: 'hoankiem',
+  // 48-tile board
+  T05: 'metro',
+  P23: 'district',
+  P24: 'district',
+  P25: 'district',
+  P26: 'complex',
+  P27: 'westlake',
+  P28: 'rural',
 };
 
 export const artFor = (ref: string): string | undefined => TILE_ART[ref];

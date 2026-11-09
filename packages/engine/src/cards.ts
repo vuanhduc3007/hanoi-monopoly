@@ -130,7 +130,10 @@ type Handler = (a: EffectArgs) => void;
 const handlers: Record<string, Handler> = {
   // ---- Cơ hội / Cộng đồng
   move_to: ({ c, drawer, effect }) => {
-    pushFront(c, { t: 'moveTo', player: drawer.id, position: effect.position });
+    // Cards name a tile (`tile: 'P22'`) so one deck works on every board.
+    const position = effect.tile !== undefined ? c.d.board.findIndex((t) => t.ref === effect.tile) : (effect.position as number);
+    if (position < 0) fail(`Card target ${effect.tile} is not on this board`);
+    pushFront(c, { t: 'moveTo', player: drawer.id, position });
   },
   move_to_nearest: ({ c, drawer, effect }) => {
     const position = nearestForward(c, drawer.position, effect.target);

@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { availableParallelism } from 'node:os';
 import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
+import { dataFor } from '@hanoi-monopoly/engine';
 import { formatReport, summarize } from './report';
 import { simulateRange, type BatchOptions } from './simulate';
 import { mergeTotals, newTotals, type Totals } from './stats';
@@ -10,6 +11,7 @@ const HELP = `Hanoi Monopoly — mô phỏng bot vs bot
   --games N          số ván (mặc định 10000)
   --players N|A-B    số người mỗi ván, hoặc khoảng ngẫu nhiên (mặc định 4)
   --mode M           classic | quick (mặc định classic)
+  --board B          standard (40 ô) | extended (48 ô) (mặc định standard)
   --seed S           seed ván đầu; ván i dùng S+i (mặc định 1)
   --max-rounds R     Truyền thống: dừng sau R vòng, xếp hạng theo tài sản (mặc định 200)
   --quick-rounds R   Nhanh: số vòng thay cho 60 phút (mặc định 40)
@@ -67,6 +69,12 @@ function parseArgs(argv: string[]): CliOptions {
         o.mode = m;
         break;
       }
+      case '--board': {
+        const b = v();
+        if (b !== 'standard' && b !== 'extended') throw new Error('--board must be standard or extended');
+        o.board = b;
+        break;
+      }
       case '--max-rounds': o.maxRounds = int(); break;
       case '--quick-rounds': o.quickRounds = int(); break;
       case '--no-characters': o.characters = false; break;
@@ -108,12 +116,12 @@ async function main(): Promise<void> {
     const parts = await Promise.all(
       Array.from({ length: k }, (_, i) => runInWorker(o, i * chunk, Math.min(o.games, (i + 1) * chunk))),
     );
-    totals = parts.reduce(mergeTotals, newTotals());
+    totals = parts.reduce(mergeTotals, newTotals(dataFor(o.board).board.length));
   }
   const seconds = (Date.now() - started) / 1000;
   const players = typeof o.players === 'number' ? `${o.players}` : o.players.join('-');
-  const title = `Hanoi Monopoly — ${o.mode === 'quick' ? 'Nhanh' : 'Truyền thống'}, ${players} người, ${o.characters ? 'có' : 'không'} nhân vật, seed ${o.seed}`;
-  const sum = summarize(totals, { tolerancePP: o.tolerance });
+  const title = `Hanoi Monopoly — ${o.mode === 'quick' ? 'Nhanh' : 'Truyền thống'}, ${players} người, ${o.board === 'extended' ? '48' : '40'} ô, ${o.characters ? 'có' : 'không'} nhân vật, seed ${o.seed}`;
+  const sum = summarize(totals, { tolerancePP: o.tolerance }, dataFor(o.board));
   process.stdout.write(formatReport(sum, { tolerancePP: o.tolerance, seconds, title }) + '\n');
   if (o.json) {
     const { workers: _w, json: _j, ...options } = o;

@@ -12,7 +12,7 @@
       "name": "Bắt Grab ra Bờ Hồ",
       "effect": {
         "type": "move_to",
-        "position": 39
+        "tile": "P22"
       }
     },
     {
@@ -20,7 +20,7 @@
       "name": "Về lại Hoàng thành",
       "effect": {
         "type": "move_to",
-        "position": 0
+        "tile": "GO"
       }
     },
     {
@@ -28,7 +28,7 @@
       "name": "Hẹn cà phê Hồ Tây",
       "effect": {
         "type": "move_to",
-        "position": 34
+        "tile": "P20"
       }
     },
     {
@@ -36,7 +36,7 @@
       "name": "Đi Times City xem phim",
       "effect": {
         "type": "move_to",
-        "position": 23
+        "tile": "P13"
       }
     },
     {
@@ -44,7 +44,7 @@
       "name": "Bắt xe buýt về Thanh Xuân",
       "effect": {
         "type": "move_to",
-        "position": 11
+        "tile": "P06"
       }
     },
     {
@@ -143,7 +143,7 @@
       "name": "Dâng hương Văn Miếu trước kỳ thi",
       "effect": {
         "type": "move_to",
-        "position": 20
+        "tile": "PARK"
       }
     }
   ],
@@ -266,7 +266,7 @@
       "name": "Về quê ăn Tết, khởi hành từ Hoàng thành",
       "effect": {
         "type": "move_to",
-        "position": 0
+        "tile": "GO"
       }
     },
     {

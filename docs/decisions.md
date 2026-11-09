@@ -119,3 +119,12 @@ Mỗi phương án chạy 10.000 ván × 3 cấu hình (Truyền thống 4 ngư�
 - **Tải lại trang bị văng ra**: trên Render, proxy chưa báo socket cũ đã đóng nên server từ chối nối lại bằng token. Mỗi tab giờ có một mã bí mật (chỉ server biết); tải lại trang thì vào lại phòng bằng mã đó, server trả lại đúng chỗ ngồi (kể cả khi bot đang chơi thay vì mất kết nối) và đóng kết nối cũ. Mở tab mới vẫn là người chơi mới.
 - **Vào lại được nhưng bot vẫn chơi** (thay đổi so với GDD 7.2 "treo máy → bot đến hết ván"): nếu kết nối cũ bị kẹt hoặc trang văng ra, server vẫn tưởng người chơi đang ngồi, lượt của họ hết giờ liên tiếp nên bị tính là treo máy và bot nhận chỗ vĩnh viễn. Giờ chính người đó quay lại (vào lại bằng mã bí mật, bấm bất kỳ nút nào, hoặc nút "Tôi chơi tiếp" ở bảng quyết định) thì lấy lại quyền điều khiển, dù bot thay vì mất kết nối, treo máy hay đã bấm Rời phòng. Khi vắng mặt, bot vẫn chơi thay như cũ.
 - **Nhà / khách sạn mang màu chủ đất**: mái nhà ống và thân tòa cao tầng (3D lẫn 2D dự phòng) theo màu người chơi, giống dấu chủ đất trên ô.
+
+## Bàn cờ mở rộng 48 ô (cho 5–6 người)
+
+- **Vì sao**: đo 400 ván bot/số người trên bàn 40 ô — 6 người chỉ có 4,7 ô sở hữu/người, bàn bán hết sau ~20 vòng, chỉ 53% ván có ai gom đủ nhóm. Bàn 48 ô có 35 ô sở hữu (5,8/người ở 6 người).
+- **Dữ liệu**: `data/board-extended.json` (bàn 40 ô `board.json` giữ nguyên). Góc ở 0 / 12 / 24 / 36. Thêm 2 nhóm màu: **Xanh ngọc** (P23 Linh Đàm, P24 Văn Quán, P25 Nghĩa Đô — sau Nâu/Xanh nhạt) và **Tím** (P26 Khu đô thị Ciputra, P27 Tây Hồ Tây, P28 Làng đào Nhật Tân — sau CSGT, trước Xanh đậm); giao thông thứ 5 **T05 Metro Nhổn – Ga Hà Nội**; thêm 1 ô Hanoi Event.
+- **Kinh tế riêng của bàn** (khối `economy` trong file bàn, ghi đè `economy.json`): thuê giao thông 5 mức `25/50/90/150/220`; kho nhà 40 nhà / 15 khách sạn; **lương +40** (`goSalaryBonus`) cộng *thêm* vào mọi mức lương, kể cả lương riêng của nhân vật — nếu đặt thẳng lương 240 thì "lương 250" của Thiếu gia Vin gần như mất tác dụng (mô phỏng: −4,4 đ%).
+- **Thẻ di chuyển** giờ ghi ô đích bằng mã (`"tile": "P22"`) thay vì số thứ tự, nên một bộ thẻ dùng được cho cả hai bàn.
+- **Chọn bàn trong phòng chờ**: Tự động (mặc định — 48 ô khi có từ `extendedBoardFromPlayers` = 5 người lúc bắt đầu) / Tiêu chuẩn 40 ô / Mở rộng 48 ô. Bàn được ghi vào `config.board` của ván (log phát lại dùng đúng bàn).
+- **Mô phỏng** (`--board extended`, 6.000 ván, 6 người): mọi nhân vật trong ±3 đ% trừ Thiếu gia Vin −3,1; ván kết thúc bằng phá sản 43% (bàn 40 ô: 34%). Người đi đầu thắng 27,5% (bàn 40 ô: 24%).

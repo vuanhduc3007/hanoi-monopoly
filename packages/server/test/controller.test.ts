@@ -402,3 +402,24 @@ describe('chat', () => {
     expect(out.last('emote')).toMatchObject({ from: null, spectator: true, emote: 'clap' });
   });
 });
+
+describe('board choice', () => {
+  it('auto: standard board for up to 4 players, 48 tiles from 5', () => {
+    const four = started(4);
+    expect(four.ctl.state!.config.board).toBe('standard');
+    const five = started(5);
+    expect(five.ctl.state!.config.board).toBe('extended');
+    expect(Object.keys(five.ctl.state!.ownables)).toHaveLength(35);
+  });
+
+  it('the host can force a board; bad values are rejected', () => {
+    const h = lobby(2);
+    h.ctl.message('s1', 'setConfig', { board: 'huge' });
+    expect(h.out.errors('s1')).toEqual(['BAD_CONFIG']);
+    h.ctl.message('s1', 'setConfig', { board: 'extended' });
+    expect(h.ctl.settings.board).toBe('extended');
+    h.ctl.message('s1', 'start', {});
+    expect(h.ctl.state!.config.board).toBe('extended');
+    expect(h.ctl.state!.players.every((p) => p.position === 0)).toBe(true);
+  });
+});

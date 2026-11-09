@@ -2,7 +2,8 @@
  * Sounds from GDD §8.3, synthesised with Web Audio (no audio files to ship):
  * xúc xắc trong bát, còi CSGT, chuông xe đạp, "ting ting", trống hội, pháo hoa.
  */
-import { defaultData as D, type GameEvent } from '@hanoi-monopoly/engine';
+import { type GameEvent } from '@hanoi-monopoly/engine';
+import { D } from '../lib/gameData';
 
 export type SoundName = 'dice' | 'whistle' | 'bell' | 'ting' | 'drum' | 'flip' | 'fireworks' | 'turn';
 

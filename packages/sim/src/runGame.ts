@@ -77,7 +77,7 @@ export function runGame(o: SimGameOptions, d: GameData = defaultData): GameRecor
   const players = Array.from({ length: o.players }, (_, i) => ({ id: `s${i}`, character: lineup[i] ?? null }));
 
   const created = createGame(
-    { players, seed: o.seed, config: { mode: o.mode, characters: o.characters } },
+    { players, seed: o.seed, config: { mode: o.mode, characters: o.characters, board: d.id } },
     d,
   );
   const s = created.state;

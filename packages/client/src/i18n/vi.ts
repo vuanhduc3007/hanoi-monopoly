@@ -3,7 +3,8 @@
  * descriptions are generated from the JSON effect data, so numbers stay in
  * sync with data/*.json.
  */
-import { defaultData as D, type Effect, type GameEvent } from '@hanoi-monopoly/engine';
+import { type Effect, type GameEvent } from '@hanoi-monopoly/engine';
+import { D } from '../lib/gameData';
 
 const nf = new Intl.NumberFormat('vi-VN');
 export const money = (n: number) => `${nf.format(n)} ${D.economy.currency}`;
@@ -60,7 +61,13 @@ export const t = {
     modes: { classic: 'Truyền thống', quick: 'Nhanh' },
     characters: 'Nhân vật',
     scholarshipFund: 'Quỹ khuyến học',
-    buildingLimit: 'Giới hạn 32 nhà / 12 khách sạn',
+    buildingLimit: 'Giới hạn số nhà / khách sạn của ngân hàng',
+    board: 'Bàn cờ',
+    boards: {
+      auto: (from: number) => `Tự động (48 ô từ ${from} người)`,
+      standard: 'Tiêu chuẩn 40 ô',
+      extended: 'Mở rộng 48 ô',
+    },
     maxPlayers: 'Số người tối đa',
     allowSpectators: 'Cho phép khán giả',
     on: 'Bật',
@@ -323,7 +330,7 @@ const charList = (ids: string[]) => ids.map((i) => charName(i)).join(', ');
 export function describeEffect(e: Effect): string {
   switch (e.type) {
     case 'move_to':
-      return e.position === 0 ? `Đi đến ${D.board[0].name}, nhận lương` : `Đi đến ${D.board[e.position].name} (${e.position})`;
+      return e.tile === 'GO' ? `Đi đến ${D.board[0].name}, nhận lương` : `Đi đến ${tileName(e.tile as string)}`;
     case 'move_to_nearest':
       return e.target === 'transport'
         ? `Đi đến ô giao thông gần nhất phía trước; có chủ thì trả gấp ${e.rentMultiplier}, chưa có thì được mua`

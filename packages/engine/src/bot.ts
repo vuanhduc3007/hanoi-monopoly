@@ -10,7 +10,7 @@
 import { buildError, unmortgageCost } from './assets';
 import { adjustRule, canOwn, postRollOptions, purchasePrice, salaryFor, skillAvailable, taxAmount, trait } from './characters';
 import { getPlayer, groupProperties, hotelLevel, jailMaxTurns, ownedBy, ownsFullGroup, type Ctx } from './ctx';
-import { defaultData, type GameData } from './data';
+import { dataFor, type GameData } from './data';
 import { applyActionInPlace } from './engine';
 import { quoteRent } from './rent';
 import type { Action, GameState, PlayerState, Trade } from './types';
@@ -56,8 +56,9 @@ export function actorOf(s: GameState): string | null {
 }
 
 /** The next action in an all-bot game (simulator). Null when the game is over. */
-export function botAction(s: GameState, d: GameData = defaultData, opts: Partial<BotOptions> = {}): Action | null {
+export function botAction(s: GameState, data?: GameData, opts: Partial<BotOptions> = {}): Action | null {
   if (s.status !== 'playing') return null;
+  const d = data ?? dataFor(s.config.board);
   const offer = s.trades[0];
   if (offer) return botActionFor(s, offer.to, d, opts);
   if (s.pending?.type === 'auction') return auctionAction({ s, ev: [], d });
@@ -72,10 +73,11 @@ export function botAction(s: GameState, d: GameData = defaultData, opts: Partial
 export function botActionFor(
   s: GameState,
   playerId: string,
-  d: GameData = defaultData,
+  data?: GameData,
   opts: Partial<BotOptions> = {},
 ): Action | null {
   if (s.status !== 'playing') return null;
+  const d = data ?? dataFor(s.config.board);
   const o = { ...BOT_DEFAULTS, ...opts };
   const c: Ctx = { s, ev: [], d };
   const me = getPlayer(c, playerId);
@@ -358,7 +360,8 @@ function findSwap(c: Ctx, p: PlayerState): Action | null {
 }
 
 /** GDD 7.4: accept only if the trade completes one of the bot's colour groups. */
-export function botAcceptsTrade(s: GameState, playerId: string, trade: Trade, d: GameData = defaultData): boolean {
+export function botAcceptsTrade(s: GameState, playerId: string, trade: Trade, data?: GameData): boolean {
+  const d = data ?? dataFor(s.config.board);
   if (trade.to !== playerId) return false;
   const c: Ctx = { s, ev: [], d };
   const after = new Set([...ownedBy(c, playerId).filter((id) => !trade.request.properties.includes(id)), ...trade.offer.properties]);

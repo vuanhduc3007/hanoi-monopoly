@@ -1,4 +1,5 @@
-import { defaultData as D, type PublicState } from '@hanoi-monopoly/engine';
+import { type PublicState } from '@hanoi-monopoly/engine';
+import { D } from '../lib/gameData';
 import { money, t } from '../i18n/vi';
 import { groupColor } from '../lib/board';
 import { hotelLevel, nameOf } from '../lib/selectors';

@@ -1,9 +1,10 @@
 import boardJson from '../../../data/board.json';
+import boardExtendedJson from '../../../data/board-extended.json';
 import economyJson from '../../../data/economy.json';
 import cardsJson from '../../../data/cards.json';
 import charactersJson from '../../../data/characters.json';
 import configJson from '../../../data/config.json';
-import type { DeckName, Effect } from './types';
+import type { BoardId, DeckName, Effect } from './types';
 
 export type TileType = 'corner' | 'property' | 'transport' | 'utility' | 'card' | 'tax';
 
@@ -62,6 +63,8 @@ export interface Economy {
   currency: string;
   startingCash: number;
   goSalary: number;
+  /** Added to every salary (incl. character overrides) on longer boards. */
+  goSalaryBonus?: number;
   taxes: Record<string, number>;
   jailFine: number;
   jailMaxTurns: Record<'classic' | 'quick', number>;
@@ -95,8 +98,12 @@ export interface RoomConfigData {
       scholarshipFund: Record<'classic' | 'quick', boolean>;
       buildingLimit: boolean;
       allowSpectators: boolean;
+      /** 'auto' picks the extended board from `extendedBoardFromPlayers` seats. */
+      board: BoardId | 'auto';
     };
     roomCodeLength: number;
+    boards: BoardId[];
+    extendedBoardFromPlayers: number;
   };
   timers: Record<string, number>;
   quickMode: {
@@ -111,6 +118,8 @@ export interface RoomConfigData {
 }
 
 export interface GameData {
+  /** Which board this data describes. */
+  id: BoardId;
   board: TileDef[];
   groups: Record<string, GroupDef>;
   ownables: Record<string, OwnableDef>;
@@ -142,6 +151,9 @@ export interface RawData {
 /** Normalises the raw JSON files into lookup tables the engine uses. */
 export function buildGameData(raw: RawData): GameData {
   const board = raw.board as {
+    id?: BoardId;
+    /** Board-specific economy overrides (salary, transport rents, building stock). */
+    economy?: Partial<Economy>;
     board: TileDef[];
     groups: Record<string, GroupDef>;
     properties: Omit<OwnableDef, 'kind'>[];
@@ -171,10 +183,11 @@ export function buildGameData(raw: RawData): GameData {
   for (const ch of chars.characters) characters[ch.id] = ch;
 
   return {
+    id: board.id ?? 'standard',
     board: board.board,
     groups: board.groups,
     ownables,
-    economy: raw.economy as Economy,
+    economy: { ...(raw.economy as Economy), ...(board.economy ?? {}) },
     cardRules: cardsRaw.rules,
     decks,
     cards,
@@ -191,3 +204,19 @@ export const defaultData: GameData = buildGameData({
   characters: charactersJson,
   config: configJson,
 });
+
+/** 48-tile board for 5–6 players: two more colour groups, a fifth transport, a third Hanoi Event. */
+export const extendedData: GameData = buildGameData({
+  board: boardExtendedJson,
+  economy: economyJson,
+  cards: cardsJson,
+  characters: charactersJson,
+  config: configJson,
+});
+
+export const BOARDS: Record<BoardId, GameData> = { standard: defaultData, extended: extendedData };
+
+/** Game data for a board (states without a board field are standard games). */
+export function dataFor(board: BoardId | undefined): GameData {
+  return BOARDS[board ?? 'standard'] ?? defaultData;
+}

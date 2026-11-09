@@ -4,7 +4,8 @@
  * changing hands (who pays, how much, why).
  */
 import { useEffect, useRef, useState } from 'react';
-import { defaultData as D, type GameEvent, type PublicState } from '@hanoi-monopoly/engine';
+import { type GameEvent, type PublicState } from '@hanoi-monopoly/engine';
+import { D } from '../lib/gameData';
 import { CardBack } from '../art/icons';
 import { cardName, describeCard, money, t, tileName } from '../i18n/vi';
 import { colorOf, nameOf } from '../lib/selectors';

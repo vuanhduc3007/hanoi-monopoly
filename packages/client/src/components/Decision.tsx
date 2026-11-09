@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { defaultData as D, type PublicState } from '@hanoi-monopoly/engine';
+import { type PublicState } from '@hanoi-monopoly/engine';
+import { D } from '../lib/gameData';
 import { cardName, describeCard, groupName, money, t, tileName } from '../i18n/vi';
 import { hasTrait, isMyTurn, me, nameOf, skillOf, unmortgageCost, waitingFor } from '../lib/selectors';
 import { act, send } from '../net/connection';

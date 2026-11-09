@@ -54,7 +54,7 @@ export function salaryFor(c: Ctx, p: PlayerState): number {
   if (sk?.type === 'auto_salary_upgrade' && p.goPasses >= (sk.afterGoPasses as number)) {
     salary = sk.value as number;
   }
-  return salary;
+  return salary + (c.d.economy.goSalaryBonus ?? 0);
 }
 
 /** Bank list price after character discounts (only for buying at list price). */

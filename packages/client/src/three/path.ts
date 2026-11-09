@@ -1,13 +1,13 @@
 /** Pure helpers for token movement on the 3D layer (tested). */
 
-export const TILES = 40;
+import { D } from '../lib/gameData';
 
 /**
  * Tiles a token walks through from `from` to `to` (excluding `from`).
  * Normal moves walk forward; a short step back (CH09) walks back; anything
  * else (jail, long card jumps) is a direct hop.
  */
-export function walkPath(from: number, to: number, jumped = false): { tiles: number[]; direct: boolean } {
+export function walkPath(from: number, to: number, jumped = false, TILES: number = D.board.length): { tiles: number[]; direct: boolean } {
   if (from === to) return { tiles: [], direct: false };
   const forward = (to - from + TILES) % TILES;
   const backward = (from - to + TILES) % TILES;

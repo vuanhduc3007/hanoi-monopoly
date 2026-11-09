@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { defaultData as D } from '@hanoi-monopoly/engine';
+import { D } from '../lib/gameData';
 import { Avatar } from '../art/icons';
 import { Clock } from '../components/Side';
 import { describeCharacter, t } from '../i18n/vi';

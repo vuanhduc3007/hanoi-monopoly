@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { defaultData as D, type PublicState } from '@hanoi-monopoly/engine';
+import { type PublicState } from '@hanoi-monopoly/engine';
+import { D } from '../lib/gameData';
 import { t } from '../i18n/vi';
 import { colorOf, currentPlayer, hotelLevel } from '../lib/selectors';
 import type { RoomView } from '../net/protocol';

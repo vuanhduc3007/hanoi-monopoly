@@ -1,4 +1,5 @@
-import { defaultData as D, whyCantBuild, type PublicState } from '@hanoi-monopoly/engine';
+import { whyCantBuild, type PublicState } from '@hanoi-monopoly/engine';
+import { D } from '../lib/gameData';
 import { groupName, money, t, tileName } from '../i18n/vi';
 import { groupColor, groupedOwnables } from '../lib/board';
 import { hotelLevel, isMyTurn, me, ownedBy, unmortgageCost } from '../lib/selectors';

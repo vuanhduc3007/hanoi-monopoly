@@ -14,9 +14,12 @@
         "quick": false
       },
       "buildingLimit": true,
-      "allowSpectators": true
+      "allowSpectators": true,
+      "board": "auto"
     },
-    "roomCodeLength": 6
+    "roomCodeLength": 6,
+    "boards": ["standard", "extended"],
+    "extendedBoardFromPlayers": 5
   },
   "timers": {
     "rollSec": 15,

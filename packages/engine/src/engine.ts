@@ -40,7 +40,7 @@ import {
   pushFront,
   type Ctx,
 } from './ctx';
-import { defaultData, type GameData } from './data';
+import { dataFor, defaultData, type GameData } from './data';
 import { addActiveEffect, singleDieActive } from './effects';
 import { declareBankruptcy, execPay, finishGame, payTask, settleDebt } from './money';
 import {
@@ -96,12 +96,14 @@ export function defaultConfig(d: GameData, mode?: GameConfig['mode']): GameConfi
   };
 }
 
-export function createGame(opts: CreateGameOptions, d: GameData = defaultData): ActionResult {
-  const { minPlayers, maxPlayers } = d.config.room;
+export function createGame(opts: CreateGameOptions, data?: GameData): ActionResult {
+  const { minPlayers, maxPlayers } = (data ?? defaultData).config.room;
   if (opts.players.length < minPlayers || opts.players.length > maxPlayers) {
     fail(`Need ${minPlayers}-${maxPlayers} players`);
   }
-  const config: GameConfig = { ...defaultConfig(d, opts.config?.mode), ...opts.config };
+  const config: GameConfig = { ...defaultConfig(defaultData, opts.config?.mode), ...opts.config };
+  const d = data ?? dataFor(config.board);
+  config.board = d.id;
   const chars = opts.players.map((p) => p.character ?? null).filter((x): x is string => !!x);
   if (config.characters) {
     if (new Set(chars).size !== chars.length) fail('Characters must be unique');
@@ -191,7 +193,7 @@ export function rollTurnOrder(ids: PlayerId[], seed: number): { order: PlayerId[
 
 // ---------------------------------------------------------------- core loop
 
-export function applyAction(state: GameState, action: Action, d: GameData = defaultData): ActionResult {
+export function applyAction(state: GameState, action: Action, d?: GameData): ActionResult {
   return applyActionInPlace(JSON.parse(JSON.stringify(state)), action, d);
 }
 
@@ -200,8 +202,8 @@ export function applyAction(state: GameState, action: Action, d: GameData = defa
  * bots only. If it throws, `state` may be partially modified: only use it for
  * actions known to be legal, or on a state you can throw away.
  */
-export function applyActionInPlace(s: GameState, action: Action, d: GameData = defaultData): ActionResult {
-  const c: Ctx = { s, ev: [], d };
+export function applyActionInPlace(s: GameState, action: Action, data?: GameData): ActionResult {
+  const c: Ctx = { s, ev: [], d: data ?? dataFor(s.config.board) };
   if (s.status === 'over') fail('Game is over');
   dispatch(c, action);
   run(c);
@@ -603,9 +605,9 @@ export function whyCantBuild(
   state: Pick<GameState, 'players' | 'turn' | 'pending' | 'ownables' | 'config' | 'activeEffects'>,
   playerId: PlayerId,
   propertyId: string,
-  d: GameData = defaultData,
+  data?: GameData,
 ): BuildBlock | null {
-  const c = { s: state as GameState, ev: [], d };
+  const c = { s: state as GameState, ev: [], d: data ?? dataFor(state.config.board) };
   return buildBlock(c, getPlayer(c, playerId), propertyId);
 }
 

@@ -10,11 +10,13 @@ import {
   botActionFor,
   createGame,
   defaultConfig,
+  dataFor,
   defaultData,
   publicView,
   rollTurnOrder,
   RuleError,
   type Action,
+  type BoardId,
   type GameConfig,
   type GameData,
   type GameEvent,
@@ -35,7 +37,11 @@ export interface Outbox {
   broadcast(type: string, message: unknown): void;
 }
 
-export interface RoomSettings extends GameConfig {
+export type BoardChoice = BoardId | 'auto';
+
+export interface RoomSettings extends Omit<GameConfig, 'board'> {
+  /** Board picked in the lobby; 'auto' resolves at start by the number of seats. */
+  board: BoardChoice;
   maxPlayers: number;
   allowSpectators: boolean;
 }
@@ -185,6 +191,7 @@ export class GameController {
     const room = this.d.config.room;
     this.settings = {
       ...defaultConfig(this.d, room.defaults.mode),
+      board: room.defaults.board,
       maxPlayers: room.maxPlayers,
       allowSpectators: room.defaults.allowSpectators,
     };
@@ -415,6 +422,10 @@ export class GameController {
       if (m.mode !== next.mode) next.scholarshipFund = room.defaults.scholarshipFund[m.mode];
       next.mode = m.mode;
     }
+    if (m.board !== undefined) {
+      if (m.board !== 'auto' && !room.boards.includes(m.board as BoardId)) throw new RoomError('BAD_CONFIG', 'board');
+      next.board = m.board as BoardChoice;
+    }
     for (const k of ['characters', 'scholarshipFund', 'buildingLimit', 'allowSpectators'] as const) {
       if (m[k] === undefined) continue;
       if (typeof m[k] !== 'boolean') throw new RoomError('BAD_CONFIG', k);
@@ -445,6 +456,13 @@ export class GameController {
 
   // ------------------------------------------------------------ start & picks
 
+  /** The board this game is played on: the lobby choice, or by table size for 'auto'. */
+  private resolveBoard(): BoardId {
+    const room = this.d.config.room;
+    if (this.settings.board !== 'auto') return this.settings.board;
+    return this.seats.length >= room.extendedBoardFromPlayers ? 'extended' : 'standard';
+  }
+
   private start(): void {
     const room = this.d.config.room;
     if (this.seats.length < room.minPlayers) throw new RoomError('NOT_ENOUGH_PLAYERS');
@@ -464,6 +482,7 @@ export class GameController {
         characters: this.settings.characters,
         scholarshipFund: this.settings.scholarshipFund,
         buildingLimit: this.settings.buildingLimit,
+        board: this.resolveBoard(),
       },
       players: [],
       turnOrderRolls: order.rolls,
@@ -539,6 +558,7 @@ export class GameController {
     const log = this.log!;
     const players = this.seats.map((s) => ({ id: s.id, name: s.name ?? undefined, character: s.character }));
     log.players = this.seats.map((s) => ({ id: s.id, name: s.name, character: s.character }));
+    if (!this.o.data) this.d = dataFor(log.config.board);
     const created = createGame({ players, seed: log.seed, config: log.config }, this.d);
     this.state = created.state;
     this.phase = 'playing';

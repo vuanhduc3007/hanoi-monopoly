@@ -89,3 +89,31 @@ describe('server address', () => {
     expect(serverUrl({ VITE_SERVER_URL: 'wss://x.example' }, dev)).toBe('wss://x.example');
   });
 });
+
+describe('48-tile board layout', () => {
+  it('places 48 tiles on a 13×13 ring with corners at 0 / 12 / 24 / 36', async () => {
+    const { extendedData: X } = await import('@hanoi-monopoly/engine');
+    const cells = new Set<string>();
+    for (let p = 0; p < 48; p++) {
+      const { row, col } = tileCell(p, 48);
+      expect(row === 0 || row === 12 || col === 0 || col === 12).toBe(true);
+      cells.add(`${row},${col}`);
+    }
+    expect(cells.size).toBe(48);
+    expect([0, 12, 24, 36].map((p) => tileCell(p, 48).side)).toEqual(['corner', 'corner', 'corner', 'corner']);
+    expect(tileCell(12, 48)).toMatchObject({ row: 12, col: 0 });
+    expect(tileCell(47, 48)).toMatchObject({ row: 11, col: 12, side: 'right' });
+    const { artFor } = await import('../src/art/tileArt');
+    for (const t of X.board) expect(artFor(t.ref), t.ref).toBeTruthy();
+  });
+
+  it('client data follows the game board; walks wrap at 48', async () => {
+    const { setBoard, D } = await import('../src/lib/gameData');
+    const { walkPath } = await import('../src/three/path');
+    setBoard('extended');
+    expect(D.board).toHaveLength(48);
+    expect(walkPath(46, 1).tiles).toEqual([47, 0, 1]);
+    setBoard('standard');
+    expect(D.board).toHaveLength(40);
+  });
+});

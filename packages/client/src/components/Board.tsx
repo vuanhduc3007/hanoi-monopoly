@@ -1,6 +1,8 @@
-import { defaultData as D, type PublicState } from '@hanoi-monopoly/engine';
+import type { CSSProperties } from 'react';
+import { type PublicState } from '@hanoi-monopoly/engine';
+import { D } from '../lib/gameData';
 import { cardName, describeCard, describeEffect, groupName, money, t } from '../i18n/vi';
-import { groupColor, tileCell } from '../lib/board';
+import { groupColor, sideLength, tileCell } from '../lib/board';
 import { colorOf, currentPlayer, hotelLevel, nameOf } from '../lib/selectors';
 import type { RoomView } from '../net/protocol';
 import { useStore } from '../store';
@@ -26,7 +28,12 @@ export function Board({ state, room, onTile }: Props) {
   const onActive = useCallback((on: boolean) => setThreeD(on), []);
   useMoneyChanges(state);
   return (
-    <div className={`board${threeD ? ' board-3d-on' : ''}`} role="grid" aria-label={t.appTitle}>
+    <div
+      className={`board board-${D.id}${threeD ? ' board-3d-on' : ''}`}
+      style={{ '--side': sideLength() } as CSSProperties}
+      role="grid"
+      aria-label={t.appTitle}
+    >
       {D.board.map((tile) => {
         const { row, col, side } = tileCell(tile.position);
         const own = state.ownables[tile.ref];

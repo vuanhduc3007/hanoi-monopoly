@@ -20,17 +20,19 @@ export interface BatchOptions {
 }
 
 export interface DataPatch {
+  /** Override fields of characters.json → rules (e.g. skillCooldownRounds). */
+  rules?: Partial<GameData['characterRules']>;
   characters?: Record<string, Partial<Pick<CharacterDef, 'passives' | 'drawbacks' | 'skill'>>>;
 }
 
 export function patchedData(patch?: DataPatch, base: GameData = defaultData): GameData {
-  if (!patch?.characters) return base;
+  if (!patch?.characters && !patch?.rules) return base;
   const characters = { ...base.characters };
-  for (const [id, fields] of Object.entries(patch.characters)) {
+  for (const [id, fields] of Object.entries(patch.characters ?? {})) {
     if (!characters[id]) throw new Error(`Patch: unknown character ${id}`);
     characters[id] = { ...characters[id], ...fields };
   }
-  return { ...base, characters };
+  return { ...base, characters, characterRules: { ...base.characterRules, ...patch.rules } };
 }
 
 export function playersFor(o: BatchOptions, gameSeed: number): number {

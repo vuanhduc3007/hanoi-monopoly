@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { applyAction } from '../src';
+import { applyAction, botAction } from '../src';
 import { D, G, has } from './helpers';
+
+// Character numbers come from characters.json so balancing never breaks the tests.
+const CH = D.characters;
+const num = (v: unknown) => v as number;
 
 describe('character data', () => {
   it('every passive/drawback/skill type in characters.json is covered by this suite', () => {
@@ -26,18 +30,19 @@ describe('character data', () => {
 });
 
 describe('C01 Thiếu gia Vin', () => {
-  it('go_salary 250 (onPassGo)', () => {
+  it('go_salary (onPassGo)', () => {
     const g = G.create(['C01', null]);
     g.setCurrent('p1').at('p1', 38).roll('p1', 1, 2);
-    expect(g.cash('p1')).toBe(1750);
+    expect(g.cash('p1')).toBe(1500 + num(CH.C01.passives[0].value));
   });
 
-  it('purchase_discount 20% on P10/P11/P13/P14 at list price only', () => {
+  it('purchase_discount on P10/P11/P13/P14 at list price only', () => {
     const g = G.create(['C01', null]);
     g.setCurrent('p1').at('p1', 15).roll('p1', 1, 2);
-    expect(g.s.pending).toMatchObject({ type: 'buy', propertyId: 'P10', price: 144 });
+    const price = D.ownables.P10.price - Math.ceil(D.ownables.P10.price * num(CH.C01.passives[1].rate));
+    expect(g.s.pending).toMatchObject({ type: 'buy', propertyId: 'P10', price });
     g.do({ type: 'buy', player: 'p1' });
-    expect(g.cash('p1')).toBe(1356);
+    expect(g.cash('p1')).toBe(1500 - price);
   });
 
   it('tax_override: TAX1 costs 300', () => {
@@ -53,7 +58,7 @@ describe('C01 Thiếu gia Vin', () => {
     expect(g.cash('p2')).toBe(1200);
   });
 
-  it('bailout (onBankrupt): bank covers a shortfall ≤ 400 once', () => {
+  it('bailout (onBankrupt): bank covers a shortfall up to maxAmount', () => {
     const g = G.create(['C01', null]).give('p2', ['P01']).give('p2', ['P02'], { level: 5 }).setCash('p1', 100);
     g.setCurrent('p1').at('p1', 0).roll('p1', 1, 2); // → P02 hotel, rent 450
     expect(g.s.pending).toMatchObject({ type: 'liquidation', player: 'p1' });
@@ -62,9 +67,10 @@ describe('C01 Thiếu gia Vin', () => {
     expect(g.cash('p2')).toBe(1950);
   });
 
-  it('bailout does not save a shortfall above 400', () => {
-    const g = G.create(['C01', null, null]).give('p2', ['P01']).give('p2', ['P02'], { level: 5 }).setCash('p1', 0);
-    g.setCurrent('p1').at('p1', 0).roll('p1', 1, 2);
+  it('bailout does not save a shortfall above maxAmount', () => {
+    const g = G.create(['C01', null, null]).give('p2', ['P21']).give('p2', ['P22'], { level: 5 }).setCash('p1', 0);
+    expect(D.ownables.P22.rent!.hotel).toBeGreaterThan(num(CH.C01.skill.maxAmount));
+    g.setCurrent('p1').at('p1', 36).roll('p1', 1, 2); // → Hồ Gươm hotel
     g.do({ type: 'declareBankruptcy', player: 'p1' });
     expect(g.p('p1').bankrupt).toBe(true);
   });
@@ -159,12 +165,13 @@ describe('C03 Tài xế Grab', () => {
     expect(g.p('p1').lapAdjustUsed).toBe(false);
   });
 
-  it('adjust_roll maxUses: at most 3 adjustments per game', () => {
+  it('adjust_roll maxUses: limited adjustments per game', () => {
     const g = G.create(['C03', null]);
-    g.p('p1').adjustUses = 2;
+    const max = num(CH.C03.passives[0].maxUses);
+    g.p('p1').adjustUses = max - 1;
     g.setCurrent('p1').rig(1, 2).do({ type: 'roll', player: 'p1' });
     g.do({ type: 'adjustStep', player: 'p1', delta: 1 });
-    expect(g.p('p1').adjustUses).toBe(3);
+    expect(g.p('p1').adjustUses).toBe(max);
     g.p('p1').lapAdjustUsed = false; // new lap
     g.s.pending = null;
     g.s.queue = [];
@@ -301,9 +308,9 @@ describe('C06 Nghiện Tarot', () => {
   });
 
   it('forbidden_properties: cannot receive them in a trade', () => {
-    const g = G.create(['C06', null]).give('p2', ['P20']);
+    const g = G.create(['C06', null]).give('p2', ['P08']);
     expect(() =>
-      g.do({ type: 'proposeTrade', player: 'p2', to: 'p1', offer: { properties: ['P20'] }, request: { cash: 100 } }),
+      g.do({ type: 'proposeTrade', player: 'p2', to: 'p1', offer: { properties: ['P08'] }, request: { cash: 100 } }),
     ).toThrow(/may not own/);
   });
 
@@ -367,22 +374,22 @@ describe('C07 SVBK', () => {
     expect(g.s.pending).toMatchObject({ type: 'buy', propertyId: 'P06', price: 112 });
   });
 
-  it('auto_salary_upgrade (Tốt nghiệp): the 5th GO pass already pays 250', () => {
+  it('auto_salary_upgrade (Tốt nghiệp): the Nth GO pass already pays the upgrade', () => {
     const g = G.create(['C07', null]);
-    g.p('p1').goPasses = 3;
+    g.p('p1').goPasses = num(CH.C07.skill.afterGoPasses) - 2;
     g.setCurrent('p1').at('p1', 38).roll('p1', 1, 2);
     expect(g.cash('p1')).toBe(1600);
     g.s.pending = null;
     g.s.turn.phase = 'roll';
     g.at('p1', 38).roll('p1', 1, 2);
-    expect(g.cash('p1')).toBe(1850);
+    expect(g.cash('p1')).toBe(1600 + num(CH.C07.skill.value));
     expect(g.p('p1').skillUsed).toBe(true);
   });
 });
 
 describe('C08 Nô lệ tư bản', () => {
-  it('starting_cash 1600', () => {
-    expect(G.create(['C08', null]).cash('p1')).toBe(1600);
+  it('starting_cash', () => {
+    expect(G.create(['C08', null]).cash('p1')).toBe(num(CH.C08.passives[0].value));
   });
 
   it('free_jail_exit (Xin nghỉ phép)', () => {
@@ -390,8 +397,56 @@ describe('C08 Nô lệ tư bản', () => {
     g.p('p1').inJail = true;
     g.p('p1').position = 10;
     g.setCurrent('p1').do({ type: 'useSkill', player: 'p1' });
-    expect(g.p('p1')).toMatchObject({ inJail: false, skillUsed: true, cash: 1600 });
+    expect(g.p('p1')).toMatchObject({ inJail: false, skillUsed: true, cash: num(CH.C08.passives[0].value) });
     g.roll('p1', 1, 2);
     expect(g.p('p1').position).toBe(13);
+  });
+});
+
+describe('skill recharge (skillCooldownRounds)', () => {
+  /** Let bots play until p1 has started `n` more turns. */
+  const turnsOfP1 = (g: G, n: number) => {
+    let seen = 0;
+    for (let k = 0; k < 5000 && seen < n && g.s.status === 'playing'; k++) {
+      const r = applyAction(g.s, botAction(g.s)!);
+      g.s = r.state;
+      seen += r.events.filter((e) => e.type === 'turnStarted' && e.player === 'p1').length;
+    }
+    return seen;
+  };
+
+  it('a used skill comes back after its cooldown of own turns, with a skillReady event', () => {
+    const g = G.create(['C08', null]);
+    g.p('p1').inJail = true;
+    g.p('p1').position = 10;
+    g.setCurrent('p1').do({ type: 'useSkill', player: 'p1' });
+    const rounds = num(CH.C08.skill.cooldownRounds ?? D.characterRules.skillCooldownRounds);
+    expect(rounds).toBeGreaterThan(0);
+    expect(g.p('p1')).toMatchObject({ skillUsed: true, skillCooldown: rounds });
+    turnsOfP1(g, rounds - 1);
+    expect(g.p('p1').skillUsed).toBe(true);
+    const before = g.p('p1').skillCooldown;
+    let ready = false;
+    for (let k = 0; k < 5000 && !ready; k++) {
+      const r = applyAction(g.s, botAction(g.s)!);
+      g.s = r.state;
+      ready = r.events.some((e) => e.type === 'skillReady' && e.player === 'p1');
+    }
+    expect(before).toBe(1);
+    expect(ready).toBe(true);
+    expect(g.p('p1').skillUsed).toBe(false);
+  });
+
+  it('per-skill cooldownRounds overrides the shared rule', () => {
+    expect(CH.C03.skill.cooldownRounds).toBeGreaterThan(D.characterRules.skillCooldownRounds);
+  });
+
+  it('recharge: false skills (SVBK Tốt nghiệp) stay used', () => {
+    expect(CH.C07.skill.recharge).toBe(false);
+    const g = G.create(['C07', null]);
+    g.p('p1').goPasses = num(CH.C07.skill.afterGoPasses) - 1;
+    g.setCurrent('p1').at('p1', 38).roll('p1', 1, 2);
+    expect(g.p('p1').skillUsed).toBe(true);
+    expect(g.p('p1').skillCooldown).toBeUndefined();
   });
 });

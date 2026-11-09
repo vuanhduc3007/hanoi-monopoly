@@ -32,7 +32,7 @@ describe('48-tile extended board', () => {
   });
 
   it('the salary bonus stacks on character salaries (Thiếu gia Vin keeps his edge)', () => {
-    for (const [chars, base] of [[[null, null], X.economy.goSalary], [['C01', null], 250]] as const) {
+    for (const [chars, base] of [[[null, null], X.economy.goSalary], [['C01', null], X.characters.C01.passives[0].value as number]] as const) {
       const g = G.create([...chars], { board: 'extended' });
       g.setCurrent('p1').at('p1', 46);
       g.rig(1, 2);

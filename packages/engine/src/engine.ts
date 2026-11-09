@@ -23,6 +23,7 @@ import {
   adjustRule,
   canOwn,
   onTurnStart,
+  useUpSkill,
   postRollOptions,
   requireSkill,
   skillOf,
@@ -368,7 +369,7 @@ function useSkill(c: Ctx, p: PlayerState, a: Extract<Action, { type: 'useSkill' 
   switch (sk.type) {
     case 'reroll': {
       const pr = requirePostRoll(c, p);
-      p.skillUsed = true;
+      useUpSkill(c, p);
       const dice = rollDice(c.s, pr.dice.length);
       c.s.turn.dice = dice;
       emit(c, 'skillUsed', { player: p.id, skill: sk.type });
@@ -383,7 +384,7 @@ function useSkill(c: Ctx, p: PlayerState, a: Extract<Action, { type: 'useSkill' 
     }
     case 'rent_discount': {
       if (pend?.type !== 'payRent' || pend.player !== p.id || !pend.discount) fail('No rent payment to discount');
-      p.skillUsed = true;
+      useUpSkill(c, p);
       const amount = Math.ceil(pend.raw * (1 - (sk.rate as number)) - 1e-9);
       c.s.pending = null;
       emit(c, 'skillUsed', { player: p.id, skill: sk.type, from: pend.task.amount, to: amount });
@@ -400,7 +401,7 @@ function useSkill(c: Ctx, p: PlayerState, a: Extract<Action, { type: 'useSkill' 
       requireFree(c);
       const target = a.target ? getPlayer(c, a.target) : null;
       if (!target || target.id === p.id || target.bankrupt) fail('Choose an opponent');
-      p.skillUsed = true;
+      useUpSkill(c, p);
       emit(c, 'skillUsed', { player: p.id, skill: sk.type, target: target.id });
       addActiveEffect(c, {
         source: { kind: 'skill', character: p.character! },
@@ -414,7 +415,7 @@ function useSkill(c: Ctx, p: PlayerState, a: Extract<Action, { type: 'useSkill' 
       requireTurn(c, p.id);
       requireFree(c);
       if (!a.group || groupProperties(c, a.group).length === 0) fail('Choose a colour group');
-      p.skillUsed = true;
+      useUpSkill(c, p);
       emit(c, 'skillUsed', { player: p.id, skill: sk.type, group: a.group });
       addActiveEffect(c, {
         source: { kind: 'skill', character: p.character! },
@@ -428,7 +429,7 @@ function useSkill(c: Ctx, p: PlayerState, a: Extract<Action, { type: 'useSkill' 
       requireTurn(c, p.id);
       requireFree(c);
       if (!p.inJail || c.s.turn.phase !== 'roll') fail('Not in jail');
-      p.skillUsed = true;
+      useUpSkill(c, p);
       emit(c, 'skillUsed', { player: p.id, skill: sk.type });
       leaveJail(c, p, 'skill');
       return;

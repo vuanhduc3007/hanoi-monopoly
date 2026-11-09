@@ -123,8 +123,27 @@ Mỗi phương án chạy 10.000 ván × 3 cấu hình (Truyền thống 4 ngư�
 ## Bàn cờ mở rộng 48 ô (cho 5–6 người)
 
 - **Vì sao**: đo 400 ván bot/số người trên bàn 40 ô — 6 người chỉ có 4,7 ô sở hữu/người, bàn bán hết sau ~20 vòng, chỉ 53% ván có ai gom đủ nhóm. Bàn 48 ô có 35 ô sở hữu (5,8/người ở 6 người).
-- **Dữ liệu**: `data/board-extended.json` (bàn 40 ô `board.json` giữ nguyên). Góc ở 0 / 12 / 24 / 36. Thêm 2 nhóm màu: **Xanh ngọc** (P23 Linh Đàm, P24 Văn Quán, P25 Nghĩa Đô — sau Nâu/Xanh nhạt) và **Tím** (P26 Khu đô thị Ciputra, P27 Tây Hồ Tây, P28 Làng đào Nhật Tân — sau CSGT, trước Xanh đậm); giao thông thứ 5 **T05 Metro Nhổn – Ga Hà Nội**; thêm 1 ô Hanoi Event.
+- **Dữ liệu**: `data/board-extended.json` (bàn 40 ô `board.json` giữ nguyên). Góc ở 0 / 12 / 24 / 36. Thêm 2 nhóm màu: **Xanh ngọc** (P23 Linh Đàm, P24 Văn Quán, P25 Nghĩa Đô — sau Nâu/Xanh nhạt) và **Tím** (P26 Khu đô thị Ciputra, P27 Tây Hồ Tây, P28 Làng đào Nhật Tân — sau CSGT, trước Xanh đậm); giao thông thứ 5 **T05 Metro Nhổn – Ga Hà Nội**; thêm 1 ô Cộng đồng (ô 39). Bản đầu thêm ô Hanoi Event thứ 3, nhưng mô phỏng cho thấy nhiều sự kiện làm Nghiện Tarot quá mạnh (+3,4 đ%) và Thiếu gia Vin quá yếu (dính EV10 nhiều hơn).
 - **Kinh tế riêng của bàn** (khối `economy` trong file bàn, ghi đè `economy.json`): thuê giao thông 5 mức `25/50/90/150/220`; kho nhà 40 nhà / 15 khách sạn; **lương +40** (`goSalaryBonus`) cộng *thêm* vào mọi mức lương, kể cả lương riêng của nhân vật — nếu đặt thẳng lương 240 thì "lương 250" của Thiếu gia Vin gần như mất tác dụng (mô phỏng: −4,4 đ%).
 - **Thẻ di chuyển** giờ ghi ô đích bằng mã (`"tile": "P22"`) thay vì số thứ tự, nên một bộ thẻ dùng được cho cả hai bàn.
 - **Chọn bàn trong phòng chờ**: Tự động (mặc định — 48 ô khi có từ `extendedBoardFromPlayers` = 5 người lúc bắt đầu) / Tiêu chuẩn 40 ô / Mở rộng 48 ô. Bàn được ghi vào `config.board` của ván (log phát lại dùng đúng bàn).
 - **Mô phỏng** (`--board extended`, 6.000 ván, 6 người): mọi nhân vật trong ±3 đ% trừ Thiếu gia Vin −3,1; ván kết thúc bằng phá sản 43% (bàn 40 ô: 34%). Người đi đầu thắng 27,5% (bàn 40 ô: 24%).
+
+## Kỹ năng hồi lại (thay đổi so với GDD: "mỗi kỹ năng 1 lần/ván")
+
+- **Luật**: dùng kỹ năng xong, kỹ năng hồi lại sau **3 lượt của chính người đó** (`characters.json` → `rules.skillCooldownRounds: 3`; đặt 0 là quay về 1 lần/ván). Kỹ năng có thể đặt thời gian hồi riêng (`skill.cooldownRounds`) hoặc không hồi (`skill.recharge: false`). Đếm lùi ở đầu mỗi lượt của người đó (lượt trong Bãi giữ xe cũng tính); hồi xong có dòng nhật ký "… hồi kỹ năng …". Bảng quyết định hiện "hồi lại sau N lượt nữa".
+- **Mô phỏng** (`--patch {"rules":{"skillCooldownRounds":N}}`, 6.000 ván/ô, 4 người 40 ô và 6 người 48 ô): cho hồi đồng loạt sau 3 lượt mà không chỉnh gì thì Tài xế Grab +8,5 đ% (tung lại quá thường xuyên), Idol TikTok +4,7, còn Nghiện Tarot −5,3, Nô lệ tư bản −4,7 và hai nhân vật có kỹ năng không "dùng" được (Thiếu gia Vin, SVBK) tụt lại. Ván cũng dài hơn ~15%.
+- **Cân bằng lại** (đã đưa vào `characters.json`):
+
+| Nhân vật | Thay đổi |
+|---|---|
+| C01 Thiếu gia Vin | lương 250 → **260**; giảm giá Vinhomes/Vincom 20% → **30%**; Bố ơi cứu con tối đa 400 → **500**, hồi sau **4** lượt |
+| C02 Ninja Lead | Ăn vạ hồi sau **4** lượt |
+| C03 Tài xế Grab | ±1 bước tối đa 3 → **2** lần/ván; Chạy cuốc đêm hồi sau **6** lượt |
+| C04 Idol TikTok | Bóc phốt hồi sau **5** lượt |
+| C05 Cò đất | Tung tin quy hoạch hồi sau 3 lượt (mặc định) |
+| C06 Nghiện Tarot | Giải hạn hồi sau **2** lượt; đất cấm bỏ Hồ Tây (P20), còn P08, P14 |
+| C07 SVBK | Tốt nghiệp sau **4** lần qua Hoàng thành (từ 5), lương lên **260**; không hồi (tự kích hoạt) |
+| C08 Nô lệ tư bản | tiền khởi đầu 1.600 → **1.750**; Xin nghỉ phép hồi sau 3 lượt |
+
+- **Kết quả** (10.000 ván mỗi cấu hình, lệch tỉ lệ thắng, đ%): 4 người 40 ô — Vin +0,2, Ninja +2,0, Grab +1,9, TikTok +1,4, Cò đất +0,8, Tarot −2,9, SVBK −2,1, Nô lệ −1,5. 6 người 48 ô — tất cả trong ±2,5 **trừ Thiếu gia Vin −4,4**. Vin yếu riêng trên bàn 48 ô vì dựa vào lương mà vòng bàn dài hơn; bỏ thuế 300 của Vin trên bàn này kéo lên ~+1,3 đ% — cần anh/chị quyết định có cho nhân vật luật riêng theo bàn hay không.

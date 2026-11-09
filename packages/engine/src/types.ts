@@ -30,6 +30,8 @@ export interface PlayerState {
   bankrupt: boolean;
   /** One-shot character skill already consumed. */
   skillUsed: boolean;
+  /** Own turns left until a used skill is ready again (rechargeable skills only). */
+  skillCooldown?: number;
   /** How many times this player has collected GO salary. */
   goPasses: number;
   /** Tài xế Grab: ±1 step already used this lap. */

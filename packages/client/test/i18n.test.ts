@@ -28,7 +28,9 @@ describe('vi.ts', () => {
       for (const line of [...c.passives, ...c.drawbacks, c.skill]) expect(line).not.toMatch(/undefined|NaN|_/);
     }
     expect(describeCharacter('C07').drawbacks).toContain('Bắt đầu 1.400 tỷ');
-    expect(describeCharacter('C03').passives[0]).toContain('tối đa 3 lần/ván');
+    expect(describeCharacter('C03').passives[0]).toContain(`tối đa ${D.characters.C03.passives[0].maxUses} lần/ván`);
+    expect(describeCharacter('C03').skill).toContain(`dùng lại sau ${D.characters.C03.skill.cooldownRounds} lượt`);
+    expect(describeCharacter('C07').skill).toContain('tự kích hoạt');
     expect(describeCharacter('C01').drawbacks[1]).toBe('Thuế thu nhập cá nhân trả 300 tỷ');
   });
 

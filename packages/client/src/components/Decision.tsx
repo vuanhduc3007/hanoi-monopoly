@@ -219,7 +219,10 @@ function TurnSkill({ state, room }: { state: PublicState; room: RoomView }) {
   const self = me(room, state)!;
   const skill = skillOf(self.character);
   const [open, setOpen] = useState(false);
-  if (!skill || self.skillUsed || !state.config.characters) return null;
+  if (!skill || !state.config.characters) return null;
+  if (self.skillUsed) {
+    return self.skillCooldown ? <p className="muted skill-cooldown">{t.act.skillCooldown(skill.name, self.skillCooldown)}</p> : null;
+  }
   if (skill.type !== 'block_rent' && skill.type !== 'rent_multiplier') return null;
   const opponents = state.players.filter((p) => p.id !== self.id && !p.bankrupt);
   return (

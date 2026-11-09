@@ -131,8 +131,29 @@ export function postRollOptions(c: Ctx, p: PlayerState): { adjust: boolean; rero
 
 // ---------------------------------------------------------------- hooks
 
+/**
+ * Consume the skill. With `skillCooldownRounds` > 0 it comes back after that many of
+ * the player's own turns, unless the skill is marked `recharge: false`.
+ */
+export function useUpSkill(c: Ctx, p: PlayerState): void {
+  p.skillUsed = true;
+  const sk = skillOf(c, p);
+  if (sk?.recharge === false) return;
+  // A skill may set its own `cooldownRounds`; otherwise the shared rule applies.
+  const rounds = (sk?.cooldownRounds as number | undefined) ?? c.d.characterRules.skillCooldownRounds ?? 0;
+  if (rounds > 0) p.skillCooldown = rounds;
+}
+
 export function onTurnStart(c: Ctx, p: PlayerState): void {
   expireEffectsOf(c, p.id);
+  if (p.skillUsed && p.skillCooldown) {
+    p.skillCooldown -= 1;
+    if (p.skillCooldown === 0) {
+      p.skillUsed = false;
+      delete p.skillCooldown;
+      emit(c, 'skillReady', { player: p.id });
+    }
+  }
   p.doublesCount = 0;
 }
 
@@ -141,7 +162,7 @@ export function onPassGo(c: Ctx, p: PlayerState): void {
   p.lapAdjustUsed = false;
   const sk = skillOf(c, p);
   if (sk?.type === 'auto_salary_upgrade' && p.goPasses === sk.afterGoPasses) {
-    p.skillUsed = true;
+    useUpSkill(c, p);
     emit(c, 'skillTriggered', { player: p.id, skill: sk.type });
   }
   const salary = salaryFor(c, p);
@@ -223,7 +244,7 @@ export function onBankrupt(c: Ctx, p: PlayerState, shortfall: number): boolean {
   const sk = skillOf(c, p);
   if (!sk || sk.type !== 'bailout' || p.skillUsed) return false;
   if (shortfall > (sk.maxAmount as number)) return false;
-  p.skillUsed = true;
+  useUpSkill(c, p);
   p.cash += shortfall;
   emit(c, 'skillUsed', { player: p.id, skill: sk.type, amount: shortfall });
   return true;

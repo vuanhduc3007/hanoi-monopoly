@@ -182,6 +182,7 @@ export const t = {
     chooseTarget: 'Chọn đối thủ',
     chooseGroup: 'Chọn nhóm màu',
     skillUsed: 'Đã dùng kỹ năng',
+    skillCooldown: (name: string, n: number) => `${name}: hồi lại sau ${n} lượt nữa`,
   },
 
   // S7
@@ -465,8 +466,15 @@ export function describeCharacter(id: string) {
     name: c.name,
     passives: c.passives.map(describeTrait),
     drawbacks: c.drawbacks.length ? c.drawbacks.map(describeTrait) : ['Không'],
-    skill: `${c.skill.name}: ${describeTrait(c.skill)}`,
+    skill: `${c.skill.name}: ${describeTrait(c.skill)} (${skillRecharge(c.skill)})`,
   };
+}
+
+/** "dùng lại sau 3 lượt" / "1 lần mỗi ván" from characters.json. */
+export function skillRecharge(skill: Effect): string {
+  const rounds = skill.recharge === false ? 0 : ((skill.cooldownRounds as number | undefined) ?? D.characterRules.skillCooldownRounds);
+  if (skill.type === 'auto_salary_upgrade') return 'tự kích hoạt';
+  return rounds > 0 ? `dùng lại sau ${rounds} lượt` : '1 lần mỗi ván';
 }
 
 // ---------------------------------------------------------------- event log
@@ -603,6 +611,8 @@ export function formatEvent(e: GameEvent, who: Who): string | null {
       return `${p} dùng kỹ năng ${D.characters[who.character(e.player as string) ?? '']?.skill.name ?? ''}`.trim();
     case 'skillTriggered':
       return `${p} tốt nghiệp — lương tăng`;
+    case 'skillReady':
+      return `${p} hồi kỹ năng ${D.characters[who.character(e.player as string) ?? '']?.skill.name ?? ''}`.trim();
     case 'decisionRequired':
       return null;
     case 'gameCreated':
@@ -620,6 +630,6 @@ export const ENGINE_EVENT_TYPES_HANDLED = [
   'paymentSkipped', 'gain', 'rentBonus', 'commission', 'fundCollected', 'fundDeposit', 'cardDrawn', 'cardKept',
   'cardEffect', 'cardDrawing', 'deckEmpty', 'effectStarted', 'effectExpired', 'jailed', 'leftJail', 'stayedInJail',
   'goToJailIgnored', 'built', 'buildingSold', 'mortgaged', 'unmortgaged', 'tradeProposed', 'tradeAccepted',
-  'tradeRejected', 'tradeCancelled', 'debt', 'bankrupt', 'skillUsed', 'skillTriggered', 'decisionRequired',
+  'tradeRejected', 'tradeCancelled', 'debt', 'bankrupt', 'skillUsed', 'skillTriggered', 'skillReady', 'decisionRequired',
   'gameCreated', 'gameOver',
 ];

@@ -292,7 +292,7 @@ describe('Hanoi Event ⚡ effects', () => {
   it('all_pay: EV32 30 each into the Quỹ, Nô lệ tư bản 50', () => {
     const g = G.create([null, 'C08', null]);
     g.draw('p1', 'EV32');
-    expect([g.cash('p1'), g.cash('p2'), g.cash('p3')]).toEqual([1470, 1550, 1470]);
+    expect([g.cash('p1'), g.cash('p2'), g.cash('p3')]).toEqual([1470, (D.characters.C08.passives[0].value as number) - 50, 1470]);
     expect(g.s.fund).toBe(110);
   });
 

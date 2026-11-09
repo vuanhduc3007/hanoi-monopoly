@@ -137,6 +137,8 @@ export interface CharacterRules {
   unique: boolean;
   pickTimerSec: number;
   skillUsesPerGame: number;
+  /** Skills recharge this many of the player's own turns after use (0 = once per game). */
+  skillCooldownRounds: number;
   discountsApplyTo: string;
 }
 

@@ -8,7 +8,7 @@ const three = () => G.create([null, null, null]);
 describe('setup', () => {
   it('starting cash, positions, decks and determinism', () => {
     const a = G.create(['C07', 'C08', null]);
-    expect(a.s.players.map((p) => p.cash)).toEqual([1400, 1600, 1500]);
+    expect(a.s.players.map((p) => p.cash)).toEqual([1400, D.characters.C08.passives[0].value, 1500]);
     expect(a.s.players.every((p) => p.position === 0)).toBe(true);
     const b = G.create(['C07', 'C08', null]);
     expect(b.s.decks).toEqual(a.s.decks);
@@ -394,7 +394,7 @@ describe('quick mode', () => {
   it('Nghiện Tarot is never dealt a forbidden tile', () => {
     for (let seed = 1; seed < 30; seed++) {
       const g = G.create(['C06', null, null, null, null, null], { mode: 'quick' }, seed);
-      for (const id of ['P08', 'P14', 'P20']) expect(g.owner(id)).not.toBe('p1');
+      for (const id of D.characters.C06.drawbacks[0].properties as string[]) expect(g.owner(id)).not.toBe('p1');
     }
   });
 

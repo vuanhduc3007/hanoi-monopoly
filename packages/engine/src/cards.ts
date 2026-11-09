@@ -2,7 +2,7 @@
  * Card effects. One handler per `effect.type` in cards.json.
  * Every card payment goes through `cardPay` (Idol ×1.5, bank → Quỹ).
  */
-import { cardPayMultiplier, eventCancelCandidate, eventPercent, onDrawCard } from './characters';
+import { cardPayMultiplier, eventCancelCandidate, eventPercent, onDrawCard, useUpSkill } from './characters';
 import { countBuildings, emit, fail, getPlayer, ownedBy, playersFrom, pushFront, type Ctx } from './ctx';
 import { addActiveEffect, isImmune } from './effects';
 import { cardPay, gain } from './money';
@@ -81,7 +81,7 @@ export function resolveEventCancel(c: Ctx, used: boolean): void {
   const exempt: PlayerId[] = [];
   if (used) {
     const tarot = getPlayer(c, pend.player);
-    tarot.skillUsed = true;
+    useUpSkill(c, tarot);
     exempt.push(tarot.id);
     emit(c, 'skillUsed', { player: tarot.id, skill: 'cancel_event_for_self', cardId: pend.cardId });
   }

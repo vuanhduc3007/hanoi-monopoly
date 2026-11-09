@@ -461,3 +461,44 @@ describe('timeouts', () => {
     expect(g.s.ownables.P22.mortgaged).toBe(false);
   });
 });
+
+describe('face-down cards and the pay button', () => {
+  it('a drawn card waits face down until the drawer flips it', () => {
+    const g = G.create([null, null]);
+    g.auto = false;
+    g.setCurrent('p1').at('p1', 4).top('CH12');
+    g.rig(1, 2).do({ type: 'roll', player: 'p1' });
+    expect(g.s.pending).toMatchObject({ type: 'revealCard', player: 'p1', deck: 'chance', cardId: 'CH12' });
+    expect(g.cash('p1')).toBe(1500);
+    expect(() => g.do({ type: 'revealCard', player: 'p2' })).toThrow();
+    g.do({ type: 'revealCard', player: 'p1' });
+    expect(g.cash('p1')).toBe(1650);
+  });
+
+  it('rent waits for "Trả tiền"; timeout pays it', () => {
+    const g = G.create([null, null]).give('p2', ['P02']);
+    g.auto = false;
+    g.setCurrent('p1').rig(1, 2).do({ type: 'roll', player: 'p1' });
+    expect(g.s.pending).toMatchObject({ type: 'payRent', player: 'p1', propertyId: 'P02', discount: false });
+    expect(g.cash('p1')).toBe(1500);
+    g.do({ type: 'payRent', player: 'p1' });
+    expect(g.cash('p1')).toBe(1496);
+
+    const h = G.create([null, null]).give('p2', ['P02']);
+    h.auto = false;
+    h.setCurrent('p1').rig(1, 2).do({ type: 'roll', player: 'p1' });
+    h.do({ type: 'timeout' });
+    expect(h.cash('p2')).toBe(1504);
+  });
+
+  it('whyCantBuild explains blocked builds', async () => {
+    const { whyCantBuild } = await import('../src');
+    const g = G.create([null, null]).give('p1', ['P01']);
+    expect(whyCantBuild(g.s, 'p1', 'P01')).toBe('needFullGroup');
+    g.give('p1', ['P02']);
+    expect(whyCantBuild(g.s, 'p1', 'P01')).toBeNull();
+    g.s.ownables.P02.level = 1;
+    expect(whyCantBuild(g.s, 'p1', 'P02')).toBe('buildEvenly');
+    expect(whyCantBuild(g.s, 'p2', 'P01')).toBe('notYourTurn');
+  });
+});

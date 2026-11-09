@@ -1,5 +1,7 @@
 import {
   build,
+  buildBlock,
+  type BuildBlock,
   cancelTrade,
   mortgage,
   proposeTrade,
@@ -10,6 +12,7 @@ import {
 } from './assets';
 import {
   chooseCard,
+  revealCard,
   execDrawCard,
   execEffect,
   execResolveCard,
@@ -377,7 +380,7 @@ function useSkill(c: Ctx, p: PlayerState, a: Extract<Action, { type: 'useSkill' 
       return;
     }
     case 'rent_discount': {
-      if (pend?.type !== 'rentDiscount' || pend.player !== p.id) fail('No rent payment to discount');
+      if (pend?.type !== 'payRent' || pend.player !== p.id || !pend.discount) fail('No rent payment to discount');
       p.skillUsed = true;
       const amount = Math.ceil(pend.raw * (1 - (sk.rate as number)) - 1e-9);
       c.s.pending = null;
@@ -435,7 +438,7 @@ function useSkill(c: Ctx, p: PlayerState, a: Extract<Action, { type: 'useSkill' 
 
 function declineSkill(c: Ctx, p: PlayerState): void {
   const pend = c.s.pending;
-  if (pend?.type === 'rentDiscount' && pend.player === p.id) {
+  if (pend?.type === 'payRent' && pend.player === p.id) {
     c.s.pending = null;
     pushFront(c, pend.task);
     return;
@@ -522,6 +525,15 @@ function dispatch(c: Ctx, a: Action): void {
       return declineSkill(c, getPlayer(c, a.player));
     case 'chooseCard':
       return chooseCard(c, getPlayer(c, a.player), a.cardId);
+    case 'revealCard':
+      return revealCard(c, getPlayer(c, a.player));
+    case 'payRent': {
+      const pend = c.s.pending;
+      if (pend?.type !== 'payRent' || pend.player !== a.player) fail('No rent to pay');
+      c.s.pending = null;
+      pushFront(c, pend.task);
+      return;
+    }
     case 'payDebt': {
       const pend = c.s.pending;
       if (pend?.type !== 'liquidation' || pend.player !== a.player) fail('No debt to pay');
@@ -568,7 +580,9 @@ function timeout(c: Ctx): void {
       return commitRoll(c, getPlayer(c, pend.player), pend.dice, 0, pend.context);
     case 'chooseCard':
       return chooseCard(c, getPlayer(c, pend.player), pend.options[0]);
-    case 'rentDiscount':
+    case 'revealCard':
+      return revealCard(c, getPlayer(c, pend.player));
+    case 'payRent':
     case 'eventCancel':
       return declineSkill(c, getPlayer(c, pend.player));
     case 'liquidation':
@@ -580,3 +594,19 @@ function timeout(c: Ctx): void {
 
 export type { GameEvent };
 export { activePlayers };
+
+/**
+ * Display helper for clients: why `playerId` cannot build on `propertyId`
+ * right now (null = allowed). Works on a public state too.
+ */
+export function whyCantBuild(
+  state: Pick<GameState, 'players' | 'turn' | 'pending' | 'ownables' | 'config' | 'activeEffects'>,
+  playerId: PlayerId,
+  propertyId: string,
+  d: GameData = defaultData,
+): BuildBlock | null {
+  const c = { s: state as GameState, ev: [], d };
+  return buildBlock(c, getPlayer(c, playerId), propertyId);
+}
+
+export type { BuildBlock };

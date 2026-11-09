@@ -11,6 +11,7 @@ import { Token } from './Token';
 import { useCallback, useState } from 'react';
 import { Board3D } from '../three/Board3D';
 import { Celebration } from './Celebration';
+import { ArrestBanner, CardDraw, MoneyFloaters, useMoneyChanges } from './BoardFx';
 
 interface Props {
   state: PublicState;
@@ -23,6 +24,7 @@ export function Board({ state, room, onTile }: Props) {
   const current = currentPlayer(state).id;
   const [threeD, setThreeD] = useState(false);
   const onActive = useCallback((on: boolean) => setThreeD(on), []);
+  useMoneyChanges(state);
   return (
     <div className={`board${threeD ? ' board-3d-on' : ''}`} role="grid" aria-label={t.appTitle}>
       {D.board.map((tile) => {
@@ -80,6 +82,9 @@ export function Board({ state, room, onTile }: Props) {
       <Center state={state} room={room} />
       <Board3D state={state} room={room} onActive={onActive} />
       <Celebration state={state} room={room} />
+      <CardDraw state={state} room={room} />
+      <ArrestBanner room={room} />
+      <MoneyFloaters state={state} room={room} />
     </div>
   );
 }

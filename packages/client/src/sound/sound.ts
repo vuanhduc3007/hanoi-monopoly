@@ -49,9 +49,7 @@ export function soundsFor(events: GameEvent[], me: string | null): SoundName[] {
       case 'diceRolled':
         if (e.purpose === 'normal' || e.purpose === 'jail' || e.purpose === 'reroll') add('dice');
         break;
-      case 'jailed':
-        add('whistle');
-        break;
+      // 'jailed' → the whistle plays with the arrest banner, when the piece is caught.
       case 'salary':
         add('bell');
         break;

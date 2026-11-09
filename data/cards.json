@@ -17,7 +17,7 @@
     },
     {
       "id": "CH02",
-      "name": "Về lại Cửa Ô",
+      "name": "Về lại Hoàng thành",
       "effect": {
         "type": "move_to",
         "position": 0
@@ -140,7 +140,7 @@
     },
     {
       "id": "CH17",
-      "name": "Tham quan Hoàng thành Thăng Long",
+      "name": "Dâng hương Văn Miếu trước kỳ thi",
       "effect": {
         "type": "move_to",
         "position": 20
@@ -263,7 +263,7 @@
     },
     {
       "id": "CD15",
-      "name": "Về quê ăn Tết, khởi hành từ Cửa Ô",
+      "name": "Về quê ăn Tết, khởi hành từ Hoàng thành",
       "effect": {
         "type": "move_to",
         "position": 0

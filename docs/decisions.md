@@ -78,7 +78,7 @@ Mỗi phương án chạy 10.000 ván × 3 cấu hình (Truyền thống 4 ngư�
 
 ## Client (Bước 4)
 
-- Bàn cờ (đổi theo góp ý người chơi, thay cho "ngược chiều kim đồng hồ" ở GDD §2): Cửa Ô ở góc dưới phải, đi sang trái dọc cạnh dưới, lên cạnh trái, sang phải cạnh trên, xuống cạnh phải — bố cục quen thuộc của cờ tỷ phú. Thứ tự ô và luật không đổi.
+- Bàn cờ (đổi theo góp ý người chơi, thay cho "ngược chiều kim đồng hồ" ở GDD §2): ô xuất phát ở góc dưới phải, đi sang trái dọc cạnh dưới, lên cạnh trái, sang phải cạnh trên, xuống cạnh phải — bố cục quen thuộc của cờ tỷ phú. Thứ tự ô và luật không đổi.
 - Mô tả thẻ và nhân vật sinh tự động từ `effect.type` + số trong JSON, nên chỉnh số liệu không phải sửa chữ.
 - Giao diện là bản chức năng dùng bảng màu §8.2; tranh Đông Hồ, font tiêu đề, âm thanh để Bước 5.
 - Mobile: bàn cờ rộng hết màn hình, các panel xếp dưới (chưa có ngăn kéo kéo lên / zoom bàn cờ — để Bước 5).
@@ -87,7 +87,7 @@ Mỗi phương án chạy 10.000 ván × 3 cấu hình (Truyền thống 4 ngư�
 
 ## Đồ họa & âm thanh (Bước 5)
 
-- Minh họa Đông Hồ vẽ bằng SVG ngay trong code (`packages/client/src/art/`): nét mực dày, màu đất phẳng, nét gạch kiểu khắc gỗ. 28 hình cho 40 ô (một số BĐS dùng chung hình theo loại: ven đô, quận, tòa tháp, khu đô thị…; Hồ Gươm, Hồ Tây, Phố cổ, Long Biên, Mỹ Đình, Ba Đình, Đống Đa, Văn Miếu, Cửa Ô có hình riêng), 8 chân dung nhân vật làm quân cờ, nhà ống mái ngói, khách sạn cao tầng, mặt sau 3 bộ thẻ (Cơ hội đỏ son, Cộng đồng vàng nghệ, Event xanh chàm họa tiết trống đồng). Họa sĩ có thể thay từng hình theo tên khóa (`TILE_ART`, `AVATARS`) mà không đụng code game.
+- Minh họa Đông Hồ vẽ bằng SVG ngay trong code (`packages/client/src/art/`): nét mực dày, màu đất phẳng, nét gạch kiểu khắc gỗ. 28 hình cho 40 ô (một số BĐS dùng chung hình theo loại: ven đô, quận, tòa tháp, khu đô thị…; Hồ Gươm, Hồ Tây, Phố cổ, Long Biên, Mỹ Đình, Ba Đình, Đống Đa, Văn Miếu, ô xuất phát có hình riêng), 8 chân dung nhân vật làm quân cờ, nhà ống mái ngói, khách sạn cao tầng, mặt sau 3 bộ thẻ (Cơ hội đỏ son, Cộng đồng vàng nghệ, Event xanh chàm họa tiết trống đồng). Họa sĩ có thể thay từng hình theo tên khóa (`TILE_ART`, `AVATARS`) mà không đụng code game.
 - Font tiêu đề tạm chọn **Playfair Display** (có chân, tương phản nét kiểu bút lông, đủ dấu tiếng Việt). Đổi ở biến `--font-title` trong `styles.css`. Mục "Chọn font tiêu đề" trong GDD vẫn để bạn quyết.
 - Âm thanh tổng hợp bằng Web Audio (không cần file): xúc xắc trong bát, còi CSGT, chuông xe đạp, "ting ting", trống hội, pháo hoa; thêm tiếng lật thẻ và tiếng gõ mõ khi đến lượt mình. Nút tắt tiếng nhớ lựa chọn. Trình duyệt chỉ phát sau lần bấm đầu tiên.
 - Mobile: bàn cờ phóng to / thu nhỏ (1×–2,5×, cuộn được), panel người chơi / nhật ký / chat thành ngăn kéo bên dưới.
@@ -101,3 +101,13 @@ Mỗi phương án chạy 10.000 ván × 3 cấu hình (Truyền thống 4 ngư�
 - Mua đất / xây nhà / lên khách sạn: bảng nổi giữa bàn với mô hình 3D xoay (mảnh đất có nhà + cờ màu người mua, nhà ống, tòa cao tầng) trong khoảng 2,4 giây; nhà trên bàn mọc lên có hiệu ứng nảy.
 - Màn hình chọn nhân vật có xem trước nhân vật 3D.
 - Máy không có WebGL: tự dùng lại quân cờ và nhà 2D như trước.
+
+## Góp ý chơi thử lần 2
+
+- **Ô xuất phát** đổi tên thành **Hoàng thành Thăng Long** (thay Cửa Ô Quan Chưởng). Không dùng "Khải Hoàn Môn" vì đang là chuyện thời sự gây tranh cãi. Để không trùng, thẻ CH17 đổi tên thành "Dâng hương Văn Miếu trước kỳ thi" (hiệu ứng giữ nguyên: đi đến Văn Miếu); CH02, CD15 đổi "Cửa Ô" → "Hoàng thành".
+- **Chọn nhân vật**: tối đa 10 phút mỗi người (`characters.json` → `pickTimerSec: 600`). Người mất kết nối / bot vẫn chọn ngay.
+- **Rút thẻ có bước lật** (thay đổi so với GDD 4.5 "thực hiện ngay"): thẻ rút ra úp giữa bàn, người rút bấm để lật, hết 8 giây thì tự lật (`config.json` → `revealCardSec`). Hiệu ứng thẻ chỉ áp dụng sau khi lật; lá bài úp không gửi cho client nào. Nghiện Tarot vẫn rút 2 chọn 1 (đó là bước tương tác của Tarot).
+- **Trả tiền thuê bằng nút** (thay đổi so với GDD 4.4 "thu tự động"): dừng ở đất người khác thì hiện nút "Trả tiền"; hết 15 giây tự trả (`payRentSec`). Ăn vạ của Ninja Lead nằm ngay trong bước này.
+- **Hoạt cảnh**: xúc xắc 3D rơi giữa bàn (~1,1 giây) rồi quân mới đi; quân đi đủ đường (kể cả khi thẻ đưa đi); vào ô CSGT thổi còi thì đi tới ô 30, dừng với đèn còi xanh đỏ + bảng "CSGT thổi còi!" + tiếng còi, rồi mới bị đưa sang Bãi giữ xe. Nút quyết định, thẻ, bảng mua nhà chỉ hiện khi quân đã tới nơi.
+- **Tiền thay đổi**: số "−… tỷ" (đỏ) / "+… tỷ" (xanh) kèm tên người và lý do bay lên trên quân cờ, và hiện cạnh tiền trong danh sách người chơi (dòng người bị trừ rung nhẹ).
+- **Xây nhà**: cửa sổ Tài sản có mục "Khi nào được xây nhà?" và ghi lý do từng ô chưa xây được (engine `whyCantBuild`).

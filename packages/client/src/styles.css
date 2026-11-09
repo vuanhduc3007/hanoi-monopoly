@@ -1138,3 +1138,267 @@ h3,
     z-index: 30;
   }
 }
+
+.board-3d-on .board-center .dice {
+  visibility: hidden;
+}
+
+/* ---- card draw: face down → flip ---- */
+.card-draw {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 7;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  perspective: 900px;
+}
+.card-big {
+  width: clamp(150px, 17vw, 230px);
+  aspect-ratio: 5 / 7;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: 7px 7px 0 rgba(43, 37, 34, 0.85);
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  padding: 14px;
+  text-align: center;
+  color: #fff;
+  transform-style: preserve-3d;
+}
+.card-big.face-down {
+  cursor: pointer;
+  animation: card-in 0.45s ease-out both, card-wiggle 1.6s ease-in-out 0.5s infinite;
+}
+.card-big.face-down:disabled {
+  cursor: default;
+  opacity: 1;
+  animation: card-in 0.45s ease-out both;
+}
+.card-big.face-down:hover:not(:disabled) {
+  transform: translateY(-4px) rotate(-1.5deg);
+}
+.card-draw.flipping .card-big {
+  animation: card-flip-out 0.35s ease-in forwards;
+}
+.card-big.face-up {
+  animation: card-flip-in 0.5s ease-out both;
+}
+.card-big.deck-community {
+  color: var(--ink);
+}
+.card-deck {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.9;
+}
+.card-title {
+  font-family: var(--font-title);
+  font-size: clamp(16px, 1.6vw, 22px);
+  line-height: 1.2;
+}
+.card-body {
+  font-size: clamp(12px, 1.1vw, 15px);
+  line-height: 1.35;
+}
+.card-draw-text {
+  background: rgba(251, 244, 227, 0.95);
+  border: 2px solid var(--ink);
+  border-radius: 99px;
+  padding: 4px 14px;
+  font-weight: 700;
+}
+@keyframes card-in {
+  from {
+    transform: translateY(-60px) rotate(-8deg) scale(0.7);
+    opacity: 0;
+  }
+}
+@keyframes card-wiggle {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  50% {
+    transform: rotate(2deg) translateY(-3px);
+  }
+}
+@keyframes card-flip-out {
+  to {
+    transform: rotateY(90deg);
+  }
+}
+@keyframes card-flip-in {
+  from {
+    transform: rotateY(-90deg);
+  }
+  to {
+    transform: rotateY(0);
+  }
+}
+
+/* ---- CSGT arrest ---- */
+.arrest {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  transform: translate(-50%, -50%);
+  z-index: 8;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 12px 22px;
+  background: #fffaf0;
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 6px 6px 0 rgba(43, 37, 34, 0.85);
+  animation: arrest-in 0.3s ease-out both;
+  overflow: hidden;
+}
+.arrest strong {
+  font-family: var(--font-title);
+  font-size: clamp(18px, 2vw, 26px);
+  color: var(--red);
+}
+.arrest-lights {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 8px;
+  background: linear-gradient(90deg, #b8312f 50%, #2f6fd6 50%);
+  animation: siren 0.35s steps(1) infinite;
+}
+@keyframes siren {
+  50% {
+    background: linear-gradient(90deg, #2f6fd6 50%, #b8312f 50%);
+  }
+}
+@keyframes arrest-in {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5) rotate(-6deg);
+    opacity: 0;
+  }
+  60% {
+    transform: translate(-50%, -50%) scale(1.08) rotate(2deg);
+  }
+}
+
+/* ---- money changes ---- */
+.money-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9;
+}
+.money-float {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  display: grid;
+  justify-items: center;
+  padding: 3px 10px;
+  background: #fffaf0;
+  border: 2.5px solid;
+  border-radius: 10px;
+  box-shadow: 3px 3px 0 rgba(43, 37, 34, 0.7);
+  white-space: nowrap;
+  animation: money-rise 2.6s ease-out forwards;
+}
+.money-float strong {
+  font-size: clamp(15px, 1.5vw, 22px);
+  font-weight: 800;
+}
+.money-float span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.money-float.minus strong,
+.cash-delta.minus {
+  color: var(--red);
+}
+.money-float.plus strong,
+.cash-delta.plus {
+  color: var(--green);
+}
+.cash-delta {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
+  animation: money-pop 2.6s ease-out forwards;
+}
+@keyframes money-rise {
+  0% {
+    transform: translate(-50%, -60%) scale(0.6);
+    opacity: 0;
+  }
+  12% {
+    transform: translate(-50%, -110%) scale(1.15);
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -190%) scale(1);
+    opacity: 0;
+  }
+}
+@keyframes money-pop {
+  0% {
+    transform: scale(1.4);
+  }
+  20% {
+    transform: scale(1);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.player:has(.cash-delta.minus) {
+  animation: shake 0.4s ease-in-out 2;
+}
+@keyframes shake {
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+}
+
+.rent-due {
+  font-weight: 700;
+}
+button.pay {
+  font-size: 17px;
+  padding: 8px 18px;
+  animation: card-wiggle 1.4s ease-in-out infinite;
+}
+
+.build-rules {
+  margin-bottom: 8px;
+  background: #fffaf0;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+}
+.build-rules summary {
+  font-weight: 700;
+  cursor: pointer;
+}
+.build-rules ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+.asset-why {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  color: var(--muted);
+}

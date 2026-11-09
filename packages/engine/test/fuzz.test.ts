@@ -53,7 +53,7 @@ describe('random self-play', () => {
         }
         const cards = s.decks.chance.length + s.decks.community.length + s.decks.event.length;
         const kept = s.players.reduce((a, p) => a + p.jailCards.length, 0);
-        const inHand = s.pending?.type === 'chooseCard' ? 2 : 0;
+        const inHand = s.pending?.type === 'chooseCard' ? 2 : s.pending?.type === 'revealCard' ? 1 : 0;
         expect(cards + kept + inHand, `seed ${seed} step ${k}`).toBe(65);
       }
       expect(s.fund).toBeGreaterThanOrEqual(0);

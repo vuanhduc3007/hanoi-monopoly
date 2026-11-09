@@ -114,7 +114,7 @@ export interface ControllerOptions {
   onFinished?: (log: GameLog) => void;
 }
 
-type TimerKind = 'roll' | 'buy' | 'decision' | 'auction' | 'turn' | 'liquidation' | 'pick';
+type TimerKind = 'roll' | 'buy' | 'decision' | 'auction' | 'turn' | 'liquidation' | 'pick' | 'reveal' | 'rent';
 
 const NAME_MAX = 20;
 const CHAT_MAX = 200;
@@ -597,8 +597,15 @@ export class GameController {
     let kind: TimerKind;
     let ms: number;
     if (pend) {
-      kind = pend.type === 'buy' ? 'buy' : pend.type === 'liquidation' ? 'liquidation' : 'decision';
-      ms = (pend.type === 'liquidation' ? t.liquidationSec : t.buyDecisionSec) * 1000;
+      const byType: Partial<Record<string, [TimerKind, number]>> = {
+        buy: ['buy', t.buyDecisionSec],
+        liquidation: ['liquidation', t.liquidationSec],
+        revealCard: ['reveal', t.revealCardSec ?? t.buyDecisionSec],
+        payRent: ['rent', t.payRentSec ?? t.buyDecisionSec],
+      };
+      const [k, sec] = byType[pend.type] ?? ['decision', t.buyDecisionSec];
+      kind = k;
+      ms = sec * 1000;
     } else if (s.turn.phase === 'roll') {
       kind = 'roll';
       ms = t.rollSec * 1000;

@@ -17,6 +17,8 @@ const CARD_TILE: Record<string, number> = { chance: 7, community: 33, event: 17 
 export class G {
   s: GameState;
   events: GameEvent[] = [];
+  /** Flip drawn cards and pay plain rents automatically (Ăn vạ prompts still stop). */
+  auto = true;
 
   constructor(s: GameState) {
     this.s = s;
@@ -31,7 +33,19 @@ export class G {
     const r = applyAction(this.s, a);
     this.s = r.state;
     this.events.push(...r.events);
-    return r.events;
+    const out = [...r.events];
+    for (let guard = 0; this.auto && guard < 20; guard++) {
+      const p = this.s.pending;
+      let next: Action | null = null;
+      if (p?.type === 'revealCard') next = { type: 'revealCard', player: p.player };
+      else if (p?.type === 'payRent' && !p.discount) next = { type: 'payRent', player: p.player };
+      if (!next) break;
+      const r2 = applyAction(this.s, next);
+      this.s = r2.state;
+      this.events.push(...r2.events);
+      out.push(...r2.events);
+    }
+    return out;
   }
 
   p(id: string): PlayerState {

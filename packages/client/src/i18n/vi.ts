@@ -32,7 +32,7 @@ export const t = {
     watch: 'Xem',
     howTo: 'Cách chơi',
     howToText: [
-      'Mỗi lượt tung 2 xúc xắc, đi theo số bước. Qua Cửa Ô Quan Chưởng nhận lương.',
+      `Mỗi lượt tung 2 xúc xắc, đi theo số bước. Qua ${D.board[0].name} nhận lương.`,
       'Dừng ở ô chưa có chủ: mua theo giá in hoặc từ chối để đấu giá.',
       'Sở hữu đủ nhóm màu để xây nhà, khách sạn và thu tiền thuê cao hơn.',
       'Thẻ Cơ hội, Cộng đồng và Hanoi Event có thể làm thay đổi cả bàn.',
@@ -105,7 +105,7 @@ export const t = {
     botPlaying: 'Bot đang chơi thay',
     assets: 'Tài sản',
     trade: 'Giao dịch',
-    seconds: (n: number) => `${n}s`,
+    seconds: (n: number) => (n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}` : `${n}s`),
     until: (name: string) => `đến lượt kế của ${name}`,
     blockRent: 'đất của đối thủ không thu thuê',
     groupRent: (groups: string, mult: number) => `thuê ${groups} x${mult}`,
@@ -152,7 +152,11 @@ export const t = {
     reroll: 'Chạy cuốc đêm (tung lại)',
     confirm: 'Đi',
     chooseCard: 'Chọn 1 trong 2 thẻ',
-    rentDiscount: (amount: string) => `Trả thuê ${amount}. Dùng Ăn vạ để giảm?`,
+    rentDue: (tile: string, owner: string, amount: string) => `Bạn dừng ở ${tile} của ${owner}: phải trả ${amount}`,
+    payRent: (amount: string) => `Trả tiền (${amount})`,
+    rentDiscountUse: (amount: string) => `Ăn vạ: chỉ trả ${amount}`,
+    flipHint: 'Bấm vào lá bài giữa bàn để lật thẻ',
+    moving: 'Đang di chuyển…',
     useSkill: 'Dùng kỹ năng',
     skip: 'Bỏ qua',
     eventCancel: (card: string) => `Dùng Giải hạn để hủy "${card}" với bạn?`,
@@ -202,6 +206,29 @@ export const t = {
     close: 'Đóng',
     transport: 'Giao thông',
     utility: 'Tiện ích',
+    buildHotel: 'Lên khách sạn',
+    rulesTitle: 'Khi nào được xây nhà?',
+    rules: (housesForHotel: number) => [
+      'Phải sở hữu ĐỦ cả nhóm màu (ví dụ cả 2 ô nâu, hoặc cả 3 ô hồng). Mua thêm hoặc đổi đất với người khác để gom đủ nhóm.',
+      'Không ô nào trong nhóm đang thế chấp.',
+      'Chỉ xây trong lượt của bạn — bất cứ lúc nào trong lượt, không cần đứng trên ô đó. Mở "Tài sản" để xây.',
+      'Xây đều: các ô cùng nhóm chênh nhau tối đa 1 nhà. Muốn xây nhà thứ 2 ở một ô thì các ô khác trong nhóm phải có ít nhất 1 nhà.',
+      `Đủ ${housesForHotel} nhà trên mọi ô của nhóm thì được nâng lên khách sạn.`,
+      'Mỗi lần xây trả giá xây của ô; bán lại được một nửa.',
+    ],
+    why: {
+      notYourTurn: 'Chỉ xây trong lượt của bạn',
+      notBuildable: 'Ô này không xây được',
+      notOwner: 'Không phải đất của bạn',
+      needFullGroup: 'Cần sở hữu đủ cả nhóm màu',
+      groupMortgaged: 'Có ô trong nhóm đang thế chấp',
+      frozen: 'Đang bị "Đóng băng thị trường BĐS"',
+      maxLevel: 'Đã xây tối đa',
+      buildEvenly: 'Phải xây đều: xây các ô khác trong nhóm trước',
+      noCash: 'Không đủ tiền',
+      noHousesLeft: 'Ngân hàng hết nhà',
+      noHotelsLeft: 'Ngân hàng hết khách sạn',
+    } as Record<string, string>,
   },
 
   // S9
@@ -246,6 +273,26 @@ export const t = {
     hotel: (name: string, tile: string) => `${name} lên khách sạn ở ${tile}`,
   },
   pick3d: 'Xem nhân vật',
+  cardDraw: {
+    title: 'Rút thẻ',
+    flip: 'Bấm vào lá bài để lật!',
+    waiting: (name: string) => `${name} đang rút thẻ…`,
+  },
+  arrest: {
+    title: '🚨 CSGT thổi còi!',
+    body: (name: string) => `${name} bị giữ xe — về Bãi giữ xe vi phạm`,
+  },
+  money: {
+    rent: (tile: string) => `Thuê ${tile}`,
+    jailFine: 'Phạt ra Bãi giữ xe',
+    fee: 'Phí',
+    salary: 'Lương',
+    bought: (tile: string) => `Mua ${tile}`,
+    built: 'Xây nhà',
+    bank: 'Ngân hàng',
+    fund: 'Quỹ khuyến học',
+    mortgage: 'Thế chấp',
+  },
   mobile: { zoomIn: 'Phóng to bàn cờ', zoomOut: 'Thu nhỏ bàn cờ', more: 'Người chơi · Nhật ký · Trò chuyện', less: 'Thu gọn' },
   botReason: { disconnect: 'mất kết nối', afk: 'treo máy', left: 'đã rời ván' } as Record<string, string>,
   clockKind: {
@@ -460,7 +507,7 @@ export function formatEvent(e: GameEvent, who: Who): string | null {
     case 'landed':
       return `${p} dừng ở ${D.board[e.position as number].name}`;
     case 'salary':
-      return `${p} qua Cửa Ô, nhận lương ${money(e.amount as number)}`;
+      return `${p} qua ${D.board[0].name}, nhận lương ${money(e.amount as number)}`;
     case 'purchased':
       return `${p} mua ${tileName(e.propertyId as string)} giá ${money(e.price as number)}`;
     case 'purchaseDeclined':
@@ -499,6 +546,8 @@ export function formatEvent(e: GameEvent, who: Who): string | null {
       return `Ngân hàng góp ${money(e.amount as number)} vào Quỹ`;
     case 'cardDrawn':
       return `${p} rút thẻ "${cardName(e.cardId as string)}": ${describeCard(e.cardId as string)}`;
+    case 'cardDrawing':
+      return `${p} rút một thẻ ${t.board.deckNames[e.deck as 'chance']}…`;
     case 'cardKept':
       return `${p} giữ thẻ ${cardName(e.cardId as string)}`;
     case 'cardEffect':
@@ -556,7 +605,7 @@ export const ENGINE_EVENT_TYPES_HANDLED = [
   'turnStarted', 'diceRolled', 'stepAdjusted', 'tripleDoubles', 'moved', 'landed', 'salary', 'purchased',
   'purchaseDeclined', 'auctionStarted', 'bid', 'auctionEnded', 'dealt', 'rentDue', 'rentWaived', 'payment',
   'paymentSkipped', 'gain', 'rentBonus', 'commission', 'fundCollected', 'fundDeposit', 'cardDrawn', 'cardKept',
-  'cardEffect', 'deckEmpty', 'effectStarted', 'effectExpired', 'jailed', 'leftJail', 'stayedInJail',
+  'cardEffect', 'cardDrawing', 'deckEmpty', 'effectStarted', 'effectExpired', 'jailed', 'leftJail', 'stayedInJail',
   'goToJailIgnored', 'built', 'buildingSold', 'mortgaged', 'unmortgaged', 'tradeProposed', 'tradeAccepted',
   'tradeRejected', 'tradeCancelled', 'debt', 'bankrupt', 'skillUsed', 'skillTriggered', 'decisionRequired',
   'gameCreated', 'gameOver',

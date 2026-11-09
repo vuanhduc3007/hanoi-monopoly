@@ -113,7 +113,10 @@ export type Pending =
     }
   | { type: 'postRoll'; player: PlayerId; dice: number[]; context: 'normal' | 'jail' }
   | { type: 'chooseCard'; player: PlayerId; deck: DeckName; options: string[] }
-  | { type: 'rentDiscount'; player: PlayerId; task: PayTask; raw: number }
+  /** Landed on someone's property: the payer presses "Trả tiền" (or uses Ăn vạ when `discount`). */
+  | { type: 'payRent'; player: PlayerId; task: PayTask; raw: number; propertyId: string; discount: boolean }
+  /** A card is drawn face down; the drawer flips it (its effect applies after). */
+  | { type: 'revealCard'; player: PlayerId; deck: DeckName; cardId: string }
   | { type: 'eventCancel'; player: PlayerId; drawer: PlayerId; cardId: string }
   | { type: 'liquidation'; player: PlayerId; task: PayTask }
   | { type: 'inheritMortgage'; player: PlayerId; propertyId: string };
@@ -193,6 +196,8 @@ export type Action =
   | { type: 'useSkill'; player: PlayerId; target?: PlayerId; group?: string }
   | { type: 'declineSkill'; player: PlayerId }
   | { type: 'chooseCard'; player: PlayerId; cardId: string }
+  | { type: 'revealCard'; player: PlayerId }
+  | { type: 'payRent'; player: PlayerId }
   | { type: 'payDebt'; player: PlayerId }
   | { type: 'declareBankruptcy'; player: PlayerId }
   | { type: 'resolveMortgage'; player: PlayerId; unmortgage: boolean }

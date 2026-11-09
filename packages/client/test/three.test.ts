@@ -66,3 +66,69 @@ describe('purchase / build pop-ups', () => {
     expect(new Set(m.map((x) => x.key)).size).toBe(4);
   });
 });
+
+describe('choreography from server events', () => {
+  it('dice first, then walk tile by tile', async () => {
+    const { planFromEvents } = await import('../src/three/path');
+    const plan = planFromEvents(
+      [
+        { type: 'diceRolled', player: 'a', dice: [2, 3], purpose: 'normal' },
+        { type: 'moved', player: 'a', from: 0, to: 5, steps: 5 },
+      ],
+      { a: 0 },
+      10,
+    );
+    expect(plan.dice).toEqual([2, 3]);
+    expect(plan.steps.a.map((s) => s.tile)).toEqual([1, 2, 3, 4, 5]);
+    expect(plan.steps.a.every((s) => s.mode === 'walk')).toBe(true);
+  });
+
+  it('CSGT: walk onto tile 30, arrest pause, then hop to the parking lot', async () => {
+    const { planFromEvents } = await import('../src/three/path');
+    const plan = planFromEvents(
+      [
+        { type: 'diceRolled', player: 'a', dice: [1, 2], purpose: 'normal' },
+        { type: 'moved', player: 'a', from: 27, to: 30, steps: 3 },
+        { type: 'landed', player: 'a', position: 30 },
+        { type: 'jailed', player: 'a' },
+      ],
+      { a: 27 },
+      10,
+    );
+    expect(plan.steps.a).toEqual([
+      { tile: 28, mode: 'walk' },
+      { tile: 29, mode: 'walk' },
+      { tile: 30, mode: 'walk' },
+      { tile: 30, mode: 'pause', arrest: true },
+      { tile: 10, mode: 'hop' },
+    ]);
+  });
+
+  it('card move: walk to the card tile, then on to the destination; CH09 walks back', async () => {
+    const { planFromEvents } = await import('../src/three/path');
+    const plan = planFromEvents(
+      [
+        { type: 'moved', player: 'a', from: 4, to: 7, steps: 3 },
+        { type: 'moved', player: 'a', from: 7, to: 4, steps: -3 },
+      ],
+      { a: 4 },
+      10,
+    );
+    expect(plan.steps.a.map((s) => s.tile)).toEqual([5, 6, 7, 6, 5, 4]);
+  });
+});
+
+describe('money reasons', () => {
+  it('names the biggest reason a player paid or received', async () => {
+    const { moneyReason } = await import('../src/components/BoardFx');
+    const events = [
+      { type: 'payment', from: 'a', to: { kind: 'player', id: 'b' }, amount: 50, kind: 'rent', reason: 'P22' },
+      { type: 'salary', player: 'c', amount: 200 },
+      { type: 'payment', from: 'c', to: { kind: 'fund' }, amount: 200, kind: 'tax', reason: 'TAX1' },
+    ];
+    expect(moneyReason(events, 'a')).toBe('Thuê Hồ Gươm');
+    expect(moneyReason(events, 'b')).toBe('Thuê Hồ Gươm');
+    expect(['Lương', 'Thuế thu nhập cá nhân']).toContain(moneyReason(events, 'c'));
+    expect(moneyReason(events, 'z')).toBe('');
+  });
+});

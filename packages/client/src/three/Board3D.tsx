@@ -3,7 +3,9 @@ import { defaultData as D, type PublicState } from '@hanoi-monopoly/engine';
 import { t } from '../i18n/vi';
 import { colorOf, currentPlayer, hotelLevel } from '../lib/selectors';
 import type { RoomView } from '../net/protocol';
+import { store } from '../store';
 import { BoardScene, type Anchor, type BuildingView, type PieceView } from './boardScene';
+import { planFromEvents } from './path';
 import { hasWebGL } from './models';
 
 /** Extra canvas space above the board so tall pieces on the top row are not clipped. */
@@ -16,6 +18,8 @@ export const TOP_BLEED = 0.1;
 export function Board3D({ state, room, onActive }: { state: PublicState; room: RoomView; onActive: (on: boolean) => void }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const scene = useRef<BoardScene | null>(null);
+  /** Positions before the latest update (to plan walks). */
+  const positions = useRef<Record<string, number> | null>(null);
 
   useEffect(() => {
     const el = canvas.current;
@@ -27,6 +31,7 @@ export function Board3D({ state, room, onActive }: { state: PublicState; room: R
       return;
     }
     scene.current = s;
+    s.onArrest = (player) => store.set({ arrest: { player, at: Date.now() } });
     const board = el.parentElement!;
     const measure = () => {
       const box = el.getBoundingClientRect();
@@ -40,12 +45,14 @@ export function Board3D({ state, room, onActive }: { state: PublicState; room: R
           h: r.height,
         };
       });
-      s.resize(box.width, box.height, anchors);
+      const b = board.getBoundingClientRect();
+      s.resize(box.width, box.height, anchors, { x: b.left - box.left + b.width / 2, y: b.top - box.top + b.height / 2 });
     };
     const ro = new ResizeObserver(measure);
     ro.observe(board);
     measure();
     onActive(true);
+    store.set({ board3d: true });
     const onVisibility = () => (document.hidden ? s.stop() : s.start());
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
@@ -53,6 +60,8 @@ export function Board3D({ state, room, onActive }: { state: PublicState; room: R
       document.removeEventListener('visibilitychange', onVisibility);
       s.dispose();
       scene.current = null;
+      positions.current = null;
+      store.set({ board3d: false });
       onActive(false);
     };
   }, [onActive]);
@@ -81,7 +90,14 @@ export function Board3D({ state, room, onActive }: { state: PublicState; room: R
         houses: o.level === H ? 0 : o.level,
         hotel: o.level === H,
       }));
-    s.sync(pieces, buildings);
+    // Choreograph this update's events (dice first, then walking / arrests).
+    const events = store.get().game?.events ?? [];
+    const before = positions.current;
+    const jail = D.board.findIndex((tile) => tile.ref === 'JAIL');
+    const plan = before ? planFromEvents(events, before, jail) : { steps: {} };
+    const busy = s.sync(pieces, buildings, plan);
+    positions.current = Object.fromEntries(state.players.map((p) => [p.id, p.position]));
+    store.set({ animUntil: Date.now() + busy });
   }, [state, room]);
 
   return <canvas ref={canvas} className="board-3d" aria-hidden style={{ top: `-${TOP_BLEED * 100}%`, height: `${(1 + TOP_BLEED) * 100}%` }} />;

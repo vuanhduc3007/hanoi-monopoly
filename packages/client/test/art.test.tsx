@@ -50,7 +50,7 @@ describe('sounds', () => {
   it('maps events to the GDD §8.3 sounds', () => {
     expect(soundsFor([ev('diceRolled', { purpose: 'normal' })], null)).toEqual(['dice']);
     expect(soundsFor([ev('diceRolled', { purpose: 'EV19' })], null)).toEqual([]);
-    expect(soundsFor([ev('jailed')], null)).toEqual(['whistle']);
+    expect(soundsFor([ev('jailed')], null)).toEqual([]); // whistle plays with the arrest banner
     expect(soundsFor([ev('salary')], null)).toEqual(['bell']);
     expect(soundsFor([ev('purchased'), ev('auctionEnded', { winner: 'a' })], null)).toEqual(['ting']);
     expect(soundsFor([ev('auctionEnded', { winner: null })], null)).toEqual([]);

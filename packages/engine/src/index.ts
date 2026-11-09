@@ -1,4 +1,5 @@
-export { applyAction, applyActionInPlace, createGame, defaultConfig, rollTurnOrder } from './engine';
+export { applyAction, applyActionInPlace, createGame, defaultConfig, rollTurnOrder, whyCantBuild } from './engine';
+export type { BuildBlock } from './engine';
 export type { CreateGameOptions, NewPlayer } from './engine';
 export { buildGameData, defaultData } from './data';
 export type { GameData, CardDef, CharacterDef, OwnableDef, TileDef } from './data';

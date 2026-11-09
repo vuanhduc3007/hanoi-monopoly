@@ -38,6 +38,17 @@ export function execDrawCard(c: Ctx, p: PlayerState, deck: DeckName): void {
     return;
   }
   const cardId = pile.shift()!;
+  // Face down until the drawer flips it (revealCard / timeout).
+  c.s.pending = { type: 'revealCard', player: p.id, deck, cardId };
+  emit(c, 'cardDrawing', { player: p.id, deck });
+}
+
+/** The drawer flipped the card: show it, then apply it. */
+export function revealCard(c: Ctx, p: PlayerState): void {
+  const pend = c.s.pending;
+  if (pend?.type !== 'revealCard' || pend.player !== p.id) fail('No card to reveal');
+  c.s.pending = null;
+  const { deck, cardId } = pend;
   emit(c, 'cardDrawn', { player: p.id, deck, cardId });
   if (deck === 'event') {
     const tarot = eventCancelCandidate(c, cardId, p.id);

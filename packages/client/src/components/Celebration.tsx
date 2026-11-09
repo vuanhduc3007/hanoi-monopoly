@@ -5,7 +5,7 @@ import { artFor } from '../art/tileArt';
 import { money, t, tileName } from '../i18n/vi';
 import { colorOf, nameOf } from '../lib/selectors';
 import type { RoomView } from '../net/protocol';
-import { store } from '../store';
+import { store, useAnimSettled } from '../store';
 import { makeDeed, makeHotel, makeHouse } from '../three/models';
 import { Model3D } from '../three/Model3D';
 
@@ -57,7 +57,8 @@ export function Celebration({ room }: { state: PublicState; room: RoomView }) {
     });
   }, []);
 
-  const current = queue[0];
+  const settled = useAnimSettled();
+  const current = settled ? queue[0] : undefined;
   useEffect(() => {
     if (!current) return;
     const id = setTimeout(() => setQueue((q) => q.slice(1)), SHOW_MS);

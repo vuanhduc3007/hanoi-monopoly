@@ -31,7 +31,7 @@ Bàn cờ giữ nguyên vị trí ô của Monopoly gốc (để giữ cân bằ
 
 | Ô | ID | Tên | Loại | Nhóm |
 | --- | --- | --- | --- | --- |
-| 0 | GO | Cửa Ô Quan Chưởng | Góc: Xuất phát (di sản) | — |
+| 0 | GO | Hoàng thành Thăng Long | Góc: Xuất phát (di sản) | — |
 | 1 | P01 | Đông Anh | BĐS | Nâu |
 | 2 | CD | Cộng đồng | Thẻ | — |
 | 3 | P02 | Gia Lâm | BĐS | Nâu |
@@ -72,7 +72,7 @@ Bàn cờ giữ nguyên vị trí ô của Monopoly gốc (để giữ cân bằ
 | 38 | TAX2 | Phí gửi xe Phố cổ | Thuế | — |
 | 39 | P22 | Hồ Gươm | BĐS | Xanh đậm |
 
-Di sản không mua bán được: Cửa Ô Quan Chưởng, Văn Miếu; Hoàng thành Thăng Long chỉ xuất hiện trong thẻ CH17. Mã màu nhóm: Nâu #8B5A2B, Xanh nhạt #85B7EB, Hồng #ED93B1, Cam #EF9F27, Đỏ #E24B4A, Vàng #FAC775, Xanh lá #639922, Xanh đậm #0C447C (sẽ chỉnh lại theo bảng màu Đông Hồ ở mục 8).
+Di sản không mua bán được: Hoàng thành Thăng Long (ô xuất phát, trước đây là Cửa Ô Quan Chưởng), Văn Miếu. Mã màu nhóm: Nâu #8B5A2B, Xanh nhạt #85B7EB, Hồng #ED93B1, Cam #EF9F27, Đỏ #E24B4A, Vàng #FAC775, Xanh lá #639922, Xanh đậm #0C447C (sẽ chỉnh lại theo bảng màu Đông Hồ ở mục 8).
 
 ## 3. Kinh tế & bất động sản
 
@@ -83,7 +83,7 @@ Thang giá dùng lại Monopoly gốc vì vị trí ô giống hệt, nên cân 
 | Thông số | Giá trị |
 | --- | --- |
 | Tiền khởi đầu | 1.500 (nhân vật có thể đổi) |
-| Lương qua Cửa Ô | 200 |
+| Lương qua Hoàng thành | 200 |
 | Thuế thu nhập (ô 4) | 200 |
 | Phí gửi xe Phố cổ (ô 38) | 100 |
 | Phạt ra Bãi giữ xe | 50 |
@@ -224,7 +224,7 @@ Ba bộ thẻ, tổng 65 lá: Cơ hội (17, chủ yếu di chuyển), Cộng đ
 | ID | Tên | Hiệu ứng |
 | --- | --- | --- |
 | CH01 | Bắt Grab ra Bờ Hồ | Đi đến Hồ Gươm (39) |
-| CH02 | Về lại Cửa Ô | Đi đến ô 0, nhận lương |
+| CH02 | Về lại Hoàng thành | Đi đến ô 0, nhận lương |
 | CH03 | Hẹn cà phê Hồ Tây | Đi đến Hồ Tây (34) |
 | CH04 | Đi Times City xem phim | Đi đến Times City (23) |
 | CH05 | Bắt xe buýt về Thanh Xuân | Đi đến Thanh Xuân (11) |
@@ -239,7 +239,7 @@ Ba bộ thẻ, tổng 65 lá: Cơ hội (17, chủ yếu di chuyển), Cộng đ
 | CH14 | Phạt quá tốc độ trên Vành đai 3 | Trả 15 |
 | CH15 | Cải tạo toàn bộ công trình | Trả 25/nhà, 100/khách sạn |
 | CH16 | Làm tổ trưởng dân phố, khao cả xóm | Trả mỗi người chơi 50 |
-| CH17 | Tham quan Hoàng thành Thăng Long | Đi đến Văn Miếu (20) |
+| CH17 | Dâng hương Văn Miếu trước kỳ thi | Đi đến Văn Miếu (20) |
 
 ### 5.2 Cộng đồng (CD)
 
@@ -259,7 +259,7 @@ Ba bộ thẻ, tổng 65 lá: Cơ hội (17, chủ yếu di chuyển), Cộng đ
 | CD12 | Đóng học phí | Trả 50 |
 | CD13 | Ủng hộ đồng bào vùng lũ | Trả 50 |
 | CD14 | Phường thu phí chỉnh trang đô thị | Trả 40/nhà, 115/khách sạn |
-| CD15 | Về quê ăn Tết, khởi hành từ Cửa Ô | Đi đến ô 0, nhận lương |
+| CD15 | Về quê ăn Tết, khởi hành từ Hoàng thành | Đi đến ô 0, nhận lương |
 | CD16 | Quên khóa xe, bị cẩu | Vào Bãi giữ xe |
 
 ### 5.3 Hanoi Event (EV)
@@ -320,7 +320,7 @@ Mỗi người chơi chọn 1 trong 8 nhân vật, gồm nội tại (+), điể
 
 **Quy tắc và làm rõ:**
 
-- Chọn theo thứ tự ngược lượt, mỗi nhân vật 1 người. Hết giờ chọn: gán ngẫu nhiên.
+- Chọn theo thứ tự ngược lượt, mỗi nhân vật 1 người, tối đa 10 phút mỗi người. Hết giờ chọn: gán ngẫu nhiên.
 - Giảm giá mua chỉ áp dụng khi mua theo giá in, không áp dụng cho đấu giá và giao dịch.
 - "Vòng" của Tài xế Grab = giữa hai lần qua ô 0. Điều chỉnh bước không làm mất hay tạo đôi.
 - Ninja Lead ở lại ô 30 vẫn bị vào Bãi giữ xe do thẻ CH10, CD16 hoặc đôi 3 lần.
@@ -355,7 +355,7 @@ Kiến trúc server-authoritative: React client chỉ gửi hành động và hi
 | Đấu giá | 10 giây, đặt lại 5 giây mỗi lần trả giá | Chốt người trả cao nhất |
 | Đề nghị giao dịch | 30 giây | Tự hủy |
 | Thanh lý khi thiếu tiền | 60 giây | Hệ thống tự bán nhà rồi thế chấp từ nhóm rẻ nhất |
-| Chọn nhân vật | 20 giây mỗi người | Gán ngẫu nhiên |
+| Chọn nhân vật | 10 phút mỗi người | Gán ngẫu nhiên |
 | Mất kết nối | 60 giây | Bot chơi thay, người chơi quay lại được bất cứ lúc nào |
 | Treo máy | Hết giờ 3 lượt liên tiếp | Bot chơi thay đến hết ván |
 
@@ -415,7 +415,7 @@ Bố cục: desktop trước (bàn cờ vuông bên trái, panel bên phải); m
 
 - Font nội dung: Be Vietnam Pro. Font tiêu đề: một font có chân hỗ trợ đủ dấu tiếng Việt, nét gợi thư pháp (chọn khi làm UI).
 - Minh họa: mỗi BĐS một tranh nhỏ kiểu Đông Hồ; mỗi nhân vật một chân dung + avatar tròn làm quân cờ; mặt sau thẻ theo bộ (Cơ hội: đỏ son, Cộng đồng: vàng nghệ, Event: xanh chàm với họa tiết trống đồng). Nhà = nhà ống mái ngói; khách sạn = tòa cao tầng.
-- Âm thanh: xúc xắc trong bát (tung), còi CSGT (vào Bãi giữ xe), chuông xe đạp (qua Cửa Ô), "ting ting" chuyển khoản (mua đất), trống hội (Hanoi Event), pháo hoa (chiến thắng). Có nút tắt tiếng.
+- Âm thanh: xúc xắc trong bát (tung), còi CSGT (vào Bãi giữ xe), chuông xe đạp (qua Hoàng thành), "ting ting" chuyển khoản (mua đất), trống hội (Hanoi Event), pháo hoa (chiến thắng). Có nút tắt tiếng.
 
 ## 9. Phụ lục: dữ liệu và việc còn mở
 

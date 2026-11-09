@@ -99,6 +99,41 @@ describe('screens', () => {
     expect(sent).toContainEqual({ type: 'action', payload: { action: { type: 'buy' } } });
   });
 
+  it('S6 rent: a pay button, not just a log line', () => {
+    const s = playing((st) => {
+      st.riggedDice = [1, 2];
+      st.ownables.P02.owner = 'u2';
+    });
+    const r = applyAction(s, { type: 'roll', player: 'u1' });
+    receiveGame({ state: publicView(r.state), events: r.events, clock: null });
+    store.set({ animUntil: 0 });
+    render(<App />);
+    fireEvent.click(screen.getByText(t.act.payRent('4 tỷ')));
+    expect(sent).toContainEqual({ type: 'action', payload: { action: { type: 'payRent' } } });
+  });
+
+  it('card draw: face-down card, the drawer clicks to flip', () => {
+    const s = playing((st) => {
+      st.riggedDice = [3, 4];
+    });
+    const r = applyAction(s, { type: 'roll', player: 'u1' });
+    receiveGame({ state: publicView(r.state), events: r.events, clock: null });
+    store.set({ animUntil: 0 });
+    render(<App />);
+    fireEvent.click(screen.getByRole('dialog', { name: t.cardDraw.title }).querySelector('button')!);
+    expect(sent).toContainEqual({ type: 'action', payload: { action: { type: 'revealCard' } } });
+  });
+
+  it('S8 explains why a tile cannot be built yet', () => {
+    playing((st) => {
+      st.ownables.P01.owner = 'u1';
+    });
+    render(<App />);
+    fireEvent.click(screen.getByText(t.board.assets));
+    expect(screen.getByText(t.assets.why.needFullGroup)).toBeTruthy();
+    expect(screen.getByText(t.assets.rulesTitle)).toBeTruthy();
+  });
+
   it('S7 trade and S8 assets open from the side panel', () => {
     playing((st) => {
       st.ownables.P01.owner = 'u1';

@@ -21,6 +21,8 @@
   "timers": {
     "rollSec": 15,
     "buyDecisionSec": 20,
+    "revealCardSec": 8,
+    "payRentSec": 15,
     "turnSec": 90,
     "tradeOfferSec": 30,
     "liquidationSec": 60,

@@ -176,14 +176,16 @@ export function onLand(c: Ctx, p: PlayerState, tile: TileDef): { tasks: Task[]; 
   return { tasks, ignoreGoToJail };
 }
 
-/** Before rent is paid: Ăn vạ asks the payer. Returns true if a decision is pending. */
-export function onPayRent(c: Ctx, payer: PlayerState, task: PayTask, raw: number): boolean {
-  if (task.amount > 0 && skillAvailable(c, payer, 'rent_discount')) {
-    c.s.pending = { type: 'rentDiscount', player: payer.id, task, raw };
-    emit(c, 'decisionRequired', { decision: 'rentDiscount', player: payer.id, amount: task.amount });
-    return true;
-  }
-  return false;
+/**
+ * Before rent is paid: the payer confirms with "Trả tiền" (and Ninja Lead may
+ * use Ăn vạ instead). Returns true if a decision is pending.
+ */
+export function onPayRent(c: Ctx, payer: PlayerState, task: PayTask, raw: number, propertyId: string): boolean {
+  if (task.amount <= 0) return false;
+  const discount = skillAvailable(c, payer, 'rent_discount');
+  c.s.pending = { type: 'payRent', player: payer.id, task, raw, propertyId, discount };
+  emit(c, 'decisionRequired', { decision: 'payRent', player: payer.id, amount: task.amount, propertyId, discount });
+  return true;
 }
 
 /** After rent was actually paid: Idol TikTok bonus from the bank. */

@@ -9,8 +9,11 @@ export type PublicState = Omit<GameState, 'decks' | 'rng' | 'seed' | 'riggedDice
 
 export function publicView(s: GameState): PublicState {
   const { decks, rng: _rng, seed, riggedDice: _r, queue: _q, ...rest } = s;
+  const view = JSON.parse(JSON.stringify(rest));
+  // The card under a face-down draw stays secret until it is flipped.
+  if (view.pending?.type === 'revealCard') view.pending.cardId = '';
   return {
-    ...JSON.parse(JSON.stringify(rest)),
+    ...view,
     deckSizes: { chance: decks.chance.length, community: decks.community.length, event: decks.event.length },
     seed: s.status === 'over' ? seed : null,
   };

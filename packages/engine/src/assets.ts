@@ -44,28 +44,61 @@ function sellValue(c: Ctx, buildCost: number): number {
 
 // ---------------------------------------------------------------- build / sell
 
-/** Why `p` may not build on `id` right now, or null if allowed. */
-export function buildError(c: Ctx, p: PlayerState, id: string): string | null {
-  if (!canManage(c, p, false)) return 'Can only build during your own turn';
+/** Why a player may not build on a tile right now (codes the client explains in Vietnamese). */
+export type BuildBlock =
+  | 'notYourTurn'
+  | 'notBuildable'
+  | 'notOwner'
+  | 'needFullGroup'
+  | 'groupMortgaged'
+  | 'frozen'
+  | 'maxLevel'
+  | 'buildEvenly'
+  | 'noCash'
+  | 'noHousesLeft'
+  | 'noHotelsLeft';
+
+const BUILD_BLOCK_TEXT: Record<BuildBlock, string> = {
+  notYourTurn: 'Can only build during your own turn',
+  notBuildable: 'Cannot build here',
+  notOwner: 'Not your property',
+  needFullGroup: 'Need the full colour group',
+  groupMortgaged: 'A property in the group is mortgaged',
+  frozen: 'Building is frozen (EV15)',
+  maxLevel: 'Maximum building level reached',
+  buildEvenly: 'Must build evenly',
+  noCash: 'Not enough cash',
+  noHousesLeft: 'No houses left in stock',
+  noHotelsLeft: 'No hotels left in stock',
+};
+
+export function buildBlock(c: Ctx, p: PlayerState, id: string): BuildBlock | null {
+  if (!canManage(c, p, false)) return 'notYourTurn';
   const def = ownableDef(c, id);
   const own = c.s.ownables[id];
-  if (def.kind !== 'property' || !def.group || !def.buildCost) return 'Cannot build here';
-  if (own.owner !== p.id) return 'Not your property';
-  if (!ownsFullGroup(c, p.id, def.group)) return 'Need the full colour group';
+  if (def.kind !== 'property' || !def.group || !def.buildCost) return 'notBuildable';
+  if (own.owner !== p.id) return 'notOwner';
+  if (!ownsFullGroup(c, p.id, def.group)) return 'needFullGroup';
   const group = groupProperties(c, def.group);
-  if (group.some((g) => c.s.ownables[g].mortgaged)) return 'A property in the group is mortgaged';
-  if (buildFreezeActive(c, p)) return 'Building is frozen (EV15)';
-  if (own.level >= maxLevel(c, p)) return 'Maximum building level reached';
+  if (group.some((g) => c.s.ownables[g].mortgaged)) return 'groupMortgaged';
+  if (buildFreezeActive(c, p)) return 'frozen';
+  if (own.level >= maxLevel(c, p)) return 'maxLevel';
   const minLevel = Math.min(...group.map((g) => c.s.ownables[g].level));
-  if (own.level !== minLevel) return 'Must build evenly';
-  if (p.cash < def.buildCost) return 'Not enough cash';
+  if (own.level !== minLevel) return 'buildEvenly';
+  if (p.cash < def.buildCost) return 'noCash';
   if (c.s.config.buildingLimit) {
     const stock = buildingStock(c);
     const toHotel = own.level + 1 === hotelLevel(c);
-    if (toHotel && stock.hotels < 1) return 'No hotels left in stock';
-    if (!toHotel && stock.houses < 1) return 'No houses left in stock';
+    if (toHotel && stock.hotels < 1) return 'noHotelsLeft';
+    if (!toHotel && stock.houses < 1) return 'noHousesLeft';
   }
   return null;
+}
+
+/** Why `p` may not build on `id` right now, or null if allowed. */
+export function buildError(c: Ctx, p: PlayerState, id: string): string | null {
+  const b = buildBlock(c, p, id);
+  return b ? BUILD_BLOCK_TEXT[b] : null;
 }
 
 export function build(c: Ctx, p: PlayerState, id: string): void {

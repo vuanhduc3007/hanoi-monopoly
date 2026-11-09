@@ -221,3 +221,78 @@ export function hasWebGL(): boolean {
     return false;
   }
 }
+
+// ---------------------------------------------------------------- dice
+
+/** Face values in three.js BoxGeometry material order (+x, -x, +y, -y, +z, -z); opposite faces sum to 7. */
+export const DIE_FACES = [3, 4, 1, 6, 2, 5];
+
+const PIPS: Record<number, [number, number][]> = {
+  1: [[0.5, 0.5]],
+  2: [[0.28, 0.28], [0.72, 0.72]],
+  3: [[0.25, 0.25], [0.5, 0.5], [0.75, 0.75]],
+  4: [[0.28, 0.28], [0.72, 0.28], [0.28, 0.72], [0.72, 0.72]],
+  5: [[0.25, 0.25], [0.75, 0.25], [0.5, 0.5], [0.25, 0.75], [0.75, 0.75]],
+  6: [[0.28, 0.24], [0.72, 0.24], [0.28, 0.5], [0.72, 0.5], [0.28, 0.76], [0.72, 0.76]],
+};
+
+function dieFace(value: number): THREE.Material {
+  const c = typeof document !== 'undefined' ? document.createElement('canvas') : null;
+  const g = c?.getContext('2d');
+  if (!c || !g) return toon(COLORS.paper);
+  c.width = c.height = 128;
+  g.fillStyle = '#fffaf0';
+  g.fillRect(0, 0, 128, 128);
+  g.strokeStyle = '#2B2522';
+  g.lineWidth = 10;
+  g.strokeRect(5, 5, 118, 118);
+  for (const [x, y] of PIPS[value]) {
+    g.fillStyle = value === 1 ? '#B8312F' : '#2B2522';
+    g.beginPath();
+    g.arc(x * 128, y * 128, value === 1 ? 17 : 12, 0, Math.PI * 2);
+    g.fill();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return new THREE.MeshToonMaterial({ map: tex, gradientMap: toonRamp() });
+}
+
+/** A die (1 unit cube) with pip faces and an ink outline. */
+export function makeDie(): THREE.Group {
+  const g = new THREE.Group();
+  g.name = 'die';
+  const geo = new THREE.BoxGeometry(1, 1, 1);
+  const outline = new THREE.Mesh(geo, outlineMaterial);
+  outline.scale.setScalar(1.08);
+  g.add(outline, new THREE.Mesh(geo, DIE_FACES.map(dieFace)));
+  return g;
+}
+
+/** Euler rotation that puts `value` on top (+y). */
+export function dieRotationFor(value: number): [number, number, number] {
+  switch (value) {
+    case 6:
+      return [Math.PI, 0, 0];
+    case 2:
+      return [-Math.PI / 2, 0, 0];
+    case 5:
+      return [Math.PI / 2, 0, 0];
+    case 3:
+      return [0, 0, Math.PI / 2];
+    case 4:
+      return [0, 0, -Math.PI / 2];
+    default:
+      return [0, 0, 0];
+  }
+}
+
+/** Police beacon (đèn còi): red and blue halves, spun while a piece is arrested. */
+export function makeBeacon(): THREE.Group {
+  const g = new THREE.Group();
+  g.name = 'beacon';
+  const red = at(inked(new THREE.SphereGeometry(0.16, 12, 8, 0, Math.PI), COLORS.red), 0, 0, 0);
+  const blue = at(inked(new THREE.SphereGeometry(0.16, 12, 8, Math.PI, Math.PI), 0x2f6fd6), 0, 0, 0);
+  g.add(red, blue);
+  g.add(at(inked(new THREE.CylinderGeometry(0.17, 0.19, 0.08, 12), COLORS.ink), 0, -0.07, 0));
+  return g;
+}

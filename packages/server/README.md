@@ -27,7 +27,7 @@ const again = await client.reconnect(room.reconnectionToken);  // after a droppe
 | `start` | `{}` | lobby, host (≥ 2 players, all ready) |
 | `rematch` | `{}` | game over, host — back to the lobby with the connected players |
 | `pick` | `{ character: 'C01'… }` | picking, your turn to pick |
-| `action` | `{ action }` — an engine `Action`; `player` is filled in by the server | playing |
+| `action` | `{ action }` — an engine `Action`; `player` is filled in by the server (incl. `revealCard`, `payRent`) | playing |
 | `chat` | `{ text }` | any time (≤ 200 chars, 1 / 0.5 s) |
 | `emote` | `{ emote }` | any time |
 
@@ -41,7 +41,7 @@ const again = await client.reconnect(room.reconnectionToken);  // after a droppe
 | `room` | `{ code, phase, settings, you, seats[], spectators, picking: { order, current, available, clock } \| null }` |
 | `turnOrder` | `{ order, rolls }` |
 | `picked` | `{ seat, character, random }` |
-| `game` | `{ state: PublicState, events: GameEvent[], clock: { kind, deadline } \| null }` |
+| `game` | `{ state: PublicState, events: GameEvent[], clock: { kind, deadline } \| null }` — clock kinds: roll, buy, decision, reveal, rent, auction, turn, liquidation, pick; a face-down card has `pending.cardId = ''` |
 | `botTakeover` | `{ seat, reason: 'disconnect' \| 'afk' \| 'left' }` |
 | `gameOver` | `{ winner, ranking, seed, stats: { rentPaid, rentEarned, rentByTile }, log }` |
 | `chat` / `emote` | `{ from, spectator, text \| emote, at }` |

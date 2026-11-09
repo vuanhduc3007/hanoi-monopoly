@@ -116,7 +116,7 @@ describe('C02 Ninja Lead', () => {
       });
     }
     g.setCurrent('p1').at('p1', 36).roll('p1', 1, 2); // → 39, 50×2×1.5×1.5 = 225
-    expect(g.s.pending).toMatchObject({ type: 'rentDiscount', raw: 225 });
+    expect(g.s.pending).toMatchObject({ type: 'payRent', discount: true, raw: 225 });
     g.do({ type: 'useSkill', player: 'p1' });
     expect(g.cash('p1')).toBe(1500 - 30 - 113);
     expect(g.cash('p2')).toBe(1613);
@@ -126,7 +126,7 @@ describe('C02 Ninja Lead', () => {
   it('declining Ăn vạ pays in full and keeps the skill', () => {
     const g = G.create(['C02', null]).give('p2', ['P01']);
     g.setCurrent('p1').at('p1', 38).roll('p1', 1, 2);
-    expect(g.s.pending?.type).toBe('rentDiscount');
+    expect(g.s.pending).toMatchObject({ type: 'payRent', discount: true });
     g.do({ type: 'declineSkill', player: 'p1' });
     expect(g.cash('p1')).toBe(1500 + 200 - 2);
     expect(g.p('p1').skillUsed).toBe(false);

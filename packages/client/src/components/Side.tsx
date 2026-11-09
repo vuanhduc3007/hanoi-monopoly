@@ -6,6 +6,7 @@ import { Token } from './Token';
 import { send } from '../net/connection';
 import type { ClockInfo, RoomView } from '../net/protocol';
 import { useStore } from '../store';
+import { money as fmtMoney } from '../i18n/vi';
 
 export function PlayerList({ state, room }: { state: PublicState; room: RoomView }) {
   const current = currentPlayer(state).id;
@@ -35,7 +36,10 @@ export function PlayerList({ state, room }: { state: PublicState; room: RoomView
                 {p.jailCards.length > 0 && ' · 🪪'}
               </div>
             </div>
-            <div className="player-cash">{p.bankrupt ? '—' : money(p.cash)}</div>
+            <div className="player-cash">
+              {p.bankrupt ? '—' : money(p.cash)}
+              <CashDelta player={p.id} />
+            </div>
           </div>
         );
       })}
@@ -129,4 +133,17 @@ export function Toasts() {
 
 function stickToBottom(el: HTMLElement | null): void {
   if (el) el.scrollTop = el.scrollHeight;
+}
+
+/** "−200 tỷ" / "+200 tỷ" next to a player's cash while the change is fresh. */
+function CashDelta({ player }: { player: string }) {
+  const changes = useStore((s) => s.money);
+  const c = [...changes].reverse().find((x) => x.player === player && x.showAt <= Date.now());
+  if (!c) return null;
+  return (
+    <span key={c.id} className={`cash-delta ${c.delta < 0 ? 'minus' : 'plus'}`}>
+      {c.delta < 0 ? '−' : '+'}
+      {fmtMoney(Math.abs(c.delta))}
+    </span>
+  );
 }

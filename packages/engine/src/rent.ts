@@ -66,6 +66,6 @@ export function execRent(c: Ctx, payer: PlayerState, id: string, ctx: LandContex
   }
   const task = payTask(payer.id, { kind: 'player', id: q.owner! }, q.amount, 'rent', id, q.owner!);
   emit(c, 'rentDue', { player: payer.id, owner: q.owner, propertyId: id, amount: q.amount });
-  if (onPayRent(c, payer, task, q.raw)) return;
+  if (onPayRent(c, payer, task, q.raw, id)) return;
   pushFront(c, task);
 }

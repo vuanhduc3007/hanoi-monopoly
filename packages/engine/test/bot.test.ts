@@ -68,7 +68,7 @@ describe('bot policy (GDD 7.4)', () => {
   it('Ăn vạ only for big rents', () => {
     const g = G.create(['C02', null]).give('p2', ['P01']);
     g.setCurrent('p1').at('p1', 38).roll('p1', 1, 2);
-    expect(botAction(g.s)).toEqual({ type: 'declineSkill', player: 'p1' });
+    expect(botAction(g.s)).toEqual({ type: 'payRent', player: 'p1' });
   });
 
   it('Giải hạn when it saves enough cash (EV10)', () => {

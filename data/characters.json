@@ -2,7 +2,7 @@
   "rules": {
     "pickOrder": "reverse_turn_order",
     "unique": true,
-    "pickTimerSec": 20,
+    "pickTimerSec": 600,
     "skillUsesPerGame": 1,
     "discountsApplyTo": "bank_list_price_only"
   },

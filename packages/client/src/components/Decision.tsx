@@ -4,6 +4,7 @@ import { cardName, describeCard, groupName, money, t, tileName } from '../i18n/v
 import { hasTrait, isMyTurn, me, nameOf, skillOf, unmortgageCost, waitingFor } from '../lib/selectors';
 import { act } from '../net/connection';
 import type { RoomView } from '../net/protocol';
+import { useAnimSettled } from '../store';
 
 interface Props {
   state: PublicState;
@@ -17,7 +18,16 @@ export function Decision({ state, room, openAssets, openTrade }: Props) {
   const self = me(room, state);
   const pend = state.pending;
   const waiting = waitingFor(state);
+  const settled = useAnimSettled();
   if (state.status !== 'playing') return null;
+  // Let the dice land and the piece arrive before asking anything.
+  if (!settled && pend && pend.type !== 'postRoll') {
+    return (
+      <section className="panel decision">
+        <p className="muted">{t.act.moving}</p>
+      </section>
+    );
+  }
 
   if (pend?.type === 'auction') return <Auction state={state} room={room} />;
 
@@ -81,18 +91,27 @@ export function Decision({ state, room, openAssets, openTrade }: Props) {
         </>
       );
       break;
-    case 'rentDiscount':
+    case 'payRent': {
+      const owner = state.ownables[pend.propertyId]?.owner;
       body = (
         <>
-          <p>{t.act.rentDiscount(money(pend.task.amount))}</p>
+          <p className="rent-due">
+            {t.act.rentDue(tileName(pend.propertyId), nameOf(room, owner), money(pend.task.amount))}
+          </p>
           <div className="buttons">
-            <button className="primary" onClick={() => act({ type: 'useSkill' })}>
-              {t.act.useSkill}
+            <button className="primary pay" onClick={() => act({ type: 'payRent' })}>
+              {t.act.payRent(money(pend.task.amount))}
             </button>
-            <button onClick={() => act({ type: 'declineSkill' })}>{t.act.skip}</button>
+            {pend.discount && (
+              <button onClick={() => act({ type: 'useSkill' })}>{t.act.rentDiscountUse(money(Math.ceil(pend.raw * (1 - ((skillOf(self.character)?.rate as number) ?? 0)) - 1e-9)))}</button>
+            )}
           </div>
         </>
       );
+      break;
+    }
+    case 'revealCard':
+      body = <p>{t.act.flipHint}</p>;
       break;
     case 'eventCancel':
       body = (

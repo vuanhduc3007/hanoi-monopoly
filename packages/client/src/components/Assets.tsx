@@ -1,4 +1,4 @@
-import { defaultData as D, type PublicState } from '@hanoi-monopoly/engine';
+import { defaultData as D, whyCantBuild, type PublicState } from '@hanoi-monopoly/engine';
 import { groupName, money, t, tileName } from '../i18n/vi';
 import { groupColor, groupedOwnables } from '../lib/board';
 import { hotelLevel, isMyTurn, me, ownedBy, unmortgageCost } from '../lib/selectors';
@@ -16,6 +16,14 @@ export function Assets({ state, room, onClose }: { state: PublicState; room: Roo
   const canManage = isMyTurn(room, state) || liquidating;
   return (
     <Modal title={t.assets.title} onClose={onClose} wide>
+      <details className="build-rules">
+        <summary>{t.assets.rulesTitle}</summary>
+        <ul>
+          {t.assets.rules(D.economy.housesForHotel[state.config.mode]).map((r) => (
+            <li key={r}>{r}</li>
+          ))}
+        </ul>
+      </details>
       {!canManage && <p className="muted">{t.assets.onlyYourTurn}</p>}
       {mine.length === 0 && <p className="muted">{t.assets.nothing}</p>}
       {groupedOwnables(mine).map(({ key, ids }) => (
@@ -27,6 +35,7 @@ export function Assets({ state, room, onClose }: { state: PublicState; room: Roo
           {ids.map((id) => {
             const own = state.ownables[id];
             const def = D.ownables[id];
+            const block = def.kind === 'property' ? whyCantBuild(state, self.id, id) : null;
             return (
               <div key={id} className={`asset${own.mortgaged ? ' mortgaged' : ''}`}>
                 <span className="asset-name">{tileName(id)}</span>
@@ -36,8 +45,12 @@ export function Assets({ state, room, onClose }: { state: PublicState; room: Roo
                 <span className="buttons">
                   {def.kind === 'property' && (
                     <>
-                      <button disabled={!isMyTurn(room, state) || own.mortgaged} onClick={() => act({ type: 'build', propertyId: id })}>
-                        {t.assets.build} ({money(def.buildCost!)})
+                      <button
+                        disabled={!!block}
+                        title={block ? t.assets.why[block] : undefined}
+                        onClick={() => act({ type: 'build', propertyId: id })}
+                      >
+                        {own.level + 1 === H ? t.assets.buildHotel : t.assets.build} ({money(def.buildCost!)})
                       </button>
                       <button disabled={!canManage || own.level === 0} onClick={() => act({ type: 'sellBuilding', propertyId: id })}>
                         {t.assets.sell}
@@ -57,6 +70,7 @@ export function Assets({ state, room, onClose }: { state: PublicState; room: Roo
                     </button>
                   )}
                 </span>
+                {block && block !== 'notYourTurn' && block !== 'maxLevel' && <span className="asset-why">{t.assets.why[block]}</span>}
               </div>
             );
           })}

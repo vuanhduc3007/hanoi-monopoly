@@ -143,6 +143,33 @@ describe('playing', () => {
     expect(h.ctl.state!.ownables.P02.owner).toBe(h.ctl.seatBySession('s2')!.id);
   });
 
+  it('a drawn card stays face down for clients, flips on click or after the reveal clock', () => {
+    const h = started(2);
+    const cur = currentSession(h);
+    h.ctl.state!.riggedDice = [3, 4]; // → 7 Cơ hội
+    h.ctl.message(cur, 'action', { action: { type: 'roll' } });
+    const g = h.out.last('game');
+    expect(g.state.pending).toMatchObject({ type: 'revealCard', cardId: '' });
+    expect(g.clock.kind).toBe('reveal');
+    h.clock.advance(sec(T.revealCardSec));
+    expect(h.ctl.state!.pending?.type).not.toBe('revealCard');
+    expect(h.out.sent.some((m) => m.type === 'game' && m.message.events.some((e: any) => e.type === 'cardDrawn'))).toBe(true);
+  });
+
+  it('rent waits for the pay button, then pays itself when the clock runs out', () => {
+    const h = started(2);
+    const cur = currentSession(h);
+    const me = h.ctl.seatBySession(cur)!.id;
+    const other = h.ctl.seats.find((x) => x.id !== me)!.id;
+    h.ctl.state!.ownables.P02 = { owner: other, mortgaged: false, level: 0 };
+    h.ctl.state!.riggedDice = [1, 2];
+    h.ctl.message(cur, 'action', { action: { type: 'roll' } });
+    expect(h.out.last('game').clock.kind).toBe('rent');
+    const before = h.ctl.state!.players.find((p) => p.id === me)!.cash;
+    h.clock.advance(sec(T.payRentSec));
+    expect(h.ctl.state!.players.find((p) => p.id === me)!.cash).toBe(before - 4);
+  });
+
   it('trade offers expire after 30s', () => {
     const h = started(2);
     h.ctl.message('s1', 'action', {

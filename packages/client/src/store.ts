@@ -1,10 +1,19 @@
-import { useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import type { GameEvent } from '@hanoi-monopoly/engine';
 import type { ChatMsg, ClockInfo, GameMsg, GameOverMsg, RoomView } from './net/protocol';
 
 export interface LogLine {
   id: number;
   event: GameEvent;
+}
+
+/** A cash change to float over the board / player list. */
+export interface MoneyChange {
+  id: number;
+  player: string;
+  delta: number;
+  reason: string;
+  showAt: number;
 }
 
 export interface Toast {
@@ -26,6 +35,13 @@ export interface AppState {
   gameOver: GameOverMsg | null;
   /** Last card drawn, for the flip animation. */
   lastCard: { cardId: string; player: string; at: number } | null;
+  /** Board animations (dice, walking) run until this time; prompts wait for it. */
+  animUntil: number;
+  /** A piece is being arrested right now (CSGT banner). */
+  arrest: { player: string; at: number } | null;
+  /** The 3D board layer is running (it drives arrests and dice). */
+  board3d: boolean;
+  money: MoneyChange[];
 }
 
 export const initialState: AppState = {
@@ -40,6 +56,10 @@ export const initialState: AppState = {
   turnOrder: null,
   gameOver: null,
   lastCard: null,
+  animUntil: 0,
+  arrest: null,
+  board3d: false,
+  money: [],
 };
 
 const LOG_MAX = 300;
@@ -91,4 +111,17 @@ export function pushToast(code: string, message?: string): void {
 
 export function useStore<T>(select: (s: AppState) => T): T {
   return useSyncExternalStore(store.subscribe, () => select(state));
+}
+
+/** True once the board animations announced via `animUntil` are over (re-renders when they end). */
+export function useAnimSettled(): boolean {
+  const until = useStore((s) => s.animUntil);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const left = until - Date.now();
+    if (left <= 0) return;
+    const id = setTimeout(() => setNow(Date.now()), left + 20);
+    return () => clearTimeout(id);
+  }, [until]);
+  return Math.max(now, Date.now()) >= until;
 }

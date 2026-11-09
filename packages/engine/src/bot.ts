@@ -103,9 +103,11 @@ export function botActionFor(
         return postRollAction(c, me, pend.dice, pend.context, o);
       case 'chooseCard':
         return chooseCardAction(c, playerId, pend.options);
-      case 'rentDiscount': {
-        const worth = pend.task.amount >= o.rentDiscountFrom || pend.task.amount > me.cash;
-        return { type: worth ? 'useSkill' : 'declineSkill', player: playerId };
+      case 'revealCard':
+        return { type: 'revealCard', player: playerId };
+      case 'payRent': {
+        const worth = pend.discount && (pend.task.amount >= o.rentDiscountFrom || pend.task.amount > me.cash);
+        return { type: worth ? 'useSkill' : 'payRent', player: playerId };
       }
       case 'eventCancel':
         return eventCancelAction(c, playerId, pend.cardId, o);

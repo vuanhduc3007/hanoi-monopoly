@@ -25,11 +25,11 @@ const again = await client.reconnect(room.reconnectionToken);  // after a droppe
 | `setName` | `{ name }` | any time |
 | `thinking` | `{ mode: 'assets' \| 'trade' \| null }` — open panel: Tài sản adds time once, Giao dịch pauses your clock | playing |
 | `ready` | `{ ready: boolean }` | lobby |
-| `setConfig` | `{ mode?, characters?, scholarshipFund?, buildingLimit?, maxPlayers?, allowSpectators? }` | lobby, host |
+| `setConfig` | `{ mode?, board?, characters?, scholarshipFund?, buildingLimit?, maxPlayers?, allowSpectators? }` — `board`: `auto` (40 tiles for 2–4, 48 for 5–6, 56 for 7–8 players) \| `standard` \| `extended` \| `large`; `maxPlayers` 2–8 | lobby, host |
 | `start` | `{}` | lobby, host (≥ 2 players, all ready) |
 | `rematch` | `{}` | game over, host — back to the lobby with the connected players |
 | `pick` | `{ character: 'C01'… }` | picking, your turn to pick |
-| `action` | `{ action }` — an engine `Action`; `player` is filled in by the server (incl. `revealCard`, `payRent`) | playing |
+| `action` | `{ action }` — an engine `Action`; `player` is filled in by the server (incl. `revealCard`, `payRent`, `gamble`, `placeBet`, `buy` with `gamble`, `useSkill` with `propertyId`) | playing |
 | `chat` | `{ text }` | any time (≤ 200 chars, 1 / 0.5 s) |
 | `emote` | `{ emote }` | any time |
 

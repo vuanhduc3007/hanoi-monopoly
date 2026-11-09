@@ -8,16 +8,36 @@ Tạo phòng, gửi mã 6 ký tự hoặc link mời cho bạn bè, chọn nhân
 
 ## Có gì trong game
 
-- **Bàn cờ 40 ô** với địa danh Hà Nội: 22 bất động sản trong 8 nhóm màu, 4 ô giao thông (Bến xe Mỹ Đình, Metro Cát Linh – Hà Đông, Ga Hà Nội, Sân bay Nội Bài), 2 tiện ích, ô Quỹ khuyến học ở Văn Miếu.
-- **Bàn mở rộng 48 ô** cho 5–6 người (tự chọn theo số người, hoặc chủ phòng chọn): thêm nhóm Xanh ngọc (Linh Đàm, Văn Quán, Nghĩa Đô), nhóm Tím (Ciputra, Tây Hồ Tây, Làng đào Nhật Tân) và Metro Nhổn – Ga Hà Nội.
-- **Kỹ năng nhân vật hồi lại** sau vài lượt (mặc định 3, tùy nhân vật) thay vì chỉ 1 lần mỗi ván.
-- **Bàn đại 56 ô** cho 7–8 người: thêm nhóm Bạc (Tràng Tiền, Nhà hát Lớn, Phan Đình Phùng), nhóm Mận (Hàng Ngang, Hàng Đào) và Bến xe Giáp Bát.
-- **12 nhân vật**, thêm Con bạc (tài xỉu, mở sòng làm nhà cái), Thợ xây, F0 chứng khoán, Tổ trưởng dân phố — cân bằng bằng mô phỏng bot cho mọi cỡ bàn 2–8 người.
+- **Ba bàn cờ vuông theo số người chơi**, địa danh Hà Nội, ô Quỹ khuyến học ở Văn Miếu. Phòng chờ tự chọn bàn theo số người, chủ phòng cũng có thể chọn tay:
+
+  | Bàn | Số người | Nội dung |
+  | --- | --- | --- |
+  | Tiêu chuẩn 40 ô | 2–4 | 22 bất động sản trong 8 nhóm màu, 4 ô giao thông (Bến xe Mỹ Đình, Metro Cát Linh – Hà Đông, Ga Hà Nội, Sân bay Nội Bài), 2 tiện ích |
+  | Mở rộng 48 ô | 5–6 | thêm nhóm Xanh ngọc (Linh Đàm, Văn Quán, Nghĩa Đô), nhóm Tím (Ciputra, Tây Hồ Tây, Làng đào Nhật Tân), Metro Nhổn – Ga Hà Nội |
+  | Đại 56 ô | 7–8 | thêm nhóm Bạc (Tràng Tiền, Nhà hát Lớn, Phan Đình Phùng), nhóm Mận (Hàng Ngang, Hàng Đào), Bến xe Giáp Bát |
+
+- **12 nhân vật**, mỗi người có nội tại, điểm yếu và một kỹ năng **hồi lại sau vài lượt** (thường là 3):
+
+  | Nhân vật | Nét chính |
+  | --- | --- |
+  | Thiếu gia Vin | lương cao, mua Vinhomes/Vincom rẻ hơn, bố trả nợ hộ khi sắp phá sản |
+  | Ninja Lead | không sợ CSGT thổi còi, "ăn vạ" giảm nửa tiền thuê |
+  | Tài xế Grab | chỉnh ±1 bước, chạy cuốc đêm (tung lại) |
+  | Idol TikTok | được ngân hàng thưởng thêm khi thu tiền thuê, "bóc phốt" chặn thu thuê của đối thủ |
+  | Cò đất | ăn hoa hồng khi đối thủ mua đất, "tung tin quy hoạch" nhân đôi tiền thuê một nhóm |
+  | Nghiện Tarot | rút 2 thẻ Cơ hội chọn 1, "giải hạn" thẻ Event |
+  | SVBK | thưởng ở Văn Miếu, tốt nghiệp thì lương tăng |
+  | Nô lệ tư bản | nhiều vốn khởi đầu, xin nghỉ phép ra khỏi Bãi giữ xe |
+  | Con bạc | chơi **tài xỉu** khi mua đất hay nộp phạt (thắng trả bớt, thua trả thêm), **mở sòng** cho cả bàn đặt cược với mình làm nhà cái |
+  | Thợ xây | xây nhà rẻ hơn, tự tay xây nhà miễn phí (kể cả một "nhà chui") |
+  | F0 chứng khoán | nhận cổ tức theo giá đất đang giữ, "bắt đáy" đất đang thế chấp của đối thủ |
+  | Tổ trưởng dân phố | miễn phí gửi xe Phố cổ, "họp tổ" thu tiền góp của cả xóm |
+
+  Tỉ lệ thắng được cân bằng bằng mô phỏng hàng trăm nghìn ván bot cho mọi cỡ bàn 2–8 người: mỗi nhân vật lệch không quá khoảng ±3 điểm % so với mức công bằng (chi tiết trong [`docs/decisions.md`](docs/decisions.md)). Bàn 2–3 người dùng chỉ số riêng cho vài nhân vật.
 - **65 lá thẻ**: Cơ hội, Cộng đồng và bộ Hanoi Event, có thẻ tác động cả bàn và thẻ ⏳ kéo dài một vòng.
-- Mỗi nhân vật có nội tại, điểm yếu và một kỹ năng; tỉ lệ thắng được cân bằng bằng mô phỏng hàng chục nghìn ván bot (`--board`, `--players 2-8`, `--pool`, `--patch`).
-- **Hai chế độ**: Truyền thống (người cuối cùng không phá sản thắng) và Nhanh (chia đất đầu ván, tài sản cao nhất khi hết 60 phút thắng).
-- **Chơi online**: mua đất, đấu giá, xây nhà, thế chấp, giao dịch. Mỗi quyết định có đồng hồ đếm ngược. Người mất kết nối được bot chơi thay và có thể quay lại bất cứ lúc nào. Có khán giả và chat.
-- **Phong cách Đông Hồ, kết hợp 2D và 3D**: bàn cờ 2D, nhân vật và nhà cửa 3D đứng trên bàn, mô hình nhà 3D hiện lên khi mua đất hoặc xây nhà. Có âm thanh (xúc xắc trong bát, còi CSGT, chuông xe đạp, trống hội…), chơi được trên điện thoại.
+- **Hai chế độ**: Truyền thống (người cuối cùng không phá sản thắng) và Nhanh (chia đất đầu ván, tài sản cao nhất khi hết 60 phút thắng). Bàn đông người nên chơi chế độ Nhanh.
+- **Chơi online**: mua đất, đấu giá, xây nhà, thế chấp, giao dịch. Mỗi quyết định có đồng hồ đếm ngược. Người mất kết nối được bot chơi thay và có thể quay lại bất cứ lúc nào, kể cả khi tải lại trang. Có khán giả và chat.
+- **Phong cách Đông Hồ, kết hợp 2D và 3D**: bàn cờ 2D, nhân vật và nhà cửa 3D đứng trên bàn (nhà mang màu người chủ), xúc xắc 3D, mô hình nhà 3D hiện lên khi mua đất hoặc xây nhà. Có âm thanh (xúc xắc trong bát, còi CSGT, chuông xe đạp, trống hội…), chơi được trên điện thoại.
 
 ## Công nghệ
 
@@ -28,7 +48,7 @@ Monorepo TypeScript (pnpm workspaces):
 | [`packages/engine`](packages/engine) | Rules engine thuần TypeScript: `applyAction(state, action) → { state, events }`, RNG có seed, bot |
 | [`packages/server`](packages/server) | Server [Colyseus](https://colyseus.io) 0.16: phòng, mã mời, đồng hồ, bot thay người; phục vụ luôn bản build của client |
 | [`packages/client`](packages/client) | React 18 + Vite, chữ tiếng Việt gom trong `src/i18n/vi.ts`, hình SVG kiểu Đông Hồ, lớp 3D bằng three.js |
-| [`packages/sim`](packages/sim) | CLI cho bot đấu với nhau để cân bằng nhân vật |
+| [`packages/sim`](packages/sim) | CLI cho bot đấu với nhau để cân bằng nhân vật (chọn bàn, số người, nhóm nhân vật, thử số liệu khác) |
 
 Server giữ toàn quyền: xúc xắc, xáo bài và tính tiền chỉ chạy trên server. Client chỉ gửi hành động và hiển thị. Mọi số liệu game nằm trong [`data/*.json`](data), không viết cứng trong code.
 
@@ -60,6 +80,10 @@ npx -y pnpm@9.15.0 test        # toàn bộ unit test (Vitest)
 
 ```bash
 npx -y pnpm@9.15.0 sim -- --games 10000 --players 4   # mô phỏng bot, báo cáo tỉ lệ thắng theo nhân vật
+```
+
+```bash
+npx -y pnpm@9.15.0 sim -- --games 10000 --players 8 --board large   # bàn 56 ô; thêm --pool C01,C02,… hoặc --patch file.json để thử
 ```
 
 ```bash

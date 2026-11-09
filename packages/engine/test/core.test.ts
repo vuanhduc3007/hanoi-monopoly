@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyAction, createGame, rollTurnOrder } from '../src';
-import { D, G, has } from './helpers';
+import { D, G, has, withCharacter } from './helpers';
 
 const two = () => G.create([null, null]);
 const three = () => G.create([null, null, null]);
@@ -391,10 +391,11 @@ describe('quick mode', () => {
     }
   });
 
-  it('Nghiện Tarot is never dealt a forbidden tile', () => {
+  it('a character is never dealt a forbidden tile', () => {
+    const d = withCharacter('C06', { drawbacks: [{ type: 'forbidden_properties', properties: ['P08', 'P14', 'P20'] }] });
     for (let seed = 1; seed < 30; seed++) {
-      const g = G.create(['C06', null, null, null, null, null], { mode: 'quick' }, seed);
-      for (const id of D.characters.C06.drawbacks[0].properties as string[]) expect(g.owner(id)).not.toBe('p1');
+      const g = G.createWith(d, ['C06', null, null, null, null, null], { mode: 'quick' }, seed);
+      for (const id of ['P08', 'P14', 'P20']) expect(g.owner(id)).not.toBe('p1');
     }
   });
 

@@ -97,9 +97,15 @@ export function countBuildings(c: Ctx, playerId: PlayerId): { houses: number; ho
   return { houses, hotels };
 }
 
-export function groupHasBuildings(c: Ctx, group: string | undefined): boolean {
+/**
+ * Buildings anywhere in the colour group — or, with `owner`, on that owner's tiles of it
+ * (a group can be shared when Thợ xây builds without the full group).
+ */
+export function groupHasBuildings(c: Ctx, group: string | undefined, owner?: PlayerId): boolean {
   if (!group) return false;
-  return groupProperties(c, group).some((id) => c.s.ownables[id].level > 0);
+  return groupProperties(c, group).some(
+    (id) => c.s.ownables[id].level > 0 && (owner === undefined || c.s.ownables[id].owner === owner),
+  );
 }
 
 export function isMyTurn(c: Ctx, playerId: PlayerId): boolean {

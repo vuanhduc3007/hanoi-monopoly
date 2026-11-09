@@ -119,3 +119,41 @@ describe('48-tile board layout', () => {
     expect(D.board).toHaveLength(40);
   });
 });
+
+describe('60-tile hexagon layout', () => {
+  it('places every tile inside the hexagon, corners every 10, text never upside down', async () => {
+    const { hexData: H } = await import('@hanoi-monopoly/engine');
+    const { hexPlace, HEX_H } = await import('../src/lib/board');
+    const { artFor } = await import('../src/art/tileArt');
+    const centres = new Set<string>();
+    for (let p = 0; p < 60; p++) {
+      const pl = hexPlace(p, 60);
+      expect(pl.corner).toBe(p % 10 === 0);
+      expect(Math.abs(pl.angle)).toBeLessThanOrEqual(90);
+      expect(pl.x).toBeGreaterThan(0);
+      expect(pl.x).toBeLessThan(1);
+      expect(pl.y).toBeGreaterThan(0);
+      expect(pl.y).toBeLessThan(HEX_H);
+      centres.add(`${pl.x.toFixed(3)},${pl.y.toFixed(3)}`);
+    }
+    expect(centres.size).toBe(60);
+    // GO bottom-right, then left along the bottom edge.
+    expect(hexPlace(0, 60).x).toBeGreaterThan(0.5);
+    expect(hexPlace(1, 60).x).toBeGreaterThan(hexPlace(2, 60).x);
+    expect(hexPlace(5, 60).angle).toBe(0);
+    expect(hexPlace(35, 60).flip).toBe(true); // top edge reads the right way up
+    for (const t of H.board) expect(artFor(t.ref), t.ref).toBeTruthy();
+  });
+
+  it('describes the new characters and splits CH16 / CD10 by table size', async () => {
+    const { describeCharacter, describeCard } = await import('../src/i18n/vi');
+    for (const id of ['C09', 'C10', 'C11', 'C12']) {
+      const c = describeCharacter(id);
+      for (const line of [...c.passives, ...c.drawbacks, c.skill]) expect(line).not.toMatch(/^[a-z_]+$/);
+    }
+    expect(describeCharacter('C09').skill).toContain('tài xỉu');
+    expect(describeCharacter('C03', 2).tableNote).toBeTruthy();
+    expect(describeCharacter('C03', 5).tableNote).toBeNull();
+    expect(describeCard('CH16')).toContain('chia đều');
+  });
+});

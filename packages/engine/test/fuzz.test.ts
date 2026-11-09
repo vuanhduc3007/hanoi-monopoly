@@ -37,10 +37,11 @@ describe('random self-play', () => {
     const chars = Object.keys(D.characters);
     let finished = 0;
     for (let seed = 1; seed <= 16; seed++) {
-      const n = 2 + (seed % 5);
+      const board = (['standard', 'extended', 'hex'] as const)[seed % 3];
+      const n = board === 'hex' ? 7 + (seed % 2) : 2 + (seed % 5);
       const mode = seed % 4 === 0 ? 'quick' : 'classic';
-      const players = Array.from({ length: n }, (_, i) => ({ id: `p${i}`, character: chars[(seed + i) % 8] }));
-      let s = createGame({ players, seed, config: { mode } }).state;
+      const players = Array.from({ length: n }, (_, i) => ({ id: `p${i}`, character: chars[(seed + i) % chars.length] }));
+      let s = createGame({ players, seed, config: { mode, board } }).state;
       for (let k = 0; k < 2500 && s.status === 'playing'; k++) {
         s = step(s, k);
         if (k % 5 !== 0) continue;

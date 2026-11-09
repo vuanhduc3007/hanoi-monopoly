@@ -1,8 +1,10 @@
 {
   "id": "extended",
   "name": "Mở rộng 48 ô",
+  "shape": "square",
+  "maxPlayers": 6,
   "economy": {
-    "goSalaryBonus": 40,
+    "goSalaryMultiplier": 1.2,
     "transportRent": [
       25,
       50,

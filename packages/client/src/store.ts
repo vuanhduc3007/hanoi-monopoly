@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import type { GameEvent } from '@hanoi-monopoly/engine';
-import { setBoard } from './lib/gameData';
+import { setBoard, setTablePlayers } from './lib/gameData';
 import type { ChatMsg, ClockInfo, GameMsg, GameOverMsg, RoomView } from './net/protocol';
 
 export interface LogLine {
@@ -90,6 +90,7 @@ export const store = {
 /** Applies a `game` message: new state, appended log, card flip. */
 export function receiveGame(msg: GameMsg, now = Date.now()): void {
   setBoard(msg.state.config.board);
+  setTablePlayers(msg.state.players.length);
   store.set((s) => {
     const lines = msg.events.map((event) => ({ id: seq++, event }));
     const card = [...msg.events].reverse().find((e) => e.type === 'cardDrawn');

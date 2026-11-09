@@ -10,6 +10,7 @@ import {
   type Ctx,
 } from './ctx';
 import { expireEffectsOf } from './effects';
+import { gambleRule, gambleWorst } from './sicbo';
 import type { PayKind, PayTarget, PayTask, PlayerState, Task } from './types';
 
 /** Fund payments fall back to the bank when Quỹ khuyến học is off. */
@@ -69,6 +70,21 @@ export function execPay(c: Ctx, task: PayTask): void {
     const rec = getPlayer(c, to.id);
     if (rec.id === from.id || rec.bankrupt) {
       emit(c, 'paymentSkipped', { from: from.id, to, amount: task.amount, reason: task.reason });
+      return;
+    }
+  }
+  // Con bạc may bet on taxes, fines and card payments (Liều ăn nhiều).
+  if (!task.gambled && to.kind !== 'player') {
+    const rule = gambleRule(c, from, task.kind, task.amount);
+    if (rule) {
+      c.s.pending = { type: 'gamble', player: from.id, task };
+      emit(c, 'decisionRequired', {
+        decision: 'gamble',
+        player: from.id,
+        amount: task.amount,
+        reason: task.reason,
+        worst: gambleWorst(rule, task.amount),
+      });
       return;
     }
   }

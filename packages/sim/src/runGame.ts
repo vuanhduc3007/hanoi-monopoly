@@ -21,6 +21,8 @@ export interface SimGameOptions {
   bot?: Partial<BotOptions>;
   /** Force these characters (in seat order); otherwise random distinct ones. */
   lineup?: string[];
+  /** Only deal these characters (default: all). */
+  pool?: string[];
 }
 
 export type EndReason = 'lastStanding' | 'quickBankrupt' | 'roundLimit';
@@ -68,7 +70,7 @@ const MAX_ACTIONS = 200_000;
 
 export function runGame(o: SimGameOptions, d: GameData = defaultData): GameRecord {
   const rand = rng(o.seed ^ 0x9e3779b9);
-  const pool = Object.keys(d.characters);
+  const pool = o.pool ? [...o.pool] : Object.keys(d.characters);
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(rand() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];

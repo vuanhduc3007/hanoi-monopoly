@@ -10,7 +10,7 @@ import { send } from '../net/connection';
 import type { RoomView } from '../net/protocol';
 import { useStore } from '../store';
 
-/** S3 — 8 character cards, countdown, pick order (last player picks first). */
+/** S3 — character cards, countdown, pick order (last player picks first). */
 export function Pick({ room }: { room: RoomView }) {
   const turnOrder = useStore((s) => s.turnOrder);
   const pick = room.picking;
@@ -19,6 +19,8 @@ export function Pick({ room }: { room: RoomView }) {
   const myColor = colorOf(room, room.you ?? '');
   const mine = pick.current === room.you;
   const takenBy = (id: string) => room.seats.find((s) => s.character === id);
+  // Characters have their own numbers at 2–3 player tables.
+  const players = room.seats.length;
   return (
     <main className="pick">
       <header className="lobby-head">
@@ -42,16 +44,16 @@ export function Pick({ room }: { room: RoomView }) {
           id={preview}
           make={() => makeCharacter(preview, myColor)}
           size={190}
-          fallback={<Avatar character={preview} size={120} label={describeCharacter(preview).name} />}
+          fallback={<Avatar character={preview} size={120} label={describeCharacter(preview, players).name} />}
         />
         <div>
-          <h2>{describeCharacter(preview).name}</h2>
-          <p className="muted">{describeCharacter(preview).skill}</p>
+          <h2>{describeCharacter(preview, players).name}</h2>
+          <p className="muted">{describeCharacter(preview, players).skill}</p>
         </div>
       </section>
       <div className="characters">
         {Object.keys(D.characters).map((id) => {
-          const c = describeCharacter(id);
+          const c = describeCharacter(id, players);
           const owner = takenBy(id);
           const free = pick.available.includes(id);
           return (
@@ -68,6 +70,7 @@ export function Pick({ room }: { room: RoomView }) {
                   <span className="muted">{id}</span> {c.name}
                 </h3>
               </header>
+              {c.tableNote && <p className="table-note">{c.tableNote}</p>}
               <h4>{t.pick.passive}</h4>
               <ul>
                 {c.passives.map((x) => (

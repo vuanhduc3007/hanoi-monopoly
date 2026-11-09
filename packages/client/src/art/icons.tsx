@@ -445,6 +445,59 @@ const AVATARS: Record<string, { bg: string; draw: () => JSX.Element }> = {
       </>
     ),
   },
+  // Con bạc: three dice on a green felt table.
+  C09: {
+    bg: '#2F6B4F',
+    draw: () => (
+      <>
+        <rect x={9} y={22} width={12} height={12} rx={2} fill={PAPER} {...s} transform="rotate(-12 15 28)" />
+        <rect x={27} y={22} width={12} height={12} rx={2} fill={PAPER} {...s} transform="rotate(10 33 28)" />
+        <rect x={18} y={10} width={12} height={12} rx={2} fill={RED} {...s} />
+        <circle cx={24} cy={16} r={1.6} fill={PAPER} />
+        <circle cx={15} cy={28} r={1.4} fill={INK} />
+        <circle cx={31} cy={25.5} r={1.2} fill={INK} />
+        <circle cx={35} cy={30.5} r={1.2} fill={INK} />
+      </>
+    ),
+  },
+  // Thợ xây: yellow hard hat over a brick wall.
+  C10: {
+    bg: '#D9822B',
+    draw: () => (
+      <>
+        <rect x={10} y={30} width={28} height={8} fill={RED} {...s} />
+        <path d="M10 34 h28 M17 30 v4 M31 30 v4 M24 34 v4" {...s} strokeWidth={1.2} />
+        <path d="M13 26 a11 10 0 0 1 22 0 Z" fill={GOLD} {...s} />
+        <rect x={10} y={25} width={28} height={3.5} rx={1.5} fill={GOLD} {...s} />
+        <path d="M24 16 v9" {...s} strokeWidth={1.2} />
+      </>
+    ),
+  },
+  // F0 chứng khoán: a chart that zigzags up.
+  C11: {
+    bg: PAPER,
+    draw: () => (
+      <>
+        <path d="M10 38 V10 M10 38 H38" {...s} />
+        <path d="M12 32 L19 25 L24 29 L31 17 L36 20" fill="none" stroke={GREEN} strokeWidth={2.4} strokeLinejoin="round" />
+        <path d="M31 17 l-1 -5 5 3" fill={GREEN} stroke={GREEN} strokeWidth={1.4} />
+        <rect x={15} y={30} width={3} height={7} fill={RED} {...s} strokeWidth={1} />
+        <rect x={27} y={26} width={3} height={11} fill={GREEN} {...s} strokeWidth={1} />
+      </>
+    ),
+  },
+  // Tổ trưởng dân phố: loudspeaker and red armband.
+  C12: {
+    bg: '#9C8A5A',
+    draw: () => (
+      <>
+        <path d="M12 21 h7 l12 -8 v22 l-12 -8 h-7 Z" fill={PAPER} {...s} />
+        <rect x={12} y={21} width={7} height={6} fill={INK} />
+        <path d="M34 18 q4 6 0 12" fill="none" {...s} strokeWidth={1.4} />
+        <rect x={14} y={33} width={18} height={5} fill={RED} {...s} strokeWidth={1.4} />
+      </>
+    ),
+  },
 };
 
 export function Avatar({ character, size = 40, label }: { character: string | null; size?: number | string; label?: string }) {

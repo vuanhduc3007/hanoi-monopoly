@@ -47,6 +47,10 @@ export function soundsFor(events: GameEvent[], me: string | null): SoundName[] {
   const add = (n: SoundName) => !out.includes(n) && out.push(n);
   for (const e of events) {
     switch (e.type) {
+      case 'sicbo':
+      case 'sicboRolled':
+        add('dice');
+        break;
       case 'diceRolled':
         if (e.purpose === 'normal' || e.purpose === 'jail' || e.purpose === 'reroll') add('dice');
         break;

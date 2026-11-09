@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { type PublicState } from '@hanoi-monopoly/engine';
+import { gambleWorst, whyCantBuild, type PublicState } from '@hanoi-monopoly/engine';
 import { D } from '../lib/gameData';
-import { cardName, describeCard, groupName, money, t, tileName } from '../i18n/vi';
-import { hasTrait, isMyTurn, me, nameOf, skillOf, unmortgageCost, waitingFor } from '../lib/selectors';
+import { cardName, describeCard, groupName, money, sicboName, t, tileName } from '../i18n/vi';
+import { hasTrait, isMyTurn, me, nameOf, ownedBy, skillOf, unmortgageCost, waitingFor } from '../lib/selectors';
 import { act, send } from '../net/connection';
 import type { RoomView } from '../net/protocol';
 import { useAnimSettled } from '../store';
@@ -44,6 +44,7 @@ export function Decision({ state, room, openAssets, openTrade }: Props) {
   if (pend?.type === 'auction') return <Auction state={state} room={room} />;
 
   const mine = !!self && waiting === self.id && !self.bankrupt;
+  if (pend?.type === 'sicboBet') return <SicboBet state={state} room={room} mine={mine} />;
   if (!mine) {
     return (
       <section className="panel decision">
@@ -54,7 +55,14 @@ export function Decision({ state, room, openAssets, openTrade }: Props) {
 
   let body: JSX.Element;
   switch (pend?.type) {
-    case 'buy':
+    case 'buy': {
+      // Con bạc may buy on a bet (Liều ăn nhiều) when a lost bet is still affordable.
+      const rule = hasTrait(self.character, 'gamble_payment');
+      const canBet =
+        !!rule &&
+        (rule.kinds as string[]).includes('buy') &&
+        pend.price >= ((rule.minAmount as number) ?? 0) &&
+        self.cash >= gambleWorst(rule, pend.price);
       body = (
         <>
           <p>{t.act.buyPrompt(tileName(pend.propertyId))}</p>
@@ -62,11 +70,36 @@ export function Decision({ state, room, openAssets, openTrade }: Props) {
             <button className="primary" disabled={self.cash < pend.price} onClick={() => act({ type: 'buy' })}>
               {t.act.buy(money(pend.price))}
             </button>
+            {canBet && (
+              <>
+                <button className="bet" onClick={() => act({ type: 'buy', gamble: 'tai' })}>{t.act.buyBet(sicboName('tai'))}</button>
+                <button className="bet" onClick={() => act({ type: 'buy', gamble: 'xiu' })}>{t.act.buyBet(sicboName('xiu'))}</button>
+              </>
+            )}
             <button onClick={() => act({ type: 'declineBuy' })}>{t.act.decline}</button>
+          </div>
+          {canBet && <p className="muted">{betHint(rule!, pend.price)}</p>}
+        </>
+      );
+      break;
+    }
+    case 'gamble': {
+      const rule = hasTrait(self.character, 'gamble_payment');
+      body = (
+        <>
+          <p className="rent-due">{t.act.gamblePrompt(money(pend.task.amount), reasonOf(pend.task.reason))}</p>
+          {rule && <p className="muted">{betHint(rule, pend.task.amount)}</p>}
+          <div className="buttons">
+            <button className="bet" onClick={() => act({ type: 'gamble', pick: 'tai' })}>{t.act.betTai}</button>
+            <button className="bet" onClick={() => act({ type: 'gamble', pick: 'xiu' })}>{t.act.betXiu}</button>
+            <button className="primary pay" onClick={() => act({ type: 'gamble', pick: null })}>
+              {t.act.payNormal(money(pend.task.amount))}
+            </button>
           </div>
         </>
       );
       break;
+    }
     case 'postRoll': {
       const sum = pend.dice.reduce((a, b) => a + b, 0);
       const adjust = hasTrait(self.character, 'adjust_roll');
@@ -223,6 +256,51 @@ function TurnSkill({ state, room }: { state: PublicState; room: RoomView }) {
   if (self.skillUsed) {
     return self.skillCooldown ? <p className="muted skill-cooldown">{t.act.skillCooldown(skill.name, self.skillCooldown)}</p> : null;
   }
+  if (state.pending) return null;
+  // One-click skills.
+  if (skill.type === 'host_sicbo' || skill.type === 'collect_contribution') {
+    return (
+      <div className="skill">
+        <button onClick={() => act({ type: 'useSkill' })}>
+          {t.act.skills}: {skill.name}
+        </button>
+      </div>
+    );
+  }
+  if (skill.type === 'buy_mortgaged' || skill.type === 'free_build') {
+    const targets =
+      skill.type === 'buy_mortgaged'
+        ? Object.keys(state.ownables).filter((id) => {
+            const o = state.ownables[id];
+            return o.owner && o.owner !== self.id && o.mortgaged;
+          })
+        : ownedBy(state, self.id).filter(
+            (id) => D.ownables[id].kind === 'property' && freeBuildAllowed(state, self.id, id),
+          );
+    return (
+      <div className="skill">
+        <button onClick={() => setOpen(!open)}>
+          {t.act.skills}: {skill.name}
+        </button>
+        {open && (
+          <div className="buttons">
+            <span className="muted">{skill.type === 'buy_mortgaged' ? t.act.chooseMortgaged : t.act.chooseFreeBuild}</span>
+            {targets.length === 0 && <span className="muted">{t.act.noTargets}</span>}
+            {targets.map((id) => (
+              <button
+                key={id}
+                style={{ borderColor: D.groups[D.ownables[id].group ?? '']?.color }}
+                onClick={() => act({ type: 'useSkill', propertyId: id })}
+              >
+                {tileName(id)}
+                {skill.type === 'buy_mortgaged' && ` · ${money(Math.ceil(D.ownables[id].mortgage * (1 + (skill.premium as number)) - 1e-9))}`}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
   if (skill.type !== 'block_rent' && skill.type !== 'rent_multiplier') return null;
   const opponents = state.players.filter((p) => p.id !== self.id && !p.bankrupt);
   return (
@@ -251,6 +329,65 @@ function TurnSkill({ state, room }: { state: PublicState; room: RoomView }) {
         </div>
       )}
     </div>
+  );
+}
+
+/** Thợ xây: a free house is allowed here (the engine also allows a first house without the full group). */
+function freeBuildAllowed(state: PublicState, playerId: string, id: string): boolean {
+  const why = whyCantBuild(state, playerId, id);
+  if (why === null || why === 'noCash') return true;
+  const sk = skillOf(state.players.find((p) => p.id === playerId)?.character ?? null);
+  if (why !== 'needFullGroup' || !sk?.anyTile || state.ownables[id].level > 0) return false;
+  const partial = ownedBy(state, playerId).filter((x) => {
+    const g = D.ownables[x].group;
+    return state.ownables[x].level > 0 && g && !D.groups[g].properties.every((y) => state.ownables[y].owner === playerId);
+  }).length;
+  return partial < ((sk.anyTileMax as number | undefined) ?? Infinity) && !state.ownables[id].mortgaged;
+}
+
+/** "Thắng chỉ trả … · thua trả … · ra bão trả …" for Con bạc's bets. */
+function betHint(rule: Record<string, unknown>, amount: number): string {
+  const up = (x: number) => Math.ceil(x - 1e-9);
+  return t.act.buyBetHint(
+    money(up(amount * (1 - (rule.winRate as number)))),
+    money(gambleWorst(rule as { type: string }, amount)),
+    money(Math.max(0, up(amount * (1 - (rule.jackpotRate as number))))),
+  );
+}
+
+function reasonOf(reason: string): string {
+  if (reason === 'TAX1' || reason === 'TAX2') return ` (${tileName(reason)})`;
+  if (reason === 'jailFine') return ' (phạt Bãi giữ xe)';
+  if (D.cards[reason]) return ` (${cardName(reason)})`;
+  return '';
+}
+
+/** Mở sòng: bettors pick Tài / Xỉu one after another; everyone sees the bets so far. */
+function SicboBet({ state, room, mine }: { state: PublicState; room: RoomView; mine: boolean }) {
+  const pend = state.pending as Extract<PublicState['pending'], { type: 'sicboBet' }>;
+  const placed = Object.entries(pend.bets);
+  return (
+    <section className="panel decision sicbo-table">
+      <p>
+        <strong>{t.sicboTitle(nameOf(room, pend.host))}</strong>
+      </p>
+      {mine ? (
+        <>
+          <p>{t.act.sicboBetPrompt(nameOf(room, pend.host), money(pend.stake))}</p>
+          <div className="buttons">
+            <button className="bet" onClick={() => act({ type: 'placeBet', pick: 'tai' })}>{t.act.betTai}</button>
+            <button className="bet" onClick={() => act({ type: 'placeBet', pick: 'xiu' })}>{t.act.betXiu}</button>
+          </div>
+        </>
+      ) : (
+        <p className="muted">{t.act.sicboWaiting(nameOf(room, pend.host), nameOf(room, pend.player))}</p>
+      )}
+      {placed.length > 0 && (
+        <p className="muted">
+          {t.act.sicboBets}: {placed.map(([id, pick]) => `${nameOf(room, id)} → ${sicboName(pick)}`).join(' · ')}
+        </p>
+      )}
+    </section>
   );
 }
 

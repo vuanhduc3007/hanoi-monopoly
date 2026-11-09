@@ -1,7 +1,9 @@
 import {
   applyAction,
   createGame,
+  dataFor,
   defaultData,
+  type GameData,
   type Action,
   type GameConfig,
   type GameEvent,
@@ -9,7 +11,22 @@ import {
   type PlayerState,
 } from '../src';
 
-export const D = defaultData;
+/**
+ * Board data with the characters' small-table overrides (`byTableSize`) removed, so the
+ * trait tests check the base numbers whatever the test table size. The overrides have
+ * their own tests (test/tablesize.test.ts).
+ */
+export function baseCharacters(d: GameData): GameData {
+  const characters = Object.fromEntries(Object.entries(d.characters).map(([id, ch]) => [id, { ...ch, byTableSize: undefined }]));
+  return { ...d, characters };
+}
+
+export const D = baseCharacters(defaultData);
+
+/** `D` with one character's fields replaced. */
+export function withCharacter(id: string, fields: Partial<GameData['characters'][string]>, base: GameData = D): GameData {
+  return { ...base, characters: { ...base.characters, [id]: { ...base.characters[id], ...fields } } };
+}
 
 const CARD_TILE: Record<string, number> = { chance: 7, community: 33, event: 17 };
 
@@ -20,17 +37,27 @@ export class G {
   /** Flip drawn cards and pay plain rents automatically (Ăn vạ prompts still stop). */
   auto = true;
 
-  constructor(s: GameState) {
+  d: GameData;
+
+  constructor(s: GameState, d: GameData = baseCharacters(dataFor(s.config.board))) {
     this.s = s;
+    this.d = d;
+  }
+
+  /** A game on custom data (e.g. a character given a trait no shipped character has). */
+  static createWith(d: GameData, chars: (string | null)[], config: Partial<GameConfig> = {}, seed = 42): G {
+    const players = chars.map((character, i) => ({ id: `p${i + 1}`, character }));
+    return new G(createGame({ players, seed, config }, d).state, d);
   }
 
   static create(chars: (string | null)[], config: Partial<GameConfig> = {}, seed = 42): G {
     const players = chars.map((character, i) => ({ id: `p${i + 1}`, character }));
-    return new G(createGame({ players, seed, config }).state);
+    const d = baseCharacters(dataFor(config.board));
+    return new G(createGame({ players, seed, config }, d).state, d);
   }
 
   do(a: Action): GameEvent[] {
-    const r = applyAction(this.s, a);
+    const r = applyAction(this.s, a, this.d);
     this.s = r.state;
     this.events.push(...r.events);
     const out = [...r.events];
@@ -40,7 +67,7 @@ export class G {
       if (p?.type === 'revealCard') next = { type: 'revealCard', player: p.player };
       else if (p?.type === 'payRent' && !p.discount) next = { type: 'payRent', player: p.player };
       if (!next) break;
-      const r2 = applyAction(this.s, next);
+      const r2 = applyAction(this.s, next, this.d);
       this.s = r2.state;
       this.events.push(...r2.events);
       out.push(...r2.events);

@@ -1440,3 +1440,140 @@ button.pay {
   border-color: var(--gold);
   box-shadow: 3px 3px 0 var(--gold);
 }
+
+/* ---------------------------------------------------------------- tài xỉu (Con bạc) */
+.sicbo-result {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  transform: translateX(-50%);
+  z-index: 7;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 10px 18px 12px;
+  background: #2f6b4f;
+  color: #fffaf0;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: 5px 5px 0 rgba(43, 37, 34, 0.8);
+  font-weight: 700;
+  font-size: clamp(13px, 1.4vw, 18px);
+  text-align: center;
+  animation: card-in 0.3s ease-out both;
+  max-width: 92%;
+}
+.sicbo-head {
+  font-size: 0.85em;
+  opacity: 0.9;
+}
+.sicbo-dice {
+  display: flex;
+  gap: 10px;
+}
+.die-face {
+  display: grid;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  width: clamp(30px, 3.4vw, 46px);
+  aspect-ratio: 1;
+  padding: 5px;
+  background: #fffaf0;
+  border: 2.5px solid var(--ink);
+  border-radius: 7px;
+  animation: die-shake 0.55s ease-out both;
+}
+.die-face i {
+  width: 72%;
+  aspect-ratio: 1;
+  place-self: center;
+  border-radius: 50%;
+  background: var(--ink);
+}
+.die-face.red-pips i {
+  background: var(--red);
+}
+@keyframes die-shake {
+  0% { transform: translateY(-18px) rotate(-200deg) scale(0.6); opacity: 0; }
+  70% { transform: translateY(2px) rotate(8deg) scale(1.05); opacity: 1; }
+  100% { transform: none; }
+}
+.sicbo-total strong {
+  color: #ffd76a;
+  font-size: 1.2em;
+}
+.result-bao .sicbo-total strong {
+  color: #ff8a7a;
+}
+.sicbo-outcome {
+  font-size: 0.85em;
+}
+.outcome-win,
+.outcome-jackpot {
+  color: #b9f5a0;
+}
+.outcome-lose {
+  color: #ffb3a8;
+}
+button.bet {
+  background: #2f6b4f;
+  color: #fffaf0;
+  border-color: var(--ink);
+}
+.table-note {
+  font-size: 0.8em;
+  color: var(--red);
+  margin: 2px 0;
+}
+
+/* ---------------------------------------------------------------- hexagon board (60 tiles, 8 players) */
+.board.board-hex {
+  display: block;
+  position: relative;
+  width: min(100%, calc((100vh - 24px) / 0.866));
+  aspect-ratio: 1 / 0.866;
+  background: var(--ink);
+  border: none;
+  outline: none;
+  box-shadow: none;
+  clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+}
+.board-hex::before {
+  /* Paper inside the ring of tiles. */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: #efe2c2;
+  clip-path: polygon(30.5% 9%, 69.5% 9%, 91% 50%, 69.5% 91%, 30.5% 91%, 9% 50%);
+}
+.board-hex .tile {
+  position: absolute;
+  padding: 1px;
+  font-size: clamp(5px, 0.55vw, 9px);
+  outline: 1px solid var(--ink);
+}
+.board-hex .tile.tile-flip {
+  flex-direction: column-reverse;
+}
+.board-hex .tile.tile-flip .tile-band {
+  margin-bottom: 0;
+  margin-top: 2px;
+}
+.board-hex .tile-corner {
+  font-size: clamp(5px, 0.6vw, 10px);
+}
+.board-hex .tile-art .tile-icon {
+  max-height: 22px;
+}
+.board-hex .tile-corner .tile-art .tile-icon {
+  max-height: 30px;
+}
+.board-hex .tile-price {
+  display: none;
+}
+.board-hex .board-center {
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  top: 19%;
+  bottom: 19%;
+}

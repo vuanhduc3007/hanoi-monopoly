@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { type GameEvent, type PublicState } from '@hanoi-monopoly/engine';
 import { D } from '../lib/gameData';
 import { CardBack } from '../art/icons';
-import { cardName, describeCard, money, t, tileName } from '../i18n/vi';
+import { cardName, describeCard, money, sicboName, t, tileName } from '../i18n/vi';
 import { colorOf, nameOf } from '../lib/selectors';
 import { act } from '../net/connection';
 import type { RoomView } from '../net/protocol';
@@ -226,6 +226,70 @@ export function MoneyFloaters({ state, room }: { state: PublicState; room: RoomV
 // ---------------------------------------------------------------- dice result
 
 const RESULT_MS = 2600;
+const SICBO_MS = 4200;
+
+const PIPS: Record<number, [number, number][]> = {
+  1: [[1, 1]],
+  2: [[0, 0], [2, 2]],
+  3: [[0, 0], [1, 1], [2, 2]],
+  4: [[0, 0], [0, 2], [2, 0], [2, 2]],
+  5: [[0, 0], [0, 2], [1, 1], [2, 0], [2, 2]],
+  6: [[0, 0], [1, 0], [2, 0], [0, 2], [1, 2], [2, 2]],
+};
+
+/** A flat die face (tài xỉu uses its own three dice, never the movement dice). */
+function DieFace({ value, delay }: { value: number; delay: number }) {
+  return (
+    <span className={`die-face${value === 1 || value === 4 ? ' red-pips' : ''}`} style={{ animationDelay: `${delay}ms` }}>
+      {PIPS[value].map(([r, c], i) => (
+        <i key={i} style={{ gridRow: r + 1, gridColumn: c + 1 }} />
+      ))}
+    </span>
+  );
+}
+
+/** Tài xỉu result: Con bạc's own bet (Liều ăn nhiều) or the Mở sòng table. */
+export function SicboResult({ room }: { room: RoomView }) {
+  const game = useStore((s) => s.game);
+  const [shown, setShown] = useState<{ e: GameEvent; at: number } | null>(null);
+  useEffect(() => {
+    const e = [...(game?.events ?? [])].reverse().find((x) => x.type === 'sicbo' || x.type === 'sicboRolled');
+    if (e) setShown({ e, at: Date.now() });
+  }, [game]);
+  useEffect(() => {
+    if (!shown) return;
+    const hide = setTimeout(() => setShown(null), SICBO_MS);
+    return () => clearTimeout(hide);
+  }, [shown?.at]);
+  if (!shown) return null;
+  const { e } = shown;
+  const dice = e.dice as number[];
+  const own = e.type === 'sicbo';
+  const outcome = own ? String(e.outcome) : null;
+  return (
+    <div className={`sicbo-result result-${String(e.result)}`} key={shown.at} role="status">
+      <div className="sicbo-head">{own ? t.sicboGamble(nameOf(room, e.player as string)) : t.sicboTitle(nameOf(room, e.host as string))}</div>
+      <div className="sicbo-dice">
+        {dice.map((v, i) => (
+          <DieFace key={i} value={v} delay={i * 120} />
+        ))}
+      </div>
+      <div className="sicbo-total">
+        {dice.join(' + ')} = {String(e.total)} → <strong>{sicboName(e.result)}</strong>
+      </div>
+      {own ? (
+        <div className={`sicbo-outcome outcome-${outcome}`}>
+          {t.sicboOutcome[outcome!]} {t.sicboPayout(money(e.from as number), money(e.to as number))}
+        </div>
+      ) : (
+        <div className="sicbo-outcome">
+          {(e.winners as string[]).map((id) => nameOf(room, id)).join(', ') || '—'} {t.sicboOutcome.win.toLowerCase()} ·{' '}
+          {(e.losers as string[]).map((id) => nameOf(room, id)).join(', ') || '—'} {t.sicboOutcome.lose.toLowerCase()}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /** "Lan tung 3 + 4 = 7" in big type once the dice have landed (no misreading the 3D dice). */
 export function DiceResult({ room }: { room: RoomView }) {

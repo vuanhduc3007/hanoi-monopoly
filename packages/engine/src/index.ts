@@ -1,9 +1,11 @@
 export { applyAction, applyActionInPlace, createGame, defaultConfig, rollTurnOrder, whyCantBuild } from './engine';
 export type { BuildBlock } from './engine';
 export type { CreateGameOptions, NewPlayer } from './engine';
-export { BOARDS, buildGameData, dataFor, defaultData, extendedData } from './data';
-export type { GameData, CardDef, CharacterDef, OwnableDef, TileDef } from './data';
-export { EFFECT_TYPES } from './cards';
+export { BOARDS, autoBoard, buildGameData, characterFor, dataFor, defaultData, extendedData, hexData } from './data';
+export type { BoardShape, GameData, CardDef, CharacterDef, OwnableDef, TableSizeOverride, TileDef } from './data';
+export { gambleWorst, rollSicbo, sicboStake } from './sicbo';
+export { contributionShares } from './engine';
+export { EFFECT_TYPES, perPlayer } from './cards';
 export * from './types';
 export { actorOf, botAction, botActionFor, botAcceptsTrade, BOT_DEFAULTS } from './bot';
 export { publicView } from './view';

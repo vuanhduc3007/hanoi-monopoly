@@ -3,7 +3,8 @@ import { deckOfTile } from './cards';
 import { activePlayers, emit, fail, getPlayer, pushFront, type Ctx } from './ctx';
 import { effectsFor } from './effects';
 import { cardPay, gain, payTask } from './money';
-import type { LandContext, PlayerState, Task } from './types';
+import { gambleAmount, gambleRule, gambleWorst, isPick } from './sicbo';
+import type { LandContext, PlayerState, SicboPick, Task } from './types';
 
 export function execMove(c: Ctx, p: PlayerState, steps: number): void {
   const n = c.d.board.length;
@@ -92,14 +93,22 @@ export function execOfferBuy(c: Ctx, p: PlayerState, id: string): void {
   emit(c, 'decisionRequired', { decision: 'buy', player: p.id, propertyId: id, price });
 }
 
-export function buy(c: Ctx, p: PlayerState): void {
+export function buy(c: Ctx, p: PlayerState, bet?: SicboPick): void {
   const pend = c.s.pending;
   if (pend?.type !== 'buy' || pend.player !== p.id) fail('No purchase pending');
-  if (p.cash < pend.price) fail('Not enough cash');
+  let price = pend.price;
+  if (bet !== undefined) {
+    // Con bạc: buy on a bet, only when the losing price is affordable.
+    const rule = gambleRule(c, p, 'buy', price);
+    if (!rule || !isPick(bet)) fail('Cannot gamble on this purchase');
+    if (p.cash < gambleWorst(rule, price)) fail('Not enough cash to cover a lost bet');
+    price = gambleAmount(c, p, rule, price, bet, 'buy', pend.propertyId);
+  }
+  if (p.cash < price) fail('Not enough cash');
   c.s.pending = null;
-  p.cash -= pend.price;
+  p.cash -= price;
   c.s.ownables[pend.propertyId].owner = p.id;
-  emit(c, 'purchased', { player: p.id, propertyId: pend.propertyId, price: pend.price });
+  emit(c, 'purchased', { player: p.id, propertyId: pend.propertyId, price });
   onPurchase(c, p.id);
 }
 

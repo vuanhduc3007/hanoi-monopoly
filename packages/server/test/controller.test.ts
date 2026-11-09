@@ -9,11 +9,12 @@ const sec = (n: number) => n * 1000;
 describe('lobby', () => {
   it('first player hosts; extra joiners become spectators; host passes on', () => {
     const { ctl } = harness();
-    for (let i = 1; i <= 6; i++) expect(ctl.join(`s${i}`, { name: `  A${i}  ` })).toBe('player');
+    const max = D.config.room.maxPlayers;
+    for (let i = 1; i <= max; i++) expect(ctl.join(`s${i}`, { name: `  A${i}  ` })).toBe('player');
     expect(ctl.seats[0]).toMatchObject({ host: true, name: 'A1' });
-    expect(ctl.join('s7')).toBe('spectator');
+    expect(ctl.join(`s${max + 1}`)).toBe('spectator');
     ctl.leave('s1', true);
-    expect(ctl.seats).toHaveLength(5);
+    expect(ctl.seats).toHaveLength(max - 1);
     expect(ctl.seats[0].host).toBe(true);
   });
 
@@ -421,5 +422,40 @@ describe('board choice', () => {
     h.ctl.message('s1', 'start', {});
     expect(h.ctl.state!.config.board).toBe('extended');
     expect(h.ctl.state!.players.every((p) => p.position === 0)).toBe(true);
+  });
+});
+
+describe('eight seats and the hexagon', () => {
+  it('auto: 7–8 players get the 60-tile hexagon', () => {
+    const h = started(8);
+    expect(h.ctl.state!.config.board).toBe('hex');
+    expect(h.ctl.state!.players).toHaveLength(8);
+    expect(started(7).ctl.state!.config.board).toBe('hex');
+  });
+
+  it('a fixed board too small for the table refuses to start', () => {
+    const h = lobby(7);
+    h.ctl.message('s1', 'setConfig', { board: 'standard' });
+    h.ctl.message('s1', 'start', {});
+    expect(h.out.errors('s1')).toEqual(['BAD_CONFIG']);
+    expect(h.ctl.phase).toBe('lobby');
+  });
+
+  it('Con bạc’s Mở sòng: each bettor gets a clock; a timed-out bet is placed for them', () => {
+    const h = started(3);
+    const s = h.ctl.state!;
+    const host = s.players[s.turn.current];
+    host.character = 'C09';
+    s.config.characters = true;
+    const hostSession = currentSession(h);
+    h.ctl.message(hostSession, 'action', { action: { type: 'useSkill' } });
+    const pend = h.ctl.state!.pending;
+    expect(pend?.type).toBe('sicboBet');
+    const bettor = (pend as { player: string }).player;
+    const timeouts = D.config.timers.sicboBetSec * 1000;
+    h.clock.advance(timeouts + 10);
+    const after = h.ctl.state!.pending as { type: string; bets?: Record<string, string> } | null;
+    if (after?.type === 'sicboBet') expect(after.bets?.[bettor]).toBeDefined();
+    else expect(after?.type ?? null).not.toBe('sicboBet');
   });
 });

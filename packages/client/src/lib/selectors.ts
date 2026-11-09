@@ -1,5 +1,5 @@
 import { type PlayerState, type PublicState } from '@hanoi-monopoly/engine';
-import { D } from './gameData';
+import { charOf, D } from './gameData';
 import { t, type Who } from '../i18n/vi';
 import type { RoomView } from '../net/protocol';
 import { PLAYER_COLORS } from './board';
@@ -44,12 +44,12 @@ export function waitingFor(state: PublicState): string | null {
 }
 
 export function skillOf(character: string | null) {
-  return character ? D.characters[character]?.skill : undefined;
+  return character && D.characters[character] ? charOf(character).skill : undefined;
 }
 
 export function hasTrait(character: string | null, type: string) {
-  if (!character) return undefined;
-  const c = D.characters[character];
+  if (!character || !D.characters[character]) return undefined;
+  const c = charOf(character);
   return [...c.passives, ...c.drawbacks].find((x) => x.type === type);
 }
 

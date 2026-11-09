@@ -4,7 +4,7 @@
  * sync with data/*.json.
  */
 import { type Effect, type GameEvent } from '@hanoi-monopoly/engine';
-import { D } from '../lib/gameData';
+import { charOf, D } from '../lib/gameData';
 
 const nf = new Intl.NumberFormat('vi-VN');
 export const money = (n: number) => `${nf.format(n)} ${D.economy.currency}`;
@@ -64,9 +64,10 @@ export const t = {
     buildingLimit: 'Giới hạn số nhà / khách sạn của ngân hàng',
     board: 'Bàn cờ',
     boards: {
-      auto: (from: number) => `Tự động (48 ô từ ${from} người)`,
-      standard: 'Tiêu chuẩn 40 ô',
-      extended: 'Mở rộng 48 ô',
+      auto: (ext: number, hex: number) => `Tự động (48 ô từ ${ext} người, lục giác từ ${hex} người)`,
+      standard: 'Tiêu chuẩn 40 ô (tối đa 6)',
+      extended: 'Mở rộng 48 ô (tối đa 6)',
+      hex: 'Lục giác 60 ô (tối đa 8)',
     },
     maxPlayers: 'Số người tối đa',
     allowSpectators: 'Cho phép khán giả',
@@ -85,7 +86,7 @@ export const t = {
     order: 'Thứ tự chọn',
     passive: 'Nội tại',
     drawback: 'Điểm yếu',
-    skill: 'Kỹ năng (1 lần/ván)',
+    skill: 'Kỹ năng',
     taken: (name: string) => `Đã chọn: ${name}`,
     choose: 'Chọn',
     turnOrder: 'Thứ tự lượt',
@@ -183,6 +184,21 @@ export const t = {
     chooseGroup: 'Chọn nhóm màu',
     skillUsed: 'Đã dùng kỹ năng',
     skillCooldown: (name: string, n: number) => `${name}: hồi lại sau ${n} lượt nữa`,
+    // Con bạc / Thợ xây / F0 / Tổ trưởng
+    buyBet: (pick: string) => `Mua & cược ${pick}`,
+    buyBetHint: (win: string, lose: string, bao: string) => `Thắng chỉ trả ${win} · thua trả ${lose} · ra bão trả ${bao}`,
+    gamblePrompt: (amount: string, reason: string) => `Bạn phải trả ${amount}${reason}. Chơi tài xỉu?`,
+    betTai: 'Cược Tài (11–17)',
+    betXiu: 'Cược Xỉu (4–10)',
+    payNormal: (amount: string) => `Trả bình thường (${amount})`,
+    sicboBetPrompt: (host: string, stake: string) => `${host} mở sòng tài xỉu — bạn đặt ${stake} vào…`,
+    sicboWaiting: (host: string, who: string) => `Sòng của ${host}: đang chờ ${who} đặt cược…`,
+    sicboBets: 'Đã đặt',
+    hostSicbo: 'Mở sòng tài xỉu',
+    collect: 'Họp tổ dân phố',
+    chooseMortgaged: 'Chọn ô đối thủ đang thế chấp',
+    chooseFreeBuild: 'Chọn ô để tự tay xây (miễn phí)',
+    noTargets: 'Chưa có ô phù hợp',
   },
 
   // S7
@@ -287,6 +303,10 @@ export const t = {
   pick3d: 'Xem nhân vật',
   diceResult: (name: string, dice: number[], sum: number) => `${name} tung ${dice.join(' + ')}${dice.length > 1 ? ` = ${sum}` : ''}`,
   doubles: 'Đôi! Được tung tiếp',
+  sicboTitle: (host: string) => `Sòng tài xỉu của ${host}`,
+  sicboGamble: (name: string) => `${name} chơi tài xỉu`,
+  sicboOutcome: { win: 'Thắng!', lose: 'Thua', jackpot: 'Nổ bão!' } as Record<string, string>,
+  sicboPayout: (from: string, to: string) => `${from} → ${to}`,
   cardDraw: {
     title: 'Rút thẻ',
     flip: 'Bấm vào lá bài để lật!',
@@ -349,9 +369,13 @@ export function describeEffect(e: Effect): string {
     case 'repairs':
       return `Trả ${money(e.perHouse)}/nhà, ${money(e.perHotel)}/khách sạn`;
     case 'pay_each_player':
-      return `Trả mỗi người chơi ${money(e.amount)}`;
+      return e.total !== undefined
+        ? `Trả tổng ${money(e.total)}, chia đều cho các người chơi khác (làm tròn lên hàng chục)`
+        : `Trả mỗi người chơi ${money(e.amount)}`;
     case 'collect_from_each':
-      return `Mỗi người chơi chuyển bạn ${money(e.amount)}`;
+      return e.total !== undefined
+        ? `Các người chơi khác góp cho bạn tổng ${money(e.total)} (chia đều, làm tròn lên hàng chục)`
+        : `Mỗi người chơi chuyển bạn ${money(e.amount)}`;
     case 'bank_pays_all':
       return `Ngân hàng lì xì mỗi người ${money(e.amount)}`;
     case 'rent_multiplier':
@@ -414,7 +438,7 @@ export function describeTrait(e: Effect): string {
     case 'event_override':
       return `${cardName(e.card)} (${e.card}) mất ${pct(e.percent)}`;
     case 'tax_override':
-      return `${tileName(e.tax)} trả ${money(e.amount)}`;
+      return e.amount === 0 ? `Miễn ${tileName(e.tax)}` : `${tileName(e.tax)} trả ${money(e.amount)}`;
     case 'bailout':
       return `Khi sắp phá sản, ngân hàng trả hộ tối đa ${money(e.maxAmount)} của khoản nợ`;
     case 'ignore_go_to_jail_tile':
@@ -442,7 +466,7 @@ export function describeTrait(e: Effect): string {
     case 'rent_multiplier':
       return `1 nhóm màu tùy chọn, thuê x${e.multiplier} trong 1 vòng (mọi chủ đều hưởng)`;
     case 'draw_two_choose_one':
-      return 'Rút thẻ Cơ hội, Cộng đồng: rút 2 chọn 1';
+      return `Rút thẻ ${((e.decks as string[] | undefined) ?? ['chance', 'community']).map((d) => DECK_NAMES[d] ?? d).join(', ')}: rút 2 chọn 1`;
     case 'forbidden_properties':
       return `Không được sở hữu ${list(e.properties)}`;
     case 'cancel_event_for_self':
@@ -452,18 +476,47 @@ export function describeTrait(e: Effect): string {
     case 'starting_cash':
       return `Bắt đầu ${money(e.value)}`;
     case 'auto_salary_upgrade':
-      return `Tự động: từ lần qua ô 0 thứ ${e.afterGoPasses}, lương ${money(e.value)}`;
+      return `Tự động: từ lần qua ${D.board[0].name} thứ ${e.afterGoPasses}, lương ${money(e.value)}`;
     case 'free_jail_exit':
       return 'Ra Bãi giữ xe miễn phí';
+    // ---- C09–C12
+    case 'gamble_payment':
+      return `Khi mua đất của ngân hàng hoặc nộp thuế, phạt, tiền thẻ từ ${money(e.minAmount ?? 0)}: được chơi tài xỉu — thắng trả bớt ${pct(e.winRate)}, thua trả thêm ${pct(e.loseRate)}, ra bão ${e.jackpotRate >= 1 ? 'khỏi trả' : `trả bớt ${pct(e.jackpotRate)}`}`;
+    case 'host_sicbo':
+      return `Bạn làm nhà cái tài xỉu: mọi đối thủ lần lượt đặt Tài hoặc Xỉu, ${
+        e.pot !== undefined ? `tổng tiền cược ${money(e.pot)} chia đều (làm tròn lên hàng chục)` : `mỗi người ${money(e.stake)}`
+      }; người thắng nhận ${pct(1 - (e.commission ?? 0))} tiền cược, ra bão nhà cái ăn hết`;
+    case 'build_discount':
+      return `Xây nhà, khách sạn rẻ hơn ${pct(e.rate)}`;
+    case 'free_build':
+      return `Xây 1 nhà miễn phí${
+        e.anyTile ? `; được xây "nhà chui" (1 nhà) lên ô chưa đủ nhóm màu, tối đa ${e.anyTileMax ?? 1} căn cùng lúc` : ''
+      }`;
+    case 'dividend':
+      return `Mỗi lần qua ${D.board[0].name} nhận cổ tức ${pct(e.rate)} giá đất đang giữ (trừ đất thế chấp)`;
+    case 'buy_mortgaged':
+      return `Mua ngay 1 ô đối thủ đang thế chấp, trả họ giá thế chấp + ${pct(e.premium)} (ô vẫn thế chấp)`;
+    case 'go_donation':
+      return `Mỗi lần qua ${D.board[0].name} góp ${money(e.amount)} vào Quỹ khuyến học`;
+    case 'collect_contribution':
+      return e.totalToSelf !== undefined
+        ? `Các đối thủ góp tổng ${money(e.totalToSelf)} cho bạn và ${money(e.totalToFund)} vào Quỹ khuyến học (chia đều, làm tròn lên)`
+        : `Mỗi đối thủ góp ${money(e.toSelf)} cho bạn và ${money(e.toFund)} vào Quỹ khuyến học`;
     default:
       return e.type;
   }
 }
 
-export function describeCharacter(id: string) {
-  const c = D.characters[id];
+const DECK_NAMES: Record<string, string> = { chance: 'Cơ hội', community: 'Cộng đồng', event: 'Hanoi Event' };
+
+/** A character's text at a table of `players` (defaults to the current table). */
+export function describeCharacter(id: string, players?: number) {
+  const c = charOf(id, players);
+  const sizes = (D.characters[id].byTableSize ?? []).flatMap((o) => o.players);
   return {
     name: c.name,
+    /** Present when this table size uses its own numbers. */
+    tableNote: players !== undefined && sizes.includes(players) ? `Chỉ số riêng cho bàn ${players} người` : null,
     passives: c.passives.map(describeTrait),
     drawbacks: c.drawbacks.length ? c.drawbacks.map(describeTrait) : ['Không'],
     skill: `${c.skill.name}: ${describeTrait(c.skill)} (${skillRecharge(c.skill)})`,
@@ -501,9 +554,16 @@ const reasonText = (r: unknown): string => {
   if (s === 'characterFee') return ' (phí phát thải)';
   if (s === 'inheritedMortgage') return ' (lãi thế chấp)';
   if (s === 'adjustStep') return ' (phí chỉnh bước)';
+  if (s === 'dividend') return ' (cổ tức)';
+  if (s === 'goDonation') return ' (góp Quỹ khuyến học)';
+  if (s === 'contribution') return ' (họp tổ dân phố)';
+  if (s === 'sicbo') return ' (tài xỉu)';
+  if (s === 'parkBonus') return ' (thưởng Văn Miếu)';
   if (D.ownables[s]) return ` (thuê ${tileName(s)})`;
   return '';
 };
+
+export const sicboName = (x: unknown): string => (x === 'tai' ? 'Tài' : x === 'xiu' ? 'Xỉu' : x === 'bao' ? 'Bão' : String(x));
 
 /** One log line per event, or null for events not worth showing. */
 export function formatEvent(e: GameEvent, who: Who): string | null {
@@ -588,7 +648,19 @@ export function formatEvent(e: GameEvent, who: Who): string | null {
     case 'goToJailIgnored':
       return `${p} được CSGT cho đi tiếp`;
     case 'built':
-      return `${p} xây ${e.hotel ? 'khách sạn' : 'nhà'} ở ${tileName(e.propertyId as string)}`;
+      return `${p} ${e.free ? 'tự tay xây' : 'xây'} ${e.hotel ? 'khách sạn' : 'nhà'} ở ${tileName(e.propertyId as string)}${e.free ? ' (miễn phí)' : ''}`;
+    case 'sicbo':
+      return `${p} chơi tài xỉu (đặt ${sicboName(e.pick)}): ${(e.dice as number[]).join(' + ')} = ${e.total} → ${sicboName(e.result)} — ${
+        e.outcome === 'win' ? 'thắng' : e.outcome === 'jackpot' ? 'nổ bão!' : 'thua'
+      }, trả ${money(e.to as number)} thay vì ${money(e.from as number)}`;
+    case 'sicboOpened':
+      return `${name(e.host as string)} mở sòng tài xỉu: mỗi người cược ${money(e.stake as number)}`;
+    case 'betPlaced':
+      return `${p} đặt ${sicboName(e.pick)}`;
+    case 'sicboRolled':
+      return `Sòng của ${name(e.host as string)}: ${(e.dice as number[]).join(' + ')} = ${e.total} → ${sicboName(e.result)}${
+        e.result === 'bao' ? ', nhà cái ăn hết' : ''
+      }`;
     case 'buildingSold':
       return `${p} bán công trình ở ${tileName(e.propertyId as string)}, nhận ${money(e.refund as number)}`;
     case 'mortgaged':
@@ -630,6 +702,6 @@ export const ENGINE_EVENT_TYPES_HANDLED = [
   'paymentSkipped', 'gain', 'rentBonus', 'commission', 'fundCollected', 'fundDeposit', 'cardDrawn', 'cardKept',
   'cardEffect', 'cardDrawing', 'deckEmpty', 'effectStarted', 'effectExpired', 'jailed', 'leftJail', 'stayedInJail',
   'goToJailIgnored', 'built', 'buildingSold', 'mortgaged', 'unmortgaged', 'tradeProposed', 'tradeAccepted',
-  'tradeRejected', 'tradeCancelled', 'debt', 'bankrupt', 'skillUsed', 'skillTriggered', 'skillReady', 'decisionRequired',
+  'tradeRejected', 'tradeCancelled', 'debt', 'bankrupt', 'skillUsed', 'skillTriggered', 'skillReady', 'decisionRequired', 'sicbo', 'sicboOpened', 'betPlaced', 'sicboRolled',
   'gameCreated', 'gameOver',
 ];

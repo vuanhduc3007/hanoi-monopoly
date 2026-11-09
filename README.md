@@ -1,6 +1,6 @@
 # Cờ Tỷ Phú Hà Nội
 
-Game cờ tỷ phú bối cảnh Hà Nội, chơi online nhiều người ngay trên trình duyệt (2–6 người mỗi phòng). Bạn đi từ ven đô vào Phố cổ: đất càng gần Hồ Gươm càng đắt.
+Game cờ tỷ phú bối cảnh Hà Nội, chơi online nhiều người ngay trên trình duyệt (2–8 người mỗi phòng). Bạn đi từ ven đô vào Phố cổ: đất càng gần Hồ Gươm càng đắt.
 
 **▶ Chơi ngay: https://hanoi-monopoly.onrender.com**
 
@@ -11,8 +11,10 @@ Tạo phòng, gửi mã 6 ký tự hoặc link mời cho bạn bè, chọn nhân
 - **Bàn cờ 40 ô** với địa danh Hà Nội: 22 bất động sản trong 8 nhóm màu, 4 ô giao thông (Bến xe Mỹ Đình, Metro Cát Linh – Hà Đông, Ga Hà Nội, Sân bay Nội Bài), 2 tiện ích, ô Quỹ khuyến học ở Văn Miếu.
 - **Bàn mở rộng 48 ô** cho 5–6 người (tự chọn theo số người, hoặc chủ phòng chọn): thêm nhóm Xanh ngọc (Linh Đàm, Văn Quán, Nghĩa Đô), nhóm Tím (Ciputra, Tây Hồ Tây, Làng đào Nhật Tân) và Metro Nhổn – Ga Hà Nội.
 - **Kỹ năng nhân vật hồi lại** sau vài lượt (mặc định 3, tùy nhân vật) thay vì chỉ 1 lần mỗi ván.
+- **Bàn lục giác 60 ô** cho 7–8 người (6 góc, thêm nhóm Bạc, nhóm Mận, Bến xe Giáp Bát).
+- **12 nhân vật**, thêm Con bạc (tài xỉu, mở sòng làm nhà cái), Thợ xây, F0 chứng khoán, Tổ trưởng dân phố — cân bằng bằng mô phỏng bot cho mọi cỡ bàn 2–8 người.
 - **65 lá thẻ**: Cơ hội, Cộng đồng và bộ Hanoi Event, có thẻ tác động cả bàn và thẻ ⏳ kéo dài một vòng.
-- **8 nhân vật**, mỗi người có nội tại, điểm yếu và một kỹ năng dùng một lần mỗi ván. Tỉ lệ thắng đã được cân bằng bằng mô phỏng 10.000 ván bot.
+- Mỗi nhân vật có nội tại, điểm yếu và một kỹ năng; tỉ lệ thắng được cân bằng bằng mô phỏng hàng chục nghìn ván bot (`--board`, `--players 2-8`, `--pool`, `--patch`).
 - **Hai chế độ**: Truyền thống (người cuối cùng không phá sản thắng) và Nhanh (chia đất đầu ván, tài sản cao nhất khi hết 60 phút thắng).
 - **Chơi online**: mua đất, đấu giá, xây nhà, thế chấp, giao dịch. Mỗi quyết định có đồng hồ đếm ngược. Người mất kết nối được bot chơi thay và có thể quay lại bất cứ lúc nào. Có khán giả và chat.
 - **Phong cách Đông Hồ, kết hợp 2D và 3D**: bàn cờ 2D, nhân vật và nhà cửa 3D đứng trên bàn, mô hình nhà 3D hiện lên khi mua đất hoặc xây nhà. Có âm thanh (xúc xắc trong bát, còi CSGT, chuông xe đạp, trống hội…), chơi được trên điện thoại.

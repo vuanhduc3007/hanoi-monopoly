@@ -102,6 +102,33 @@ const ACCESSORIES: Record<string, Accessory> = {
     at(inked(new THREE.BoxGeometry(0.2, 0.14, 0.07), COLORS.brown), h.x + 0.24, h.y - 0.33, h.z + 0.02),
     at(inked(new THREE.ConeGeometry(0.035, 0.16, 4), COLORS.red), h.x, h.y - 0.25, h.z + 0.15),
   ],
+  // Con bạc: dark glasses and a pair of dice in hand.
+  C09: (h) => [
+    at(inked(new THREE.BoxGeometry(0.26, 0.05, 0.04), COLORS.ink), h.x, h.y + 0.02, h.z + 0.16),
+    at(inked(new THREE.BoxGeometry(0.08, 0.08, 0.08), COLORS.paper), h.x + 0.22, h.y - 0.3, h.z + 0.1),
+    at(inked(new THREE.BoxGeometry(0.08, 0.08, 0.08), COLORS.red), h.x + 0.3, h.y - 0.24, h.z + 0.04),
+  ],
+  // Thợ xây: yellow hard hat with a brim, trowel in hand.
+  C10: (h) => [
+    at(inked(new THREE.SphereGeometry(0.19, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), COLORS.gold), h.x, h.y + 0.04, h.z),
+    at(inked(new THREE.CylinderGeometry(0.25, 0.25, 0.025, 16), COLORS.gold), h.x, h.y + 0.05, h.z + 0.02),
+    at(inked(new THREE.BoxGeometry(0.12, 0.02, 0.1), COLORS.paper), h.x + 0.25, h.y - 0.3, h.z + 0.08),
+  ],
+  // F0 chứng khoán: phone showing a green chart, blue tie.
+  C11: (h) => [
+    at(inked(new THREE.BoxGeometry(0.11, 0.18, 0.025), COLORS.ink), h.x + 0.24, h.y - 0.08, h.z + 0.1),
+    at(inked(new THREE.ConeGeometry(0.04, 0.08, 3), COLORS.green), h.x + 0.24, h.y - 0.05, h.z + 0.13),
+    at(inked(new THREE.ConeGeometry(0.035, 0.16, 4), COLORS.indigo), h.x, h.y - 0.25, h.z + 0.15),
+  ],
+  // Tổ trưởng dân phố: loudspeaker and a red armband.
+  C12: (h) => {
+    const horn = inked(new THREE.CylinderGeometry(0.1, 0.03, 0.2, 10, 1, true), COLORS.paper);
+    horn.rotation.z = -Math.PI / 2;
+    return [
+      at(horn, h.x + 0.3, h.y - 0.02, h.z + 0.06),
+      at(inked(new THREE.CylinderGeometry(0.2, 0.22, 0.06, 14), COLORS.red), 0, h.y - 0.42, 0),
+    ];
+  },
 };
 
 const BODY_COLORS: Record<string, number> = {
@@ -113,6 +140,10 @@ const BODY_COLORS: Record<string, number> = {
   C06: COLORS.purple,
   C07: COLORS.red,
   C08: COLORS.sky,
+  C09: 0x2f6b4f,
+  C10: 0xd9822b,
+  C11: 0xdfe6ee,
+  C12: 0x9c8a5a,
 };
 
 export const CHARACTER_MODEL_IDS = Object.keys(ACCESSORIES);

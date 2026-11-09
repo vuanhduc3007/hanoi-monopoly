@@ -10,6 +10,7 @@ import {
   botActionFor,
   createGame,
   defaultConfig,
+  autoBoard,
   dataFor,
   defaultData,
   publicView,
@@ -458,15 +459,18 @@ export class GameController {
 
   /** The board this game is played on: the lobby choice, or by table size for 'auto'. */
   private resolveBoard(): BoardId {
-    const room = this.d.config.room;
     if (this.settings.board !== 'auto') return this.settings.board;
-    return this.seats.length >= room.extendedBoardFromPlayers ? 'extended' : 'standard';
+    return autoBoard(this.seats.length, this.d);
   }
 
   private start(): void {
     const room = this.d.config.room;
     if (this.seats.length < room.minPlayers) throw new RoomError('NOT_ENOUGH_PLAYERS');
     if (this.seats.some((s) => !s.host && !s.ready)) throw new RoomError('NOT_READY');
+    // A fixed board must seat everyone (40 and 48 tiles: up to 6, the hexagon: 8).
+    if (!this.o.data && this.seats.length > dataFor(this.resolveBoard()).maxPlayers) {
+      throw new RoomError('BAD_CONFIG', 'board too small for this many players');
+    }
     const seed = Math.floor(this.random() * 2 ** 32) >>> 0;
     const order = rollTurnOrder(
       this.seats.map((s) => s.id),
@@ -695,6 +699,8 @@ export class GameController {
         liquidation: ['liquidation', t.liquidationSec],
         revealCard: ['reveal', t.revealCardSec ?? t.buyDecisionSec],
         payRent: ['rent', t.payRentSec ?? t.buyDecisionSec],
+        gamble: ['decision', t.gambleSec ?? t.buyDecisionSec],
+        sicboBet: ['decision', t.sicboBetSec ?? t.buyDecisionSec],
       };
       const [k, sec] = byType[pend.type] ?? ['decision', t.buyDecisionSec];
       kind = k;

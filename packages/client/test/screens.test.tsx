@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { applyAction, createGame, publicView, type GameState } from '@hanoi-monopoly/engine';
+import { applyAction, createGame, defaultData, publicView, type GameState } from '@hanoi-monopoly/engine';
 import { App } from '../src/App';
 import { t } from '../src/i18n/vi';
 import type { RoomView } from '../src/net/protocol';
@@ -64,12 +64,12 @@ describe('screens', () => {
     expect(sent).toContainEqual({ type: 'start', payload: undefined });
   });
 
-  it('S3 pick: 8 character cards', () => {
+  it('S3 pick: one card per character', () => {
     store.set({
       room: { ...seats(2), phase: 'picking', picking: { order: ['u2', 'u1'], current: 'u1', available: ['C01', 'C02'], clock: null } },
     });
     render(<App />);
-    expect(screen.getAllByText(t.pick.choose)).toHaveLength(8);
+    expect(screen.getAllByText(t.pick.choose)).toHaveLength(Object.keys(defaultData.characters).length);
   });
 
   it('S4 board: 40 tiles, roll button on my turn sends roll', () => {

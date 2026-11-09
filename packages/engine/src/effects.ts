@@ -1,4 +1,5 @@
 import { emit, groupProperties, type Ctx } from './ctx';
+import { characterFor } from './data';
 import type { ActiveEffect, Effect, PlayerId, PlayerState } from './types';
 
 /** Is the player immune to this card (character passive or card's own immune list)? */
@@ -6,7 +7,7 @@ export function isImmune(c: Ctx, p: PlayerState, cardId: string | null, effect: 
   if (!c.s.config.characters || !p.character) return false;
   if (Array.isArray(effect.immune) && effect.immune.includes(p.character)) return true;
   if (!cardId) return false;
-  const def = c.d.characters[p.character];
+  const def = characterFor(c.d, p.character, c.s.players.length);
   return [...def.passives, ...def.drawbacks].some(
     (t) => t.type === 'immune_events' && Array.isArray(t.cards) && t.cards.includes(cardId),
   );

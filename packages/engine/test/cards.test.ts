@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EFFECT_TYPES, type Effect } from '../src';
+import { EFFECT_TYPES, perPlayer, type Effect } from '../src';
 import { D, G, has } from './helpers';
 
 const plain = () => G.create([null, null, null]);
@@ -140,16 +140,23 @@ describe('Cơ hội / Cộng đồng effects', () => {
     expect(h.cash('p1')).toBe(1500 - (4 * 40 + 3 * 115));
   });
 
-  it('pay_each_player: CH16 pays 50 to each other player', () => {
+  it('pay_each_player: CH16 splits its total among the other players (rounded up to tens)', () => {
     const g = plain();
     g.draw('p1', 'CH16');
-    expect([g.cash('p1'), g.cash('p2'), g.cash('p3')]).toEqual([1400, 1550, 1550]);
+    const each = perPlayer(D.cards.CH16.effect, 2);
+    expect([g.cash('p1'), g.cash('p2'), g.cash('p3')]).toEqual([1500 - 2 * each, 1500 + each, 1500 + each]);
   });
 
-  it('collect_from_each: CD10 collects 10 from each other player', () => {
+  it('perPlayer: a total keeps the card the same size at any table; a plain amount is per player', () => {
+    expect([1, 2, 3, 5, 7].map((n) => perPlayer({ type: 'x', total: 150 }, n))).toEqual([150, 80, 50, 30, 30]);
+    expect(perPlayer({ type: 'x', amount: 50 }, 7)).toBe(50);
+  });
+
+  it('collect_from_each: CD10 collects its total split among the other players', () => {
     const g = plain();
     g.draw('p1', 'CD10');
-    expect([g.cash('p1'), g.cash('p2'), g.cash('p3')]).toEqual([1520, 1490, 1490]);
+    const each = perPlayer(D.cards.CD10.effect, 2);
+    expect([g.cash('p1'), g.cash('p2'), g.cash('p3')]).toEqual([1500 + 2 * each, 1500 - each, 1500 - each]);
   });
 });
 
@@ -302,8 +309,9 @@ describe('Hanoi Event ⚡ effects', () => {
     expect(h.s.pending).toMatchObject({ type: 'liquidation', player: 'p2' });
     h.do({ type: 'mortgage', player: 'p2', propertyId: 'P01' });
     h.do({ type: 'payDebt', player: 'p2' });
-    expect(h.cash('p2')).toBe(25);
-    expect(h.cash('p1')).toBe(1520); // p3 then paid too
+    const each = perPlayer(D.cards.CD10.effect, 2);
+    expect(h.cash('p2')).toBe(5 + D.ownables.P01.mortgage - each);
+    expect(h.cash('p1')).toBe(1500 + 2 * each); // p3 then paid too
   });
 });
 

@@ -1,4 +1,7 @@
 {
+  "id": "standard",
+  "shape": "square",
+  "maxPlayers": 6,
   "board": [
     {
       "position": 0,

@@ -2,7 +2,9 @@ export type PlayerId = string;
 export type DeckName = 'chance' | 'community' | 'event';
 export type Mode = 'classic' | 'quick';
 /** standard = 40 tiles (GDD §2), extended = 48 tiles for bigger tables. */
-export type BoardId = 'standard' | 'extended';
+export type BoardId = 'standard' | 'extended' | 'hex';
+/** Tài xỉu bet. */
+export type SicboPick = 'tai' | 'xiu';
 
 export interface GameConfig {
   mode: Mode;
@@ -81,6 +83,8 @@ export interface PayTask {
   reason: string;
   /** For rent: the property owner (receives Idol bonus). */
   owner?: PlayerId;
+  /** Con bạc already chose whether to gamble on this payment. */
+  gambled?: boolean;
 }
 
 export interface LandContext {
@@ -125,7 +129,19 @@ export type Pending =
   | { type: 'revealCard'; player: PlayerId; deck: DeckName; cardId: string }
   | { type: 'eventCancel'; player: PlayerId; drawer: PlayerId; cardId: string }
   | { type: 'liquidation'; player: PlayerId; task: PayTask }
-  | { type: 'inheritMortgage'; player: PlayerId; propertyId: string };
+  | { type: 'inheritMortgage'; player: PlayerId; propertyId: string }
+  /** Con bạc: bet on this tax / fine / card payment (Liều ăn nhiều)? */
+  | { type: 'gamble'; player: PlayerId; task: PayTask }
+  /** Con bạc's Mở sòng: opponents bet one after another (`player` = whose bet it is). */
+  | {
+      type: 'sicboBet';
+      player: PlayerId;
+      host: PlayerId;
+      stake: number;
+      commission: number;
+      bets: Record<PlayerId, SicboPick>;
+      order: PlayerId[];
+    };
 
 export interface TradeBundle {
   cash: number;
@@ -179,7 +195,7 @@ export type Action =
   | { type: 'roll'; player: PlayerId }
   | { type: 'confirmRoll'; player: PlayerId }
   | { type: 'adjustStep'; player: PlayerId; delta: number }
-  | { type: 'buy'; player: PlayerId }
+  | { type: 'buy'; player: PlayerId; gamble?: SicboPick }
   | { type: 'declineBuy'; player: PlayerId }
   | { type: 'bid'; player: PlayerId; amount: number }
   | { type: 'closeAuction' }
@@ -199,7 +215,9 @@ export type Action =
   | { type: 'cancelTrade'; player?: PlayerId; tradeId: string }
   | { type: 'payJailFine'; player: PlayerId }
   | { type: 'useJailCard'; player: PlayerId }
-  | { type: 'useSkill'; player: PlayerId; target?: PlayerId; group?: string }
+  | { type: 'useSkill'; player: PlayerId; target?: PlayerId; group?: string; propertyId?: string }
+  | { type: 'gamble'; player: PlayerId; pick: SicboPick | null }
+  | { type: 'placeBet'; player: PlayerId; pick: SicboPick }
   | { type: 'declineSkill'; player: PlayerId }
   | { type: 'chooseCard'; player: PlayerId; cardId: string }
   | { type: 'revealCard'; player: PlayerId }

@@ -166,16 +166,14 @@ const handlers: Record<string, Handler> = {
     if (base > 0) pushFront(c, cardPay(c, drawer, { kind: 'bank' }, base, cardId));
   },
   pay_each_player: (a) => {
-    const tasks = affected(a)
-      .filter((p) => p.id !== a.drawer.id)
-      .map((p) => cardPay(a.c, a.drawer, { kind: 'player', id: p.id }, a.effect.amount, a.cardId));
-    pushFront(a.c, ...tasks);
+    const others = affected(a).filter((p) => p.id !== a.drawer.id);
+    const amount = perPlayer(a.effect, others.length);
+    pushFront(a.c, ...others.map((p) => cardPay(a.c, a.drawer, { kind: 'player', id: p.id }, amount, a.cardId)));
   },
   collect_from_each: (a) => {
-    const tasks = affected(a)
-      .filter((p) => p.id !== a.drawer.id)
-      .map((p) => cardPay(a.c, p, { kind: 'player', id: a.drawer.id }, a.effect.amount, a.cardId));
-    pushFront(a.c, ...tasks);
+    const others = affected(a).filter((p) => p.id !== a.drawer.id);
+    const amount = perPlayer(a.effect, others.length);
+    pushFront(a.c, ...others.map((p) => cardPay(a.c, p, { kind: 'player', id: a.drawer.id }, amount, a.cardId)));
   },
 
   // ---- Hanoi Event: ⚡
@@ -306,6 +304,17 @@ function durationEffect(a: EffectArgs): void {
     effect: a.effect,
     exempt: a.exempt,
   });
+}
+
+/**
+ * Amount per other player for "each player" cards: a fixed `amount`, or a `total`
+ * split among them (rounded up to `roundTo`, default 10) so bigger tables do not
+ * multiply the card's weight.
+ */
+export function perPlayer(effect: Effect, others: number): number {
+  if (effect.total === undefined) return effect.amount as number;
+  const step = (effect.roundTo as number | undefined) ?? 10;
+  return Math.ceil((effect.total as number) / Math.max(1, others) / step - 1e-9) * step;
 }
 
 export const EFFECT_TYPES = Object.keys(handlers);

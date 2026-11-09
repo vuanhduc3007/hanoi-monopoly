@@ -11,11 +11,12 @@ const HELP = `Hanoi Monopoly — mô phỏng bot vs bot
   --games N          số ván (mặc định 10000)
   --players N|A-B    số người mỗi ván, hoặc khoảng ngẫu nhiên (mặc định 4)
   --mode M           classic | quick (mặc định classic)
-  --board B          standard (40 ô) | extended (48 ô) (mặc định standard)
+  --board B          standard (40 ô) | extended (48 ô) | hex (60 ô, lục giác) (mặc định standard)
   --seed S           seed ván đầu; ván i dùng S+i (mặc định 1)
   --max-rounds R     Truyền thống: dừng sau R vòng, xếp hạng theo tài sản (mặc định 200)
   --quick-rounds R   Nhanh: số vòng thay cho 60 phút (mặc định 40)
   --no-characters    tắt nhân vật (Cổ điển)
+  --pool C01,C02,…   chỉ chia các nhân vật này
   --tolerance P      ngưỡng lệch tỉ lệ thắng, điểm % (mặc định 3)
   --workers K        số luồng (mặc định số CPU - 1)
   --json FILE        ghi kết quả dạng JSON
@@ -71,13 +72,14 @@ function parseArgs(argv: string[]): CliOptions {
       }
       case '--board': {
         const b = v();
-        if (b !== 'standard' && b !== 'extended') throw new Error('--board must be standard or extended');
+        if (b !== 'standard' && b !== 'extended' && b !== 'hex') throw new Error('--board must be standard, extended or hex');
         o.board = b;
         break;
       }
       case '--max-rounds': o.maxRounds = int(); break;
       case '--quick-rounds': o.quickRounds = int(); break;
       case '--no-characters': o.characters = false; break;
+      case '--pool': o.pool = v().split(',').map((x) => x.trim()).filter(Boolean); break;
       case '--tolerance': o.tolerance = Number(v()); break;
       case '--workers': o.workers = Math.max(1, int()); break;
       case '--json': o.json = v(); break;
@@ -91,7 +93,7 @@ function parseArgs(argv: string[]): CliOptions {
     }
   }
   const counts = typeof o.players === 'number' ? [o.players] : o.players;
-  if (counts.some((n) => n < 2 || n > 6)) throw new Error('--players must be within 2-6');
+  if (counts.some((n) => n < 2 || n > 8)) throw new Error('--players must be within 2-8');
   return o;
 }
 
@@ -120,7 +122,7 @@ async function main(): Promise<void> {
   }
   const seconds = (Date.now() - started) / 1000;
   const players = typeof o.players === 'number' ? `${o.players}` : o.players.join('-');
-  const title = `Hanoi Monopoly — ${o.mode === 'quick' ? 'Nhanh' : 'Truyền thống'}, ${players} người, ${o.board === 'extended' ? '48' : '40'} ô, ${o.characters ? 'có' : 'không'} nhân vật, seed ${o.seed}`;
+  const title = `Hanoi Monopoly — ${o.mode === 'quick' ? 'Nhanh' : 'Truyền thống'}, ${players} người, ${dataFor(o.board).board.length} ô, ${o.characters ? 'có' : 'không'} nhân vật, seed ${o.seed}`;
   const sum = summarize(totals, { tolerancePP: o.tolerance }, dataFor(o.board));
   process.stdout.write(formatReport(sum, { tolerancePP: o.tolerance, seconds, title }) + '\n');
   if (o.json) {

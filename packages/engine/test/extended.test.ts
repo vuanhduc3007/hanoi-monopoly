@@ -26,12 +26,12 @@ describe('48-tile extended board', () => {
 
   it('applies its economy overrides (salary, five-transport rents)', () => {
     expect(X.economy.goSalary).toBe(defaultData.economy.goSalary);
-    expect(X.economy.goSalaryBonus).toBeGreaterThan(0);
+    expect(X.economy.goSalaryMultiplier).toBeGreaterThan(1);
     expect(X.economy.transportRent).toHaveLength(5);
     expect(X.economy.jailFine).toBe(defaultData.economy.jailFine);
   });
 
-  it('the salary bonus stacks on character salaries (Thiếu gia Vin keeps his edge)', () => {
+  it('the salary multiplier scales character salaries too (Thiếu gia Vin keeps his edge)', () => {
     for (const [chars, base] of [[[null, null], X.economy.goSalary], [['C01', null], X.characters.C01.passives[0].value as number]] as const) {
       const g = G.create([...chars], { board: 'extended' });
       g.setCurrent('p1').at('p1', 46);
@@ -39,7 +39,7 @@ describe('48-tile extended board', () => {
       const before = g.s.players[0].cash;
       g.do({ type: 'roll', player: 'p1' });
       const salary = g.events.filter((e) => e.type === 'salary').reduce((a, e) => a + (e.amount as number), 0);
-      expect(salary, `${chars[0]}`).toBe(base + X.economy.goSalaryBonus!);
+      expect(salary, `${chars[0]}`).toBe(Math.ceil(base * X.economy.goSalaryMultiplier!));
       expect(g.s.players[0].cash).toBeGreaterThan(before);
     }
   });

@@ -1,6 +1,7 @@
 import {
   build,
   buildBlock,
+  partialFreeBuild,
   type BuildBlock,
   cancelTrade,
   mortgage,
@@ -35,6 +36,7 @@ import {
   emit,
   fail,
   getPlayer,
+  groupHasBuildings,
   groupProperties,
   isMyTurn,
   jailMaxTurns,
@@ -59,10 +61,12 @@ import {
   leaveJail,
 } from './movement';
 import { execRent } from './rent';
+import { openSicbo, placeBet, resolveGamble, timeoutBet } from './sicbo';
 import { randomInt, rollDice, shuffle } from './rng';
 import type {
   Action,
   ActionResult,
+  Effect,
   GameConfig,
   GameEvent,
   GameState,
@@ -98,13 +102,14 @@ export function defaultConfig(d: GameData, mode?: GameConfig['mode']): GameConfi
 }
 
 export function createGame(opts: CreateGameOptions, data?: GameData): ActionResult {
-  const { minPlayers, maxPlayers } = (data ?? defaultData).config.room;
-  if (opts.players.length < minPlayers || opts.players.length > maxPlayers) {
-    fail(`Need ${minPlayers}-${maxPlayers} players`);
-  }
   const config: GameConfig = { ...defaultConfig(defaultData, opts.config?.mode), ...opts.config };
   const d = data ?? dataFor(config.board);
   config.board = d.id;
+  const { minPlayers } = d.config.room;
+  const maxPlayers = Math.min(d.maxPlayers, d.config.room.maxPlayers);
+  if (opts.players.length < minPlayers || opts.players.length > maxPlayers) {
+    fail(`Need ${minPlayers}-${maxPlayers} players on this board`);
+  }
   const chars = opts.players.map((p) => p.character ?? null).filter((x): x is string => !!x);
   if (config.characters) {
     if (new Set(chars).size !== chars.length) fail('Characters must be unique');
@@ -118,7 +123,7 @@ export function createGame(opts: CreateGameOptions, data?: GameData): ActionResu
       id: p.id,
       name: p.name ?? p.id,
       character: config.characters ? p.character ?? null : null,
-      cash: startingCash(d, p.character ?? null, config.characters),
+      cash: startingCash(d, p.character ?? null, config.characters, opts.players.length),
       position: 0,
       inJail: false,
       jailTurns: 0,
@@ -425,6 +430,57 @@ function useSkill(c: Ctx, p: PlayerState, a: Extract<Action, { type: 'useSkill' 
       });
       return;
     }
+    case 'host_sicbo': {
+      requireTurn(c, p.id);
+      requireFree(c);
+      useUpSkill(c, p);
+      emit(c, 'skillUsed', { player: p.id, skill: sk.type });
+      openSicbo(c, p, sk);
+      return;
+    }
+    case 'free_build': {
+      if (!a.propertyId || !c.s.ownables[a.propertyId]) fail('Choose a property to build on');
+      const why = buildBlock(c, p, a.propertyId, 0, partialFreeBuild(c, p));
+      if (why) fail(`Cannot build: ${why}`);
+      useUpSkill(c, p);
+      emit(c, 'skillUsed', { player: p.id, skill: sk.type, propertyId: a.propertyId });
+      build(c, p, a.propertyId, true);
+      return;
+    }
+    case 'buy_mortgaged': {
+      requireTurn(c, p.id);
+      requireFree(c);
+      const id = a.propertyId;
+      const own = id ? c.s.ownables[id] : undefined;
+      if (!id || !own || !own.owner || own.owner === p.id || !own.mortgaged) fail("Choose an opponent's mortgaged property");
+      const def = c.d.ownables[id];
+      if (!canOwn(c, p, id)) fail('This character may not own that property');
+      if (groupHasBuildings(c, def.group, own.owner)) fail('Its group has buildings');
+      const cost = Math.ceil(def.mortgage * (1 + (sk.premium as number)) - 1e-9);
+      if (p.cash < cost) fail('Not enough cash');
+      const seller = getPlayer(c, own.owner);
+      useUpSkill(c, p);
+      p.cash -= cost;
+      seller.cash += cost;
+      own.owner = p.id;
+      emit(c, 'skillUsed', { player: p.id, skill: sk.type, propertyId: id, from: seller.id, amount: cost });
+      return;
+    }
+    case 'collect_contribution': {
+      requireTurn(c, p.id);
+      requireFree(c);
+      useUpSkill(c, p);
+      emit(c, 'skillUsed', { player: p.id, skill: sk.type });
+      const tasks: Task[] = [];
+      const others = activePlayers(c).filter((q) => q.id !== p.id);
+      const { toSelf, toFund } = contributionShares(sk, others.length);
+      for (const q of others) {
+        tasks.push(payTask(q.id, { kind: 'player', id: p.id }, toSelf, 'other', 'contribution'));
+        tasks.push(payTask(q.id, { kind: 'fund' }, toFund, 'other', 'contribution'));
+      }
+      pushFront(c, ...tasks);
+      return;
+    }
     case 'free_jail_exit': {
       requireTurn(c, p.id);
       requireFree(c);
@@ -451,6 +507,17 @@ function declineSkill(c: Ctx, p: PlayerState): void {
     return;
   }
   fail('No skill prompt to decline');
+}
+
+/**
+ * Họp tổ dân phố: what each opponent pays. `totalToSelf` / `totalToFund` are split
+ * among the opponents (rounded up) so the skill is worth the same at any table size;
+ * fixed `toSelf` / `toFund` per opponent are also accepted.
+ */
+export function contributionShares(sk: Effect, opponents: number): { toSelf: number; toFund: number } {
+  const share = (total: unknown, each: unknown) =>
+    each !== undefined ? (each as number) : Math.ceil((total as number) / Math.max(1, opponents) - 1e-9);
+  return { toSelf: share(sk.totalToSelf, sk.toSelf), toFund: share(sk.totalToFund, sk.toFund) };
 }
 
 // ---------------------------------------------------------------- dispatch
@@ -483,7 +550,11 @@ function dispatch(c: Ctx, a: Action): void {
       return;
     }
     case 'buy':
-      return buy(c, getPlayer(c, a.player));
+      return buy(c, getPlayer(c, a.player), a.gamble);
+    case 'gamble':
+      return resolveGamble(c, getPlayer(c, a.player), a.pick);
+    case 'placeBet':
+      return placeBet(c, getPlayer(c, a.player), a.pick);
     case 'declineBuy':
       return declineBuy(c, getPlayer(c, a.player));
     case 'bid':
@@ -592,6 +663,10 @@ function timeout(c: Ctx): void {
       return declareBankruptcy(c);
     case 'inheritMortgage':
       return resolveInheritedMortgage(c, getPlayer(c, pend.player), false);
+    case 'gamble':
+      return resolveGamble(c, getPlayer(c, pend.player), null);
+    case 'sicboBet':
+      return timeoutBet(c);
   }
 }
 

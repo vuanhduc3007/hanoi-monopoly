@@ -7,12 +7,24 @@
  * - Bids in auctions up to the list price (never more than its cash).
  * - Rejects trades unless they complete one of its colour groups.
  */
-import { buildError, unmortgageCost } from './assets';
-import { adjustRule, canOwn, postRollOptions, purchasePrice, salaryFor, skillAvailable, taxAmount, trait } from './characters';
-import { getPlayer, groupProperties, hotelLevel, jailMaxTurns, ownedBy, ownsFullGroup, type Ctx } from './ctx';
+import { buildBlock, buildError, partialFreeBuild, unmortgageCost } from './assets';
+import {
+  adjustRule,
+  buildCostFor,
+  canOwn,
+  postRollOptions,
+  purchasePrice,
+  salaryFor,
+  skillAvailable,
+  skillOf,
+  taxAmount,
+  trait,
+} from './characters';
+import { activePlayers, getPlayer, groupHasBuildings, groupProperties, hotelLevel, jailMaxTurns, ownedBy, ownsFullGroup, type Ctx } from './ctx';
 import { dataFor, type GameData } from './data';
 import { applyActionInPlace } from './engine';
 import { quoteRent } from './rent';
+import { gambleRule, gambleWorst, sicboStake } from './sicbo';
 import type { Action, GameState, PlayerState, Trade } from './types';
 
 export interface BotOptions {
@@ -97,10 +109,20 @@ export function botActionFor(
   if (actorOf(s) !== playerId) return null;
   if (pend) {
     switch (pend.type) {
-      case 'buy':
-        return me.cash - pend.price >= o.buyReserve
-          ? { type: 'buy', player: playerId }
-          : { type: 'declineBuy', player: playerId };
+      case 'buy': {
+        if (me.cash - pend.price < o.buyReserve) return { type: 'declineBuy', player: playerId };
+        // Con bạc bets when even a lost bet leaves the reserve.
+        const rule = gambleRule(c, me, 'buy', pend.price);
+        const bet = rule && me.cash - gambleWorst(rule, pend.price) >= o.buyReserve;
+        return bet ? { type: 'buy', player: playerId, gamble: botPick(s, playerId) } : { type: 'buy', player: playerId };
+      }
+      case 'gamble': {
+        const rule = gambleRule(c, me, pend.task.kind, pend.task.amount);
+        const bet = rule && me.cash - gambleWorst(rule, pend.task.amount) >= o.buildReserve;
+        return { type: 'gamble', player: playerId, pick: bet ? botPick(s, playerId) : null };
+      }
+      case 'sicboBet':
+        return { type: 'placeBet', player: playerId, pick: botPick(s, playerId) };
       case 'postRoll':
         return postRollAction(c, me, pend.dice, pend.context, o);
       case 'chooseCard':
@@ -141,8 +163,26 @@ function beforeRoll(c: Ctx, p: PlayerState): Action {
   return { type: 'roll', player: p.id };
 }
 
-/** Bóc phốt / Tung tin quy hoạch at the start of the turn when the board justifies it. */
+/** Tài or Xỉu: equal odds, so any deterministic choice will do. */
+function botPick(s: GameState, playerId: string): 'tai' | 'xiu' {
+  const seat = s.players.findIndex((x) => x.id === playerId);
+  return (s.turn.number + seat + s.nextUid) % 2 === 0 ? 'tai' : 'xiu';
+}
+
+/** Bóc phốt / Tung tin quy hoạch / Mở sòng / Họp tổ / Bắt đáy at the start of the turn when worth it. */
 function turnStartSkill(c: Ctx, p: PlayerState): Action | null {
+  const sk = skillOf(c, p);
+  if (sk && skillAvailable(c, p, sk.type)) {
+    const opponents = activePlayers(c).filter((q) => q.id !== p.id);
+    if (sk.type === 'collect_contribution' && opponents.length > 0) return { type: 'useSkill', player: p.id };
+    if (sk.type === 'host_sicbo' && opponents.length > 0 && p.cash >= sicboStake(sk, opponents.length) * opponents.length) {
+      return { type: 'useSkill', player: p.id };
+    }
+    if (sk.type === 'buy_mortgaged') {
+      const pick = bestMortgagedBuy(c, p, sk.premium as number);
+      if (pick) return { type: 'useSkill', player: p.id, propertyId: pick };
+    }
+  }
   if (skillAvailable(c, p, 'block_rent')) {
     let best: { id: string; levels: number } | null = null;
     for (const opp of c.s.players) {
@@ -164,6 +204,27 @@ function turnStartSkill(c: Ctx, p: PlayerState): Action | null {
     if (best) return { type: 'useSkill', player: p.id, group: best.group };
   }
   return null;
+}
+
+/** F0 chứng khoán: the opponent's mortgaged tile most worth buying (group completion first). */
+function bestMortgagedBuy(c: Ctx, p: PlayerState, premium: number): string | null {
+  let best: { id: string; score: number } | null = null;
+  for (const [id, own] of Object.entries(c.s.ownables)) {
+    if (!own.owner || own.owner === p.id || !own.mortgaged || !canOwn(c, p, id)) continue;
+    const def = c.d.ownables[id];
+    if (groupHasBuildings(c, def.group, own.owner)) continue;
+    const cost = Math.ceil(def.mortgage * (1 + premium) - 1e-9);
+    // Needs the unmortgage money later too.
+    if (p.cash - cost - def.mortgage < 300) continue;
+    let score = def.price;
+    if (def.group) {
+      const group = groupProperties(c, def.group);
+      const mine = group.filter((g) => c.s.ownables[g].owner === p.id).length;
+      score += mine * 400 + (mine === group.length - 1 ? 1000 : 0);
+    }
+    if (!best || score > best.score) best = { id, score };
+  }
+  return best?.id ?? null;
 }
 
 function rentAtLevel(c: Ctx, id: string): number {
@@ -195,10 +256,18 @@ function endOfTurn(c: Ctx, p: PlayerState, o: BotOptions): Action {
   const candidates = ownedBy(c, p.id)
     .filter((id) => c.d.ownables[id].kind === 'property')
     .sort((a, b) => c.d.ownables[b].price - c.d.ownables[a].price);
+  // Thợ xây: the free house goes on the priciest tile that may take one.
+  if (skillAvailable(c, p, 'free_build')) {
+    for (const id of candidates) {
+      if (c.s.ownables[id].level < o.maxHouses && buildBlock(c, p, id, 0, partialFreeBuild(c, p)) === null) {
+        return { type: 'useSkill', player: p.id, propertyId: id };
+      }
+    }
+  }
   for (const id of candidates) {
     const level = c.s.ownables[id].level;
     if (level >= o.maxHouses) continue;
-    if (p.cash - (c.d.ownables[id].buildCost ?? 0) < o.buildReserve) continue;
+    if (p.cash - buildCostFor(c, p, id) < o.buildReserve) continue;
     if (buildError(c, p, id) === null) return { type: 'build', player: p.id, propertyId: id };
   }
   return { type: 'endTurn', player: p.id };

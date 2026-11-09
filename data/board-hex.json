@@ -1,0 +1,1113 @@
+{
+  "id": "hex",
+  "name": "Lục giác 60 ô",
+  "shape": "hexagon",
+  "maxPlayers": 8,
+  "economy": {
+    "goSalaryMultiplier": 1.3,
+    "transportRent": [
+      25,
+      50,
+      90,
+      140,
+      200,
+      270
+    ],
+    "buildingLimit": {
+      "houses": 48,
+      "hotels": 17
+    }
+  },
+  "board": [
+    {
+      "position": 0,
+      "type": "corner",
+      "ref": "GO",
+      "name": "Hoàng thành Thăng Long"
+    },
+    {
+      "position": 1,
+      "type": "property",
+      "ref": "P01",
+      "name": "Đông Anh"
+    },
+    {
+      "position": 2,
+      "type": "card",
+      "ref": "CD",
+      "name": "Cộng đồng"
+    },
+    {
+      "position": 3,
+      "type": "property",
+      "ref": "P02",
+      "name": "Gia Lâm"
+    },
+    {
+      "position": 4,
+      "type": "tax",
+      "ref": "TAX1",
+      "name": "Thuế thu nhập cá nhân"
+    },
+    {
+      "position": 5,
+      "type": "transport",
+      "ref": "T01",
+      "name": "Bến xe Mỹ Đình"
+    },
+    {
+      "position": 6,
+      "type": "property",
+      "ref": "P03",
+      "name": "Hoàng Mai"
+    },
+    {
+      "position": 7,
+      "type": "card",
+      "ref": "CH",
+      "name": "Cơ hội"
+    },
+    {
+      "position": 8,
+      "type": "property",
+      "ref": "P04",
+      "name": "Hà Đông"
+    },
+    {
+      "position": 9,
+      "type": "property",
+      "ref": "P05",
+      "name": "Bắc Từ Liêm"
+    },
+    {
+      "position": 10,
+      "type": "corner",
+      "ref": "JAIL",
+      "name": "Bãi giữ xe vi phạm"
+    },
+    {
+      "position": 11,
+      "type": "property",
+      "ref": "P23",
+      "name": "Linh Đàm"
+    },
+    {
+      "position": 12,
+      "type": "utility",
+      "ref": "U01",
+      "name": "Điện lực Hà Nội"
+    },
+    {
+      "position": 13,
+      "type": "property",
+      "ref": "P24",
+      "name": "Văn Quán"
+    },
+    {
+      "position": 14,
+      "type": "property",
+      "ref": "P25",
+      "name": "Nghĩa Đô"
+    },
+    {
+      "position": 15,
+      "type": "transport",
+      "ref": "T02",
+      "name": "Metro Cát Linh – Hà Đông"
+    },
+    {
+      "position": 16,
+      "type": "property",
+      "ref": "P06",
+      "name": "Thanh Xuân"
+    },
+    {
+      "position": 17,
+      "type": "card",
+      "ref": "CD",
+      "name": "Cộng đồng"
+    },
+    {
+      "position": 18,
+      "type": "property",
+      "ref": "P07",
+      "name": "Mỹ Đình"
+    },
+    {
+      "position": 19,
+      "type": "property",
+      "ref": "P08",
+      "name": "Cầu Giấy"
+    },
+    {
+      "position": 20,
+      "type": "corner",
+      "ref": "WALK",
+      "name": "Phố đi bộ Hồ Gươm"
+    },
+    {
+      "position": 21,
+      "type": "property",
+      "ref": "P09",
+      "name": "Long Biên"
+    },
+    {
+      "position": 22,
+      "type": "card",
+      "ref": "EV",
+      "name": "Hanoi Event"
+    },
+    {
+      "position": 23,
+      "type": "property",
+      "ref": "P10",
+      "name": "Vinhomes Ocean Park"
+    },
+    {
+      "position": 24,
+      "type": "property",
+      "ref": "P11",
+      "name": "Vinhomes Riverside"
+    },
+    {
+      "position": 25,
+      "type": "transport",
+      "ref": "T03",
+      "name": "Ga Hà Nội"
+    },
+    {
+      "position": 26,
+      "type": "property",
+      "ref": "P12",
+      "name": "Hai Bà Trưng"
+    },
+    {
+      "position": 27,
+      "type": "card",
+      "ref": "CH",
+      "name": "Cơ hội"
+    },
+    {
+      "position": 28,
+      "type": "property",
+      "ref": "P13",
+      "name": "Times City"
+    },
+    {
+      "position": 29,
+      "type": "property",
+      "ref": "P14",
+      "name": "Royal City"
+    },
+    {
+      "position": 30,
+      "type": "corner",
+      "ref": "PARK",
+      "name": "Văn Miếu – Quốc Tử Giám"
+    },
+    {
+      "position": 31,
+      "type": "property",
+      "ref": "P15",
+      "name": "Vincom Center Bà Triệu"
+    },
+    {
+      "position": 32,
+      "type": "tax",
+      "ref": "TAX2",
+      "name": "Phí gửi xe Phố cổ"
+    },
+    {
+      "position": 33,
+      "type": "property",
+      "ref": "P16",
+      "name": "Lotte Center Hanoi"
+    },
+    {
+      "position": 34,
+      "type": "property",
+      "ref": "P17",
+      "name": "Keangnam Landmark 72"
+    },
+    {
+      "position": 35,
+      "type": "transport",
+      "ref": "T04",
+      "name": "Sân bay Nội Bài"
+    },
+    {
+      "position": 36,
+      "type": "property",
+      "ref": "P26",
+      "name": "Khu đô thị Ciputra"
+    },
+    {
+      "position": 37,
+      "type": "card",
+      "ref": "EV",
+      "name": "Hanoi Event"
+    },
+    {
+      "position": 38,
+      "type": "property",
+      "ref": "P27",
+      "name": "Tây Hồ Tây"
+    },
+    {
+      "position": 39,
+      "type": "property",
+      "ref": "P28",
+      "name": "Làng đào Nhật Tân"
+    },
+    {
+      "position": 40,
+      "type": "corner",
+      "ref": "GOTOJAIL",
+      "name": "CSGT thổi còi"
+    },
+    {
+      "position": 41,
+      "type": "property",
+      "ref": "P18",
+      "name": "Đống Đa"
+    },
+    {
+      "position": 42,
+      "type": "card",
+      "ref": "CD",
+      "name": "Cộng đồng"
+    },
+    {
+      "position": 43,
+      "type": "property",
+      "ref": "P19",
+      "name": "Ba Đình"
+    },
+    {
+      "position": 44,
+      "type": "property",
+      "ref": "P20",
+      "name": "Hồ Tây"
+    },
+    {
+      "position": 45,
+      "type": "transport",
+      "ref": "T05",
+      "name": "Metro Nhổn – Ga Hà Nội"
+    },
+    {
+      "position": 46,
+      "type": "property",
+      "ref": "P29",
+      "name": "Phố Tràng Tiền"
+    },
+    {
+      "position": 47,
+      "type": "card",
+      "ref": "CH",
+      "name": "Cơ hội"
+    },
+    {
+      "position": 48,
+      "type": "property",
+      "ref": "P30",
+      "name": "Nhà hát Lớn"
+    },
+    {
+      "position": 49,
+      "type": "property",
+      "ref": "P31",
+      "name": "Phố Phan Đình Phùng"
+    },
+    {
+      "position": 50,
+      "type": "corner",
+      "ref": "MARKET",
+      "name": "Chợ Đồng Xuân"
+    },
+    {
+      "position": 51,
+      "type": "transport",
+      "ref": "T06",
+      "name": "Bến xe Giáp Bát"
+    },
+    {
+      "position": 52,
+      "type": "property",
+      "ref": "P32",
+      "name": "Phố Hàng Ngang"
+    },
+    {
+      "position": 53,
+      "type": "property",
+      "ref": "P21",
+      "name": "Phố cổ Hà Nội"
+    },
+    {
+      "position": 54,
+      "type": "tax",
+      "ref": "TAX2",
+      "name": "Phí gửi xe Phố cổ"
+    },
+    {
+      "position": 55,
+      "type": "utility",
+      "ref": "U02",
+      "name": "Nước sạch Hà Nội"
+    },
+    {
+      "position": 56,
+      "type": "property",
+      "ref": "P33",
+      "name": "Phố Hàng Đào"
+    },
+    {
+      "position": 57,
+      "type": "card",
+      "ref": "EV",
+      "name": "Hanoi Event"
+    },
+    {
+      "position": 58,
+      "type": "tax",
+      "ref": "TAX1",
+      "name": "Thuế thu nhập cá nhân"
+    },
+    {
+      "position": 59,
+      "type": "property",
+      "ref": "P22",
+      "name": "Hồ Gươm"
+    }
+  ],
+  "groups": {
+    "brown": {
+      "name": "Nâu",
+      "color": "#8A5A3B",
+      "properties": [
+        "P01",
+        "P02"
+      ]
+    },
+    "lightblue": {
+      "name": "Xanh nhạt",
+      "color": "#8FB3C9",
+      "properties": [
+        "P03",
+        "P04",
+        "P05"
+      ]
+    },
+    "teal": {
+      "name": "Xanh ngọc",
+      "color": "#3E8E86",
+      "properties": [
+        "P23",
+        "P24",
+        "P25"
+      ]
+    },
+    "pink": {
+      "name": "Hồng",
+      "color": "#E7A6A1",
+      "properties": [
+        "P06",
+        "P07",
+        "P08"
+      ]
+    },
+    "orange": {
+      "name": "Cam",
+      "color": "#D9822B",
+      "properties": [
+        "P09",
+        "P10",
+        "P11"
+      ]
+    },
+    "red": {
+      "name": "Đỏ",
+      "color": "#B8312F",
+      "properties": [
+        "P12",
+        "P13",
+        "P14"
+      ]
+    },
+    "yellow": {
+      "name": "Vàng",
+      "color": "#E3A72F",
+      "properties": [
+        "P15",
+        "P16",
+        "P17"
+      ]
+    },
+    "purple": {
+      "name": "Tím",
+      "color": "#6B4A8A",
+      "properties": [
+        "P26",
+        "P27",
+        "P28"
+      ]
+    },
+    "green": {
+      "name": "Xanh lá",
+      "color": "#5F7F3A",
+      "properties": [
+        "P18",
+        "P19",
+        "P20"
+      ]
+    },
+    "silver": {
+      "name": "Bạc",
+      "color": "#7C8494",
+      "properties": [
+        "P29",
+        "P30",
+        "P31"
+      ]
+    },
+    "maroon": {
+      "name": "Mận",
+      "color": "#8E3B46",
+      "properties": [
+        "P32",
+        "P33"
+      ]
+    },
+    "darkblue": {
+      "name": "Xanh đậm",
+      "color": "#2E4A7D",
+      "properties": [
+        "P21",
+        "P22"
+      ]
+    }
+  },
+  "properties": [
+    {
+      "id": "P01",
+      "position": 1,
+      "name": "Đông Anh",
+      "group": "brown",
+      "price": 60,
+      "rent": {
+        "base": 2,
+        "h1": 10,
+        "h2": 30,
+        "h3": 90,
+        "h4": 160,
+        "hotel": 250
+      },
+      "buildCost": 50,
+      "mortgage": 30
+    },
+    {
+      "id": "P02",
+      "position": 3,
+      "name": "Gia Lâm",
+      "group": "brown",
+      "price": 60,
+      "rent": {
+        "base": 4,
+        "h1": 20,
+        "h2": 60,
+        "h3": 180,
+        "h4": 320,
+        "hotel": 450
+      },
+      "buildCost": 50,
+      "mortgage": 30
+    },
+    {
+      "id": "P03",
+      "position": 6,
+      "name": "Hoàng Mai",
+      "group": "lightblue",
+      "price": 100,
+      "rent": {
+        "base": 6,
+        "h1": 30,
+        "h2": 90,
+        "h3": 270,
+        "h4": 400,
+        "hotel": 550
+      },
+      "buildCost": 50,
+      "mortgage": 50
+    },
+    {
+      "id": "P04",
+      "position": 8,
+      "name": "Hà Đông",
+      "group": "lightblue",
+      "price": 100,
+      "rent": {
+        "base": 6,
+        "h1": 30,
+        "h2": 90,
+        "h3": 270,
+        "h4": 400,
+        "hotel": 550
+      },
+      "buildCost": 50,
+      "mortgage": 50
+    },
+    {
+      "id": "P05",
+      "position": 9,
+      "name": "Bắc Từ Liêm",
+      "group": "lightblue",
+      "price": 120,
+      "rent": {
+        "base": 8,
+        "h1": 40,
+        "h2": 100,
+        "h3": 300,
+        "h4": 450,
+        "hotel": 600
+      },
+      "buildCost": 50,
+      "mortgage": 60
+    },
+    {
+      "id": "P23",
+      "position": 11,
+      "name": "Linh Đàm",
+      "group": "teal",
+      "price": 130,
+      "rent": {
+        "base": 9,
+        "h1": 45,
+        "h2": 125,
+        "h3": 375,
+        "h4": 540,
+        "hotel": 680
+      },
+      "buildCost": 75,
+      "mortgage": 65
+    },
+    {
+      "id": "P24",
+      "position": 13,
+      "name": "Văn Quán",
+      "group": "teal",
+      "price": 130,
+      "rent": {
+        "base": 9,
+        "h1": 45,
+        "h2": 125,
+        "h3": 375,
+        "h4": 540,
+        "hotel": 680
+      },
+      "buildCost": 75,
+      "mortgage": 65
+    },
+    {
+      "id": "P25",
+      "position": 14,
+      "name": "Nghĩa Đô",
+      "group": "teal",
+      "price": 150,
+      "rent": {
+        "base": 11,
+        "h1": 55,
+        "h2": 165,
+        "h3": 475,
+        "h4": 660,
+        "hotel": 820
+      },
+      "buildCost": 75,
+      "mortgage": 75
+    },
+    {
+      "id": "P06",
+      "position": 16,
+      "name": "Thanh Xuân",
+      "group": "pink",
+      "price": 140,
+      "rent": {
+        "base": 10,
+        "h1": 50,
+        "h2": 150,
+        "h3": 450,
+        "h4": 625,
+        "hotel": 750
+      },
+      "buildCost": 100,
+      "mortgage": 70
+    },
+    {
+      "id": "P07",
+      "position": 18,
+      "name": "Mỹ Đình",
+      "group": "pink",
+      "price": 140,
+      "rent": {
+        "base": 10,
+        "h1": 50,
+        "h2": 150,
+        "h3": 450,
+        "h4": 625,
+        "hotel": 750
+      },
+      "buildCost": 100,
+      "mortgage": 70
+    },
+    {
+      "id": "P08",
+      "position": 19,
+      "name": "Cầu Giấy",
+      "group": "pink",
+      "price": 160,
+      "rent": {
+        "base": 12,
+        "h1": 60,
+        "h2": 180,
+        "h3": 500,
+        "h4": 700,
+        "hotel": 900
+      },
+      "buildCost": 100,
+      "mortgage": 80
+    },
+    {
+      "id": "P09",
+      "position": 21,
+      "name": "Long Biên",
+      "group": "orange",
+      "price": 180,
+      "rent": {
+        "base": 14,
+        "h1": 70,
+        "h2": 200,
+        "h3": 550,
+        "h4": 750,
+        "hotel": 950
+      },
+      "buildCost": 100,
+      "mortgage": 90
+    },
+    {
+      "id": "P10",
+      "position": 23,
+      "name": "Vinhomes Ocean Park",
+      "group": "orange",
+      "price": 180,
+      "rent": {
+        "base": 14,
+        "h1": 70,
+        "h2": 200,
+        "h3": 550,
+        "h4": 750,
+        "hotel": 950
+      },
+      "buildCost": 100,
+      "mortgage": 90
+    },
+    {
+      "id": "P11",
+      "position": 24,
+      "name": "Vinhomes Riverside",
+      "group": "orange",
+      "price": 200,
+      "rent": {
+        "base": 16,
+        "h1": 80,
+        "h2": 220,
+        "h3": 600,
+        "h4": 800,
+        "hotel": 1000
+      },
+      "buildCost": 100,
+      "mortgage": 100
+    },
+    {
+      "id": "P12",
+      "position": 26,
+      "name": "Hai Bà Trưng",
+      "group": "red",
+      "price": 220,
+      "rent": {
+        "base": 18,
+        "h1": 90,
+        "h2": 250,
+        "h3": 700,
+        "h4": 875,
+        "hotel": 1050
+      },
+      "buildCost": 150,
+      "mortgage": 110
+    },
+    {
+      "id": "P13",
+      "position": 28,
+      "name": "Times City",
+      "group": "red",
+      "price": 220,
+      "rent": {
+        "base": 18,
+        "h1": 90,
+        "h2": 250,
+        "h3": 700,
+        "h4": 875,
+        "hotel": 1050
+      },
+      "buildCost": 150,
+      "mortgage": 110
+    },
+    {
+      "id": "P14",
+      "position": 29,
+      "name": "Royal City",
+      "group": "red",
+      "price": 240,
+      "rent": {
+        "base": 20,
+        "h1": 100,
+        "h2": 300,
+        "h3": 750,
+        "h4": 925,
+        "hotel": 1100
+      },
+      "buildCost": 150,
+      "mortgage": 120
+    },
+    {
+      "id": "P15",
+      "position": 31,
+      "name": "Vincom Center Bà Triệu",
+      "group": "yellow",
+      "price": 260,
+      "rent": {
+        "base": 22,
+        "h1": 110,
+        "h2": 330,
+        "h3": 800,
+        "h4": 975,
+        "hotel": 1150
+      },
+      "buildCost": 150,
+      "mortgage": 130
+    },
+    {
+      "id": "P16",
+      "position": 33,
+      "name": "Lotte Center Hanoi",
+      "group": "yellow",
+      "price": 260,
+      "rent": {
+        "base": 22,
+        "h1": 110,
+        "h2": 330,
+        "h3": 800,
+        "h4": 975,
+        "hotel": 1150
+      },
+      "buildCost": 150,
+      "mortgage": 130
+    },
+    {
+      "id": "P17",
+      "position": 34,
+      "name": "Keangnam Landmark 72",
+      "group": "yellow",
+      "price": 280,
+      "rent": {
+        "base": 24,
+        "h1": 120,
+        "h2": 360,
+        "h3": 850,
+        "h4": 1025,
+        "hotel": 1200
+      },
+      "buildCost": 150,
+      "mortgage": 140
+    },
+    {
+      "id": "P26",
+      "position": 36,
+      "name": "Khu đô thị Ciputra",
+      "group": "purple",
+      "price": 290,
+      "rent": {
+        "base": 25,
+        "h1": 125,
+        "h2": 375,
+        "h3": 875,
+        "h4": 1060,
+        "hotel": 1240
+      },
+      "buildCost": 175,
+      "mortgage": 145
+    },
+    {
+      "id": "P27",
+      "position": 38,
+      "name": "Tây Hồ Tây",
+      "group": "purple",
+      "price": 290,
+      "rent": {
+        "base": 25,
+        "h1": 125,
+        "h2": 375,
+        "h3": 875,
+        "h4": 1060,
+        "hotel": 1240
+      },
+      "buildCost": 175,
+      "mortgage": 145
+    },
+    {
+      "id": "P28",
+      "position": 39,
+      "name": "Làng đào Nhật Tân",
+      "group": "purple",
+      "price": 310,
+      "rent": {
+        "base": 27,
+        "h1": 135,
+        "h2": 410,
+        "h3": 950,
+        "h4": 1150,
+        "hotel": 1330
+      },
+      "buildCost": 175,
+      "mortgage": 155
+    },
+    {
+      "id": "P18",
+      "position": 41,
+      "name": "Đống Đa",
+      "group": "green",
+      "price": 300,
+      "rent": {
+        "base": 26,
+        "h1": 130,
+        "h2": 390,
+        "h3": 900,
+        "h4": 1100,
+        "hotel": 1275
+      },
+      "buildCost": 200,
+      "mortgage": 150
+    },
+    {
+      "id": "P19",
+      "position": 43,
+      "name": "Ba Đình",
+      "group": "green",
+      "price": 300,
+      "rent": {
+        "base": 26,
+        "h1": 130,
+        "h2": 390,
+        "h3": 900,
+        "h4": 1100,
+        "hotel": 1275
+      },
+      "buildCost": 200,
+      "mortgage": 150
+    },
+    {
+      "id": "P20",
+      "position": 44,
+      "name": "Hồ Tây",
+      "group": "green",
+      "price": 320,
+      "rent": {
+        "base": 28,
+        "h1": 150,
+        "h2": 450,
+        "h3": 1000,
+        "h4": 1200,
+        "hotel": 1400
+      },
+      "buildCost": 200,
+      "mortgage": 160
+    },
+    {
+      "id": "P29",
+      "name": "Phố Tràng Tiền",
+      "group": "silver",
+      "price": 330,
+      "rent": {
+        "base": 30,
+        "h1": 155,
+        "h2": 465,
+        "h3": 1030,
+        "h4": 1230,
+        "hotel": 1430
+      },
+      "buildCost": 200,
+      "mortgage": 165,
+      "position": 46
+    },
+    {
+      "id": "P30",
+      "name": "Nhà hát Lớn",
+      "group": "silver",
+      "price": 330,
+      "rent": {
+        "base": 30,
+        "h1": 155,
+        "h2": 465,
+        "h3": 1030,
+        "h4": 1230,
+        "hotel": 1430
+      },
+      "buildCost": 200,
+      "mortgage": 165,
+      "position": 48
+    },
+    {
+      "id": "P31",
+      "name": "Phố Phan Đình Phùng",
+      "group": "silver",
+      "price": 350,
+      "rent": {
+        "base": 33,
+        "h1": 165,
+        "h2": 490,
+        "h3": 1080,
+        "h4": 1280,
+        "hotel": 1480
+      },
+      "buildCost": 200,
+      "mortgage": 175,
+      "position": 49
+    },
+    {
+      "id": "P32",
+      "name": "Phố Hàng Ngang",
+      "group": "maroon",
+      "price": 340,
+      "rent": {
+        "base": 32,
+        "h1": 160,
+        "h2": 480,
+        "h3": 1060,
+        "h4": 1260,
+        "hotel": 1460
+      },
+      "buildCost": 200,
+      "mortgage": 170,
+      "position": 52
+    },
+    {
+      "id": "P21",
+      "position": 53,
+      "name": "Phố cổ Hà Nội",
+      "group": "darkblue",
+      "price": 350,
+      "rent": {
+        "base": 35,
+        "h1": 175,
+        "h2": 500,
+        "h3": 1100,
+        "h4": 1300,
+        "hotel": 1500
+      },
+      "buildCost": 200,
+      "mortgage": 175
+    },
+    {
+      "id": "P33",
+      "name": "Phố Hàng Đào",
+      "group": "maroon",
+      "price": 360,
+      "rent": {
+        "base": 36,
+        "h1": 180,
+        "h2": 520,
+        "h3": 1150,
+        "h4": 1350,
+        "hotel": 1550
+      },
+      "buildCost": 200,
+      "mortgage": 180,
+      "position": 56
+    },
+    {
+      "id": "P22",
+      "position": 59,
+      "name": "Hồ Gươm",
+      "group": "darkblue",
+      "price": 400,
+      "rent": {
+        "base": 50,
+        "h1": 200,
+        "h2": 600,
+        "h3": 1400,
+        "h4": 1700,
+        "hotel": 2000
+      },
+      "buildCost": 200,
+      "mortgage": 200
+    }
+  ],
+  "transports": [
+    {
+      "id": "T01",
+      "position": 5,
+      "name": "Bến xe Mỹ Đình",
+      "price": 200,
+      "mortgage": 100
+    },
+    {
+      "id": "T02",
+      "position": 15,
+      "name": "Metro Cát Linh – Hà Đông",
+      "price": 200,
+      "mortgage": 100
+    },
+    {
+      "id": "T03",
+      "position": 25,
+      "name": "Ga Hà Nội",
+      "price": 200,
+      "mortgage": 100
+    },
+    {
+      "id": "T04",
+      "position": 35,
+      "name": "Sân bay Nội Bài",
+      "price": 200,
+      "mortgage": 100
+    },
+    {
+      "id": "T05",
+      "position": 45,
+      "name": "Metro Nhổn – Ga Hà Nội",
+      "price": 200,
+      "mortgage": 100
+    },
+    {
+      "id": "T06",
+      "name": "Bến xe Giáp Bát",
+      "price": 200,
+      "mortgage": 100,
+      "position": 51
+    }
+  ],
+  "utilities": [
+    {
+      "id": "U01",
+      "position": 12,
+      "name": "Điện lực Hà Nội",
+      "price": 150,
+      "mortgage": 75
+    },
+    {
+      "id": "U02",
+      "position": 55,
+      "name": "Nước sạch Hà Nội",
+      "price": 150,
+      "mortgage": 75
+    }
+  ]
+}

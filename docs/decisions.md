@@ -147,3 +147,61 @@ Mỗi phương án chạy 10.000 ván × 3 cấu hình (Truyền thống 4 ngư�
 | C08 Nô lệ tư bản | tiền khởi đầu 1.600 → **1.750**; Xin nghỉ phép hồi sau 3 lượt |
 
 - **Kết quả** (10.000 ván mỗi cấu hình, lệch tỉ lệ thắng, đ%): 4 người 40 ô — Vin +0,2, Ninja +2,0, Grab +1,9, TikTok +1,4, Cò đất +0,8, Tarot −2,9, SVBK −2,1, Nô lệ −1,5. 6 người 48 ô — tất cả trong ±2,5 **trừ Thiếu gia Vin −4,4**. Vin yếu riêng trên bàn 48 ô vì dựa vào lương mà vòng bàn dài hơn; bỏ thuế 300 của Vin trên bàn này kéo lên ~+1,3 đ% — cần anh/chị quyết định có cho nhân vật luật riêng theo bàn hay không.
+
+## 4 nhân vật mới, bàn lục giác 8 người, cân bằng lại toàn bộ
+
+### Nhân vật mới (C09–C12)
+
+- **C09 Con bạc** — tài xỉu dùng **3 xúc xắc riêng** (không đụng xúc xắc đi quân): 11–17 Tài, 4–10 Xỉu, ba mặt giống nhau = **bão**.
+  - Nội tại *Liều ăn nhiều* (`gamble_payment`): khi mua đất của ngân hàng, nộp thuế, phạt Bãi giữ xe hoặc tiền thẻ (từ 50 tỷ) được chọn chơi: thắng trả bớt 30%, thua trả thêm 40% (phạt cao hơn thưởng như ý tưởng gốc), ra bão khỏi trả. Xác suất thắng 48,6% → trung bình đắt hơn ~2%, chủ yếu là may rủi. Mua đất chỉ được cược khi đủ tiền nếu thua. Không áp dụng cho tiền thuê.
+  - Kỹ năng *Mở sòng* (`host_sicbo`): mọi đối thủ lần lượt đặt Tài/Xỉu (mỗi người 10 giây, hết giờ chọn ngẫu nhiên), Con bạc làm nhà cái; người thắng nhận 80% tiền cược, bão nhà cái ăn hết. Tổng tiền cược cố định **240 tỷ chia đều** (làm tròn lên hàng chục) — nếu mỗi người cược cố định thì bàn 8 người mạnh gấp đôi bàn 4 người (+10 đ%).
+  - Điểm yếu: bắt đầu 1.400 tỷ.
+- **C10 Thợ xây** — xây rẻ hơn 25%; *Tự tay xây* (`free_build`): xây 1 nhà miễn phí, được xây **"nhà chui"** (1 nhà) lên ô chưa đủ nhóm màu, tối đa 1 căn cùng lúc; bắt đầu 1.450 tỷ. Không giới hạn số nhà chui thì quá mạnh (+20 đ% ở bàn 6–8 người, vì cuối ván ô nào cũng có nhà).
+  - Vì nhà chui, một nhóm màu có thể chia nhiều chủ mà có nhà: luật *"bán hết nhà trong nhóm trước khi thế chấp / giao dịch"* giờ chỉ xét **nhà của chính người đó** trong nhóm.
+- **C11 F0 chứng khoán** — *cổ tức* 2% giá đất đang giữ (trừ đất thế chấp) mỗi lần qua Hoàng thành; *Bắt đáy* (`buy_mortgaged`): mua ngay 1 ô đối thủ đang thế chấp, trả họ giá thế chấp +10%, ô vẫn thế chấp; điểm yếu: tiền thẻ ×1,3.
+- **C12 Tổ trưởng dân phố** — miễn Phí gửi xe Phố cổ; *Họp tổ dân phố* (`collect_contribution`): các đối thủ góp tổng 20 tỷ cho tổ trưởng và 20 tỷ vào Quỹ (chia đều); điểm yếu: mỗi lần qua Hoàng thành góp 20 tỷ vào Quỹ.
+
+### Bàn lục giác 60 ô (7–8 người)
+
+- `data/board-hex.json`, hình lục giác đầu bằng, 6 góc ở 0/10/20/30/40/50: Hoàng thành, Bãi giữ xe, **Phố đi bộ Hồ Gươm** (nghỉ chân), Văn Miếu, CSGT thổi còi, **Chợ Đồng Xuân** (nghỉ chân).
+- 41 ô sở hữu: thêm nhóm **Bạc** (P29 Phố Tràng Tiền, P30 Nhà hát Lớn, P31 Phố Phan Đình Phùng), nhóm **Mận** (P32 Phố Hàng Ngang, P33 Phố Hàng Đào), giao thông **T06 Bến xe Giáp Bát**. 3 Cơ hội, 3 Cộng đồng, 3 Event (bản đầu có 4+4 thẻ — Nghiện Tarot +6 đ% vì rút thẻ quá thường).
+- Kinh tế riêng: lương ×1,3, thuê giao thông 6 mức, kho 48 nhà / 17 khách sạn. Bàn 48 ô đổi từ "lương +40" sang **lương ×1,2**: lương riêng của nhân vật (Thiếu gia Vin, SVBK, Tài xế Grab) giờ co giãn theo độ dài vòng.
+- Mỗi bàn có `maxPlayers` (40 và 48 ô: 6; lục giác: 8); phòng tối đa 8 người. Chọn bàn Tự động: 2–4 người bàn 40 ô, 5–6 người 48 ô, 7–8 người lục giác (`config.json` → `room.autoBoardFrom`).
+
+### Thẻ chia theo số người
+
+CH16 (khao cả xóm) và CD10 (sinh nhật) đổi từ "mỗi người 50 / 10" sang **tổng 150 / 30 chia đều** (làm tròn lên hàng chục): bàn 4 người giữ đúng con số cũ, bàn 8 người không còn mất/nhận gấp 2–3 lần.
+
+### Chỉ số theo số người chơi (`byTableSize`)
+
+Bàn 2–3 người chơi khác hẳn (2 người: 99% ván kết thúc bằng phá sản sau ~65 vòng). Ngay cả 8 nhân vật cũ đã lệch ±9 đ% ở bàn 2 người. Mỗi nhân vật có thể có chỉ số riêng cho vài cỡ bàn (`characters.json` → `byTableSize`), màn chọn nhân vật ghi "Chỉ số riêng cho bàn N người". Đang dùng cho bàn 2 và 3 người: Thợ xây (không nhà chui, giảm giá xây ít hơn), Tổ trưởng (góp ít hơn), Tài xế Grab (bỏ/giảm phạt lương), Nghiện Tarot (rút 2 chọn 1 cả Cộng đồng, thêm tiền), F0 (cổ tức 4%), Nô lệ tư bản, Cò đất, Idol TikTok, SVBK, Ninja Lead.
+
+### Cân bằng lại 8 nhân vật cũ
+
+Thiếu gia Vin lương 280, giảm 25% cho cả Vincom Bà Triệu; Nghiện Tarot rút 2 chọn 1 chỉ với Cơ hội, bỏ đất cấm, điểm yếu tiền thẻ ×1,2, Giải hạn hồi sau 3 lượt; Nô lệ tư bản khởi đầu 1.800.
+
+### Kết quả kiểm chứng (seed mới 2026, chưa dùng khi chỉnh)
+
+Lệch tỉ lệ thắng so với mức công bằng, điểm %:
+
+| | 2 người | 3 | 4 | 5 (48 ô) | 6 (48 ô) | 7 (lục giác) | 8 (lục giác) |
+|---|---|---|---|---|---|---|---|
+| C01 Thiếu gia Vin | +1,9 | +2,2 | +1,0 | −0,4 | −0,7 | −2,3 | −2,4 |
+| C02 Ninja Lead | +0,3 | +1,2 | +2,4 | +0,8 | −0,4 | −0,6 | −0,3 |
+| C03 Tài xế Grab | +0,8 | −0,6 | +1,5 | +1,1 | +1,0 | −0,2 | +0,0 |
+| C04 Idol TikTok | −3,3 | −0,1 | +1,2 | −0,7 | +0,2 | −1,2 | −0,8 |
+| C05 Cò đất | +0,6 | −0,5 | +0,8 | +1,2 | −1,2 | +1,4 | +1,0 |
+| C06 Nghiện Tarot | −1,7 | −0,7 | −2,5 | −1,5 | +0,5 | +0,5 | +2,1 |
+| C07 SVBK | −0,3 | −0,5 | −1,2 | −1,1 | +1,4 | −1,3 | −0,9 |
+| C08 Nô lệ tư bản | −2,1 | +0,4 | −0,5 | +0,8 | +0,0 | +1,1 | +0,6 |
+| C09 Con bạc | +2,5 | −1,2 | −0,3 | −0,3 | +0,9 | +0,1 | +1,1 |
+| C10 Thợ xây | −1,4 | +1,3 | −0,9 | −2,2 | −1,9 | −0,7 | −0,9 |
+| C11 F0 chứng khoán | +0,1 | −0,9 | −2,9 | +0,2 | −0,7 | +0,9 | −0,5 |
+| C12 Tổ trưởng dân phố | +2,7 | −0,6 | +1,5 | +2,0 | +0,6 | +2,4 | +1,1 |
+
+20.000 ván ở 2–4 người, 15.000 ở 5–6, 12.000 ở 7–8 (bot theo GDD 7.4, nhân vật chia ngẫu nhiên). Tất cả trong ±3,3 đ%.
+
+### Chưa xử lý (đề xuất)
+
+- **Lợi thế đi trước** lớn và tăng theo số người: người đi đầu thắng 34% ở bàn 4 người (công bằng 25%), 27% ở bàn 8 người (công bằng 12,5%). Có thể bù cho người đi sau (thêm tiền khởi đầu theo thứ tự) — cần anh/chị quyết.
+- Ván 8 người kiểu Truyền thống dài (~160 vòng, ~1.270 lượt); nên gợi ý chơi chế độ Nhanh khi đông người.

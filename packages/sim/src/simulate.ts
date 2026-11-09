@@ -12,6 +12,8 @@ export interface BatchOptions {
   /** Board layout (default standard). */
   board?: BoardId;
   characters: boolean;
+  /** Only deal these characters (default: all). */
+  pool?: string[];
   maxRounds: number;
   quickRounds: number;
   bot?: Partial<BotOptions>;
@@ -20,19 +22,26 @@ export interface BatchOptions {
 }
 
 export interface DataPatch {
+  /** Override fields of the board's economy (e.g. goSalaryBonus, transportRent). */
+  economy?: Partial<GameData['economy']>;
   /** Override fields of characters.json → rules (e.g. skillCooldownRounds). */
   rules?: Partial<GameData['characterRules']>;
-  characters?: Record<string, Partial<Pick<CharacterDef, 'passives' | 'drawbacks' | 'skill'>>>;
+  characters?: Record<string, Partial<Pick<CharacterDef, 'passives' | 'drawbacks' | 'skill' | 'byTableSize'>>>;
 }
 
 export function patchedData(patch?: DataPatch, base: GameData = defaultData): GameData {
-  if (!patch?.characters && !patch?.rules) return base;
+  if (!patch?.characters && !patch?.rules && !patch?.economy) return base;
   const characters = { ...base.characters };
   for (const [id, fields] of Object.entries(patch.characters ?? {})) {
     if (!characters[id]) throw new Error(`Patch: unknown character ${id}`);
     characters[id] = { ...characters[id], ...fields };
   }
-  return { ...base, characters, characterRules: { ...base.characterRules, ...patch.rules } };
+  return {
+    ...base,
+    characters,
+    characterRules: { ...base.characterRules, ...patch.rules },
+    economy: { ...base.economy, ...patch.economy },
+  };
 }
 
 export function playersFor(o: BatchOptions, gameSeed: number): number {
@@ -54,6 +63,7 @@ export function simulateRange(o: BatchOptions, from: number, to: number): Totals
         players: playersFor(o, seed),
         mode: o.mode,
         characters: o.characters,
+        pool: o.pool,
         maxRounds: o.maxRounds,
         quickRounds: o.quickRounds,
         bot: o.bot,

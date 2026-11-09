@@ -14,7 +14,7 @@
       "passives": [
         {
           "type": "go_salary",
-          "value": 260
+          "value": 280
         },
         {
           "type": "purchase_discount",
@@ -22,9 +22,10 @@
             "P10",
             "P11",
             "P13",
-            "P14"
+            "P14",
+            "P15"
           ],
-          "rate": 0.3
+          "rate": 0.25
         }
       ],
       "drawbacks": [
@@ -79,7 +80,17 @@
         "rate": 0.5,
         "trigger": "on_pay_rent",
         "cooldownRounds": 4
-      }
+      },
+      "byTableSize": [
+        {
+          "players": [
+            3
+          ],
+          "skill": {
+            "cooldownRounds": 5
+          }
+        }
+      ]
     },
     {
       "id": "C03",
@@ -110,7 +121,26 @@
         "type": "reroll",
         "trigger": "after_roll",
         "cooldownRounds": 6
-      }
+      },
+      "byTableSize": [
+        {
+          "players": [
+            2
+          ],
+          "drawbacks": []
+        },
+        {
+          "players": [
+            3
+          ],
+          "drawbacks": [
+            {
+              "type": "go_salary",
+              "value": 160
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "C04",
@@ -134,7 +164,27 @@
         "target": "opponent",
         "duration": "user_next_turn_start",
         "cooldownRounds": 5
-      }
+      },
+      "byTableSize": [
+        {
+          "players": [
+            2
+          ],
+          "passives": [
+            {
+              "type": "rent_bonus_from_bank",
+              "rate": 0.25,
+              "min": 10
+            }
+          ],
+          "drawbacks": [
+            {
+              "type": "card_payment_multiplier",
+              "value": 1.2
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "C05",
@@ -156,7 +206,20 @@
         "target": "group",
         "multiplier": 2,
         "duration": "user_next_turn_start"
-      }
+      },
+      "byTableSize": [
+        {
+          "players": [
+            2
+          ],
+          "passives": [
+            {
+              "type": "commission_on_opponent_bank_purchase",
+              "amount": 40
+            }
+          ]
+        }
+      ]
     },
     {
       "id": "C06",
@@ -165,25 +228,65 @@
         {
           "type": "draw_two_choose_one",
           "decks": [
-            "chance",
-            "community"
+            "chance"
           ]
         }
       ],
       "drawbacks": [
         {
-          "type": "forbidden_properties",
-          "properties": [
-            "P08",
-            "P14"
-          ]
+          "type": "card_payment_multiplier",
+          "value": 1.2
         }
       ],
       "skill": {
         "name": "Giải hạn",
         "type": "cancel_event_for_self",
-        "cooldownRounds": 2
-      }
+        "cooldownRounds": 3
+      },
+      "byTableSize": [
+        {
+          "players": [
+            2
+          ],
+          "passives": [
+            {
+              "type": "draw_two_choose_one",
+              "decks": [
+                "chance",
+                "community"
+              ]
+            },
+            {
+              "type": "starting_cash",
+              "value": 1750
+            }
+          ],
+          "skill": {
+            "cooldownRounds": 2
+          }
+        },
+        {
+          "players": [
+            3
+          ],
+          "passives": [
+            {
+              "type": "draw_two_choose_one",
+              "decks": [
+                "chance",
+                "community"
+              ]
+            },
+            {
+              "type": "starting_cash",
+              "value": 1600
+            }
+          ],
+          "skill": {
+            "cooldownRounds": 2
+          }
+        }
+      ]
     },
     {
       "id": "C07",
@@ -214,7 +317,26 @@
         "afterGoPasses": 4,
         "recharge": false,
         "value": 260
-      }
+      },
+      "byTableSize": [
+        {
+          "players": [
+            2
+          ],
+          "skill": {
+            "afterGoPasses": 3
+          }
+        },
+        {
+          "players": [
+            3
+          ],
+          "skill": {
+            "afterGoPasses": 3,
+            "value": 280
+          }
+        }
+      ]
     },
     {
       "id": "C08",
@@ -222,14 +344,206 @@
       "passives": [
         {
           "type": "starting_cash",
-          "value": 1750
+          "value": 1800
         }
       ],
       "drawbacks": [],
       "skill": {
         "name": "Xin nghỉ phép",
         "type": "free_jail_exit"
+      },
+      "byTableSize": [
+        {
+          "players": [
+            2
+          ],
+          "passives": [
+            {
+              "type": "starting_cash",
+              "value": 2000
+            }
+          ]
+        },
+        {
+          "players": [
+            3
+          ],
+          "passives": [
+            {
+              "type": "starting_cash",
+              "value": 1900
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "C09",
+      "name": "Con bạc",
+      "passives": [
+        {
+          "type": "gamble_payment",
+          "kinds": [
+            "buy",
+            "tax",
+            "jail",
+            "card"
+          ],
+          "minAmount": 50,
+          "winRate": 0.3,
+          "loseRate": 0.4,
+          "jackpotRate": 1
+        }
+      ],
+      "drawbacks": [
+        {
+          "type": "starting_cash",
+          "value": 1400
+        }
+      ],
+      "skill": {
+        "name": "Mở sòng",
+        "type": "host_sicbo",
+        "pot": 240,
+        "roundTo": 10,
+        "commission": 0.2
       }
+    },
+    {
+      "id": "C10",
+      "name": "Thợ xây",
+      "passives": [
+        {
+          "type": "build_discount",
+          "rate": 0.25
+        }
+      ],
+      "drawbacks": [
+        {
+          "type": "starting_cash",
+          "value": 1450
+        }
+      ],
+      "skill": {
+        "name": "Tự tay xây",
+        "type": "free_build",
+        "anyTile": true,
+        "anyTileMax": 1
+      },
+      "byTableSize": [
+        {
+          "players": [
+            2
+          ],
+          "passives": [
+            {
+              "type": "build_discount",
+              "rate": 0
+            }
+          ],
+          "drawbacks": [
+            {
+              "type": "starting_cash",
+              "value": 1200
+            }
+          ],
+          "skill": {
+            "anyTile": false,
+            "cooldownRounds": 8
+          }
+        },
+        {
+          "players": [
+            3
+          ],
+          "passives": [
+            {
+              "type": "build_discount",
+              "rate": 0.1
+            }
+          ],
+          "drawbacks": [
+            {
+              "type": "starting_cash",
+              "value": 1400
+            }
+          ],
+          "skill": {
+            "anyTile": false,
+            "cooldownRounds": 6
+          }
+        }
+      ]
+    },
+    {
+      "id": "C11",
+      "name": "F0 chứng khoán",
+      "passives": [
+        {
+          "type": "dividend",
+          "rate": 0.02
+        }
+      ],
+      "drawbacks": [
+        {
+          "type": "card_payment_multiplier",
+          "value": 1.3
+        }
+      ],
+      "skill": {
+        "name": "Bắt đáy",
+        "type": "buy_mortgaged",
+        "premium": 0.1
+      },
+      "byTableSize": [
+        {
+          "players": [
+            2,
+            3
+          ],
+          "passives": [
+            {
+              "type": "dividend",
+              "rate": 0.04
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "C12",
+      "name": "Tổ trưởng dân phố",
+      "passives": [
+        {
+          "type": "tax_override",
+          "tax": "TAX2",
+          "amount": 0
+        }
+      ],
+      "drawbacks": [
+        {
+          "type": "go_donation",
+          "amount": 20
+        }
+      ],
+      "skill": {
+        "name": "Họp tổ dân phố",
+        "type": "collect_contribution",
+        "totalToSelf": 20,
+        "totalToFund": 20
+      },
+      "byTableSize": [
+        {
+          "players": [
+            2,
+            3
+          ],
+          "skill": {
+            "totalToSelf": 15,
+            "totalToFund": 15
+          }
+        }
+      ]
     }
   ]
 }

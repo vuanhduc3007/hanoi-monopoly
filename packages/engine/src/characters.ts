@@ -5,7 +5,7 @@
  * onDrawCard, onPurchase, onBankrupt.
  */
 import { activePlayers, emit, fail, hotelLevel, housesForHotel, ownedBy, type Ctx } from './ctx';
-import type { GameData, TileDef } from './data';
+import { characterFor, type GameData, type TileDef } from './data';
 import { expireEffectsOf, isImmune } from './effects';
 import type { DeckName, Effect, PayTask, PlayerState, Task } from './types';
 
@@ -14,7 +14,7 @@ import type { DeckName, Effect, PayTask, PlayerState, Task } from './types';
 /** Passives + drawbacks of the player's character (empty if characters are off). */
 export function traits(c: Ctx, p: PlayerState): Effect[] {
   if (!c.s.config.characters || !p.character) return [];
-  const def = c.d.characters[p.character];
+  const def = characterFor(c.d, p.character, c.s.players.length);
   return [...def.passives, ...def.drawbacks];
 }
 
@@ -28,7 +28,7 @@ export function traitsOf(c: Ctx, p: PlayerState, type: string): Effect[] {
 
 export function skillOf(c: Ctx, p: PlayerState): (Effect & { name: string }) | undefined {
   if (!c.s.config.characters || !p.character) return undefined;
-  return c.d.characters[p.character].skill;
+  return characterFor(c.d, p.character, c.s.players.length).skill;
 }
 
 /** The one-shot skill of this type is still available. */
@@ -37,9 +37,9 @@ export function skillAvailable(c: Ctx, p: PlayerState, type: string): boolean {
   return !!sk && sk.type === type && !p.skillUsed && !p.bankrupt;
 }
 
-export function startingCash(d: GameData, characterId: string | null, charactersOn: boolean): number {
+export function startingCash(d: GameData, characterId: string | null, charactersOn: boolean, players: number): number {
   if (charactersOn && characterId) {
-    const def = d.characters[characterId];
+    const def = characterFor(d, characterId, players);
     const t = [...def.passives, ...def.drawbacks].find((x) => x.type === 'starting_cash');
     if (t) return t.value as number;
   }
@@ -54,7 +54,8 @@ export function salaryFor(c: Ctx, p: PlayerState): number {
   if (sk?.type === 'auto_salary_upgrade' && p.goPasses >= (sk.afterGoPasses as number)) {
     salary = sk.value as number;
   }
-  return salary + (c.d.economy.goSalaryBonus ?? 0);
+  const mult = c.d.economy.goSalaryMultiplier ?? 1;
+  return Math.ceil(salary * mult - 1e-9) + (c.d.economy.goSalaryBonus ?? 0);
 }
 
 /** Bank list price after character discounts (only for buying at list price). */
@@ -69,6 +70,13 @@ export function purchasePrice(c: Ctx, p: PlayerState, propertyId: string): numbe
     }
   }
   return Math.ceil(price - 1e-9);
+}
+
+/** Thợ xây: building cost after `build_discount`. */
+export function buildCostFor(c: Ctx, p: PlayerState, propertyId: string): number {
+  const base = c.d.ownables[propertyId].buildCost ?? 0;
+  const t = trait(c, p, 'build_discount');
+  return t ? Math.ceil(base * (1 - (t.rate as number)) - 1e-9) : base;
 }
 
 export function canOwn(c: Ctx, p: PlayerState, propertyId: string): boolean {
@@ -168,6 +176,27 @@ export function onPassGo(c: Ctx, p: PlayerState): void {
   const salary = salaryFor(c, p);
   p.cash += salary;
   emit(c, 'salary', { player: p.id, amount: salary, passes: p.goPasses });
+  // F0 chứng khoán: dividend on the list price of unmortgaged holdings.
+  const div = trait(c, p, 'dividend');
+  if (div) {
+    const total = ownedBy(c, p.id)
+      .filter((id) => !c.s.ownables[id].mortgaged)
+      .reduce((a, id) => a + c.d.ownables[id].price, 0);
+    const amount = Math.ceil(total * (div.rate as number) - 1e-9);
+    if (amount > 0) {
+      p.cash += amount;
+      emit(c, 'gain', { player: p.id, amount, reason: 'dividend' });
+    }
+  }
+  // Tổ trưởng dân phố: sets an example and gives to the Quỹ every lap.
+  const don = trait(c, p, 'go_donation');
+  if (don) {
+    const amount = Math.min(don.amount as number, p.cash);
+    const toFund = c.s.config.scholarshipFund;
+    p.cash -= amount;
+    if (toFund) c.s.fund += amount;
+    emit(c, 'payment', { from: p.id, to: { kind: toFund ? 'fund' : 'bank' }, amount, kind: 'fee', reason: 'goDonation' });
+  }
 }
 
 /** Extra tasks / overrides when a player stops on a tile. */

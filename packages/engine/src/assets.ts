@@ -1,4 +1,4 @@
-import { canOwn, maxLevel } from './characters';
+import { buildCostFor, canOwn, maxLevel, skillOf } from './characters';
 import {
   emit,
   fail,
@@ -9,6 +9,7 @@ import {
   housesForHotel,
   isMyTurn,
   ownableDef,
+  ownedBy,
   ownsFullGroup,
   type Ctx,
 } from './ctx';
@@ -72,20 +73,25 @@ const BUILD_BLOCK_TEXT: Record<BuildBlock, string> = {
   noHotelsLeft: 'No hotels left in stock',
 };
 
-export function buildBlock(c: Ctx, p: PlayerState, id: string): BuildBlock | null {
+/**
+ * `cost` overrides the price (Thợ xây's free house); by default the player's building cost.
+ * `partial` (Thợ xây's Tự tay xây) also allows a first house without the full colour group.
+ */
+export function buildBlock(c: Ctx, p: PlayerState, id: string, cost?: number, partial = false): BuildBlock | null {
   if (!canManage(c, p, false)) return 'notYourTurn';
   const def = ownableDef(c, id);
   const own = c.s.ownables[id];
   if (def.kind !== 'property' || !def.group || !def.buildCost) return 'notBuildable';
   if (own.owner !== p.id) return 'notOwner';
-  if (!ownsFullGroup(c, p.id, def.group)) return 'needFullGroup';
+  const full = ownsFullGroup(c, p.id, def.group);
+  if (!full && !(partial && own.level === 0)) return 'needFullGroup';
   const group = groupProperties(c, def.group);
-  if (group.some((g) => c.s.ownables[g].mortgaged)) return 'groupMortgaged';
+  if (full ? group.some((g) => c.s.ownables[g].mortgaged) : own.mortgaged) return 'groupMortgaged';
   if (buildFreezeActive(c, p)) return 'frozen';
   if (own.level >= maxLevel(c, p)) return 'maxLevel';
   const minLevel = Math.min(...group.map((g) => c.s.ownables[g].level));
-  if (own.level !== minLevel) return 'buildEvenly';
-  if (p.cash < def.buildCost) return 'noCash';
+  if (full && own.level !== minLevel) return 'buildEvenly';
+  if (p.cash < (cost ?? buildCostFor(c, p, id))) return 'noCash';
   if (c.s.config.buildingLimit) {
     const stock = buildingStock(c);
     const toHotel = own.level + 1 === hotelLevel(c);
@@ -95,21 +101,36 @@ export function buildBlock(c: Ctx, p: PlayerState, id: string): BuildBlock | nul
   return null;
 }
 
+/**
+ * Thợ xây's free house may go on a tile without the full group (`anyTile` on the skill),
+ * while he has fewer than `anyTileMax` such houses standing.
+ */
+export function partialFreeBuild(c: Ctx, p: PlayerState): boolean {
+  const sk = skillOf(c, p);
+  if (sk?.type !== 'free_build' || sk.anyTile !== true) return false;
+  const max = (sk.anyTileMax as number | undefined) ?? Infinity;
+  const standing = ownedBy(c, p.id).filter((id) => {
+    const g = c.d.ownables[id].group;
+    return c.s.ownables[id].level > 0 && g !== undefined && !ownsFullGroup(c, p.id, g);
+  }).length;
+  return standing < max;
+}
+
 /** Why `p` may not build on `id` right now, or null if allowed. */
 export function buildError(c: Ctx, p: PlayerState, id: string): string | null {
   const b = buildBlock(c, p, id);
   return b ? BUILD_BLOCK_TEXT[b] : null;
 }
 
-export function build(c: Ctx, p: PlayerState, id: string): void {
-  const err = buildError(c, p, id);
-  if (err) fail(err);
-  const def = ownableDef(c, id);
+export function build(c: Ctx, p: PlayerState, id: string, free = false): void {
+  const cost = free ? 0 : buildCostFor(c, p, id);
+  const b = buildBlock(c, p, id, cost, free && partialFreeBuild(c, p));
+  if (b) fail(BUILD_BLOCK_TEXT[b]);
   const own = c.s.ownables[id];
   const toHotel = own.level + 1 === hotelLevel(c);
-  p.cash -= def.buildCost!;
+  p.cash -= cost;
   own.level += 1;
-  emit(c, 'built', { player: p.id, propertyId: id, level: own.level, hotel: toHotel, cost: def.buildCost });
+  emit(c, 'built', { player: p.id, propertyId: id, level: own.level, hotel: toHotel, cost, ...(free ? { free: true } : {}) });
 }
 
 /** Sells one level back to the bank. A hotel becomes H houses, or fewer if the stock is short. */
@@ -135,7 +156,7 @@ export function sellBuilding(c: Ctx, p: PlayerState, id: string): void {
   const own = c.s.ownables[id];
   if (own.owner !== p.id) fail('Not your property');
   if (own.level === 0) fail('No buildings to sell');
-  const group = groupProperties(c, def.group!);
+  const group = groupProperties(c, def.group!).filter((g) => c.s.ownables[g].owner === p.id);
   const maxInGroup = Math.max(...group.map((g) => c.s.ownables[g].level));
   if (own.level !== maxInGroup) fail('Must sell evenly');
   sellOneLevel(c, p, id);
@@ -148,7 +169,7 @@ export function mortgageProperty(c: Ctx, p: PlayerState, id: string): void {
   const own = c.s.ownables[id];
   if (own.owner !== p.id) fail('Not your property');
   if (own.mortgaged) fail('Already mortgaged');
-  if (groupHasBuildings(c, def.group)) fail('Sell all buildings in the group first');
+  if (groupHasBuildings(c, def.group, p.id)) fail('Sell all buildings in the group first');
   own.mortgaged = true;
   p.cash += def.mortgage;
   emit(c, 'mortgaged', { player: p.id, propertyId: id, amount: def.mortgage });
@@ -246,7 +267,7 @@ function validateTrade(c: Ctx, t: Trade, toUnmortgage: string[]): void {
     for (const id of b.properties) {
       const def = ownableDef(c, id);
       if (c.s.ownables[id].owner !== giver.id) fail(`${giver.id} does not own ${id}`);
-      if (groupHasBuildings(c, def.group)) fail(`Cannot trade ${id}: its group has buildings`);
+      if (groupHasBuildings(c, def.group, giver.id)) fail(`Cannot trade ${id}: its group has buildings`);
       if (!canOwn(c, receiver, id)) fail(`${receiver.id} may not own ${id}`);
     }
     for (const card of b.jailCards) if (!giver.jailCards.includes(card)) fail(`${giver.id} lacks ${card}`);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { applyAction, botAction } from '../src';
-import { D, G, has } from './helpers';
+import { applyAction, botAction, perPlayer } from '../src';
+import { D, G, has, withCharacter } from './helpers';
 
 // Character numbers come from characters.json so balancing never breaks the tests.
 const CH = D.characters;
@@ -15,6 +15,9 @@ describe('character data', () => {
       'commission_on_opponent_bank_purchase', 'no_hotels', 'rent_multiplier',
       'draw_two_choose_one', 'forbidden_properties', 'cancel_event_for_self', 'park_bonus',
       'starting_cash', 'auto_salary_upgrade', 'free_jail_exit',
+      // C09–C12: test/newcharacters.test.ts
+      'gamble_payment', 'host_sicbo', 'build_discount', 'free_build', 'dividend', 'buy_mortgaged',
+      'go_donation', 'collect_contribution',
     ]);
     for (const ch of Object.values(D.characters)) {
       for (const t of [...ch.passives, ...ch.drawbacks, ch.skill]) expect(covered).toContain(t.type);
@@ -229,7 +232,8 @@ describe('C04 Idol TikTok', () => {
 
     const h = G.create(['C04', null, null]);
     h.draw('p1', 'CH16');
-    expect([h.cash('p1'), h.cash('p2')]).toEqual([1350, 1575]);
+    const each = Math.ceil(perPlayer(D.cards.CH16.effect, 2) * num(CH.C04.drawbacks[0].value));
+    expect([h.cash('p1'), h.cash('p2')]).toEqual([1500 - 2 * each, 1500 + each]);
 
     const k = G.create([null, 'C04']);
     k.draw('p1', 'EV10'); // 15% of 1500 = 225 → 220
@@ -300,15 +304,18 @@ describe('C06 Nghiện Tarot', () => {
     expect(g.cash('p1')).toBe(1550);
   });
 
+  // No shipped character has forbidden tiles any more; the trait stays supported.
+  const forbidden = () => withCharacter('C06', { drawbacks: [{ type: 'forbidden_properties', properties: ['P08'] }] });
+
   it('forbidden_properties: cannot buy or bid; tile auctions immediately', () => {
-    const g = G.create(['C06', null]);
+    const g = G.createWith(forbidden(), ['C06', null]);
     g.setCurrent('p1').at('p1', 11).roll('p1', 1, 2); // → P08
     expect(g.s.pending).toMatchObject({ type: 'auction', eligible: ['p2'] });
     expect(() => g.do({ type: 'bid', player: 'p1', amount: 10 })).toThrow(/eligible/);
   });
 
   it('forbidden_properties: cannot receive them in a trade', () => {
-    const g = G.create(['C06', null]).give('p2', ['P08']);
+    const g = G.createWith(forbidden(), ['C06', null]).give('p2', ['P08']);
     expect(() =>
       g.do({ type: 'proposeTrade', player: 'p2', to: 'p1', offer: { properties: ['P08'] }, request: { cash: 100 } }),
     ).toThrow(/may not own/);
@@ -323,11 +330,11 @@ describe('C06 Nghiện Tarot', () => {
     expect(g.p('p2').skillUsed).toBe(true);
   });
 
-  it('declining Giải hạn applies the event normally', () => {
+  it('declining Giải hạn applies the event normally (with the card-payment drawback)', () => {
     const g = G.create([null, 'C06']);
     g.draw('p1', 'EV10');
     g.do({ type: 'declineSkill', player: 'p2' });
-    expect(g.cash('p2')).toBe(1350);
+    expect(g.cash('p2')).toBe(1500 - Math.ceil(150 * num(CH.C06.drawbacks[0].value)));
   });
 
   it('Giải hạn on a ⏳ card exempts the Tarot player for its duration (EV15)', () => {

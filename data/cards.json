@@ -135,7 +135,8 @@
       "name": "Làm tổ trưởng dân phố, khao cả xóm",
       "effect": {
         "type": "pay_each_player",
-        "amount": 50
+        "total": 150,
+        "roundTo": 10
       }
     },
     {
@@ -225,7 +226,8 @@
       "name": "Sinh nhật bạn",
       "effect": {
         "type": "collect_from_each",
-        "amount": 10
+        "total": 30,
+        "roundTo": 10
       }
     },
     {

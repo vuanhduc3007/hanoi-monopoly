@@ -4,7 +4,7 @@
       "classic",
       "quick"
     ],
-    "maxPlayers": 6,
+    "maxPlayers": 8,
     "minPlayers": 2,
     "defaults": {
       "mode": "classic",
@@ -18,8 +18,15 @@
       "board": "auto"
     },
     "roomCodeLength": 6,
-    "boards": ["standard", "extended"],
-    "extendedBoardFromPlayers": 5
+    "boards": [
+      "standard",
+      "extended",
+      "hex"
+    ],
+    "autoBoardFrom": {
+      "extended": 5,
+      "hex": 7
+    }
   },
   "timers": {
     "rollSec": 15,
@@ -31,7 +38,9 @@
     "tradeOfferSec": 30,
     "liquidationSec": 60,
     "disconnectBotSec": 60,
-    "afkTurnsBeforeBot": 3
+    "afkTurnsBeforeBot": 3,
+    "sicboBetSec": 10,
+    "gambleSec": 15
   },
   "quickMode": {
     "dealPropertiesPerPlayer": 2,

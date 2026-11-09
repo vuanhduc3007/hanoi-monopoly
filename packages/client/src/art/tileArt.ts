@@ -45,6 +45,15 @@ export const TILE_ART: Record<string, string> = {
   P26: 'complex',
   P27: 'westlake',
   P28: 'rural',
+  // 60-tile hexagon
+  T06: 'bus',
+  P29: 'mall',
+  P30: 'tower',
+  P31: 'district',
+  P32: 'oldquarter',
+  P33: 'oldquarter',
+  WALK: 'hoankiem',
+  MARKET: 'mall',
 };
 
 export const artFor = (ref: string): string | undefined => TILE_ART[ref];

@@ -1,4 +1,12 @@
-export { applyAction, applyActionInPlace, createGame, defaultConfig, rollTurnOrder, whyCantBuild } from './engine';
+export {
+  applyAction,
+  applyActionInPlace,
+  createGame,
+  defaultConfig,
+  interleaveTeams,
+  rollTurnOrder,
+  whyCantBuild,
+} from './engine';
 export type { BuildBlock } from './engine';
 export type { CreateGameOptions, NewPlayer } from './engine';
 export { BOARDS, autoBoard, buildGameData, characterFor, dataFor, defaultData, extendedData, largeData } from './data';

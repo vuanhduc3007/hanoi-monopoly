@@ -37,6 +37,23 @@ export function activePlayers(c: Ctx): PlayerState[] {
   return c.s.players.filter((p) => !p.bankrupt);
 }
 
+/** Two different players on the same team (team games only). */
+export function teammates(c: Ctx, a: PlayerId, b: PlayerId): boolean {
+  if (a === b) return false;
+  const ta = c.s.players.find((p) => p.id === a)?.team;
+  return ta !== undefined && ta === c.s.players.find((p) => p.id === b)?.team;
+}
+
+/** Active players `p` plays against: everyone else, minus teammates in team games. */
+export function opponentsOf(c: Ctx, p: PlayerState): PlayerState[] {
+  return activePlayers(c).filter((q) => q.id !== p.id && !teammates(c, p.id, q.id));
+}
+
+/** Teams (or single players, outside team games) still in the game. */
+export function aliveSides(c: Ctx): number {
+  return new Set(activePlayers(c).map((p) => (p.team !== undefined ? `t${p.team}` : p.id))).size;
+}
+
 /** Active players in turn order starting from `fromId` (inclusive). */
 export function playersFrom(c: Ctx, fromId: PlayerId): PlayerState[] {
   const idx = c.s.players.findIndex((p) => p.id === fromId);

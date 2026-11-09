@@ -6,7 +6,7 @@ import { groupColor, sideLength, tileCell } from '../lib/board';
 import { colorOf, currentPlayer, hotelLevel, nameOf } from '../lib/selectors';
 import type { RoomView } from '../net/protocol';
 import { useStore } from '../store';
-import { CardBack, Hotel, House, TileIcon } from '../art/icons';
+import { CardBack, Flag, Hotel, House, TileIcon } from '../art/icons';
 import { artFor } from '../art/tileArt';
 import { Dice } from './Dice';
 import { Token } from './Token';
@@ -44,8 +44,14 @@ export function Board({ state, room, onTile }: Props) {
           <button
             key={tile.position}
             data-pos={tile.position}
-            className={`tile tile-${side} tile-${tile.type}`}
-            style={{ gridRow: row + 1, gridColumn: col + 1 }}
+            className={`tile tile-${side} tile-${tile.type}${own?.owner ? ' tile-owned' : ''}`}
+            style={
+              {
+                gridRow: row + 1,
+                gridColumn: col + 1,
+                ...(own?.owner ? { '--owner': colorOf(room, own.owner) } : {}),
+              } as CSSProperties
+            }
             onClick={() => onTile(tile.position)}
             title={tile.name}
           >
@@ -60,9 +66,10 @@ export function Board({ state, room, onTile }: Props) {
             {own?.owner && (
               <span
                 className={`tile-owner${own.mortgaged ? ' mortgaged' : ''}`}
-                style={{ background: colorOf(room, own.owner) }}
-                title={nameOf(room, own.owner)}
-              />
+                title={own.mortgaged ? t.tile.ownerMortgaged(nameOf(room, own.owner)) : nameOf(room, own.owner)}
+              >
+                <Flag color={colorOf(room, own.owner)} mortgaged={own.mortgaged} />
+              </span>
             )}
             {own && own.level > 0 && (
               <span className="tile-buildings" aria-label={hotel ? t.tile.hotel : t.tile.house(own.level)}>

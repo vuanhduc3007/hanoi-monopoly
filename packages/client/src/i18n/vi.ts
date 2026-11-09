@@ -72,6 +72,15 @@ export const t = {
     },
     maxPlayers: 'Số người tối đa',
     allowSpectators: 'Cho phép khán giả',
+    teams: 'Chế độ đội',
+    teamOptions: (n: number) => (n === 0 ? 'Không (mỗi người một phe)' : `${n} đội`),
+    teamHint: 'Đồng đội không thu tiền thuê của nhau, thẻ và kỹ năng chỉ nhắm vào đội khác. Đội cuối cùng còn trụ (hoặc nhiều tài sản nhất khi hết giờ) thắng. Lượt đi xen kẽ giữa các đội.',
+    joinTeam: 'Vào đội',
+    shuffleTeams: 'Xáo đội ngẫu nhiên',
+    unevenTeams: 'Các đội phải có người và lệch nhau tối đa 1 người.',
+    draft: 'Chọn nhân vật',
+    drafts: { pick: 'Lần lượt chọn', random: 'Bốc thăm ngẫu nhiên' },
+    draftHint: 'Bốc thăm: thứ tự lượt và nhân vật của mọi người đều do máy bốc ngẫu nhiên.',
     on: 'Bật',
     off: 'Tắt',
     leave: 'Rời phòng',
@@ -91,6 +100,15 @@ export const t = {
     taken: (name: string) => `Đã chọn: ${name}`,
     choose: 'Chọn',
     turnOrder: 'Thứ tự lượt',
+    random: 'Chọn ngẫu nhiên',
+    drawing: (name: string) => `Đang bốc thăm cho ${name}…`,
+    drawTitle: 'Bốc thăm nhân vật',
+  },
+
+  teams: {
+    names: ['Đội Rồng', 'Đội Phượng', 'Đội Lân', 'Đội Quy'],
+    won: (team: string, names: string) => `${team} thắng! (${names})`,
+    teammate: 'Đồng đội',
   },
 
   characters: {
@@ -138,6 +156,7 @@ export const t = {
   tile: {
     price: 'Giá mua',
     owner: 'Chủ',
+    ownerMortgaged: (name: string) => `${name} (đang thế chấp)`,
     noOwner: 'Ngân hàng',
     rent: 'Tiền thuê',
     base: 'Đất trống',
@@ -527,6 +546,12 @@ export function describeTrait(e: Effect): string {
   }
 }
 
+/** "Đội Rồng" — team names wrap around after the fourth. */
+export function teamName(team: number): string {
+  const names = t.teams.names;
+  return names[team % names.length] + (team >= names.length ? ` ${Math.floor(team / names.length) + 1}` : '');
+}
+
 /** Salary on the current board (longer boards multiply every salary). */
 function boardSalary(value: number): string {
   const m = D.economy.goSalaryMultiplier ?? 1;
@@ -653,7 +678,9 @@ export function formatEvent(e: GameEvent, who: Who): string | null {
         ? `${tileName(e.propertyId as string)} đang thế chấp — không thu thuê`
         : e.why === 'blocked'
           ? `${tileName(e.propertyId as string)} bị Bóc phốt — không thu thuê`
-          : null;
+          : e.why === 'team'
+            ? `${p} vào ${tileName(e.propertyId as string)} của đồng đội — miễn thuê`
+            : null;
     case 'payment':
       return `${name(e.from as string)} trả ${to(e.to, name)} ${money(e.amount as number)}${reasonText(e.reason)}`;
     case 'paymentSkipped':

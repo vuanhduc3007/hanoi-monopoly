@@ -3,7 +3,17 @@
  * Every card payment goes through `cardPay` (Idol ×1.5, bank → Quỹ).
  */
 import { cardPayMultiplier, eventCancelCandidate, eventPercent, onDrawCard, useUpSkill } from './characters';
-import { countBuildings, emit, fail, getPlayer, ownedBy, playersFrom, pushFront, type Ctx } from './ctx';
+import {
+  countBuildings,
+  type Ctx,
+  emit,
+  fail,
+  getPlayer,
+  ownedBy,
+  playersFrom,
+  pushFront,
+  teammates,
+} from './ctx';
 import { addActiveEffect, isImmune } from './effects';
 import { cardPay, gain } from './money';
 import { rollDie } from './rng';
@@ -176,12 +186,12 @@ const handlers: Record<string, Handler> = {
     if (base > 0) pushFront(c, cardPay(c, drawer, { kind: 'bank' }, base, cardId));
   },
   pay_each_player: (a) => {
-    const others = affected(a).filter((p) => p.id !== a.drawer.id);
+    const others = affected(a).filter((p) => p.id !== a.drawer.id && !teammates(a.c, p.id, a.drawer.id));
     const amount = perPlayer(a.effect, others.length);
     pushFront(a.c, ...others.map((p) => cardPay(a.c, a.drawer, { kind: 'player', id: p.id }, amount, a.cardId)));
   },
   collect_from_each: (a) => {
-    const others = affected(a).filter((p) => p.id !== a.drawer.id);
+    const others = affected(a).filter((p) => p.id !== a.drawer.id && !teammates(a.c, p.id, a.drawer.id));
     const amount = perPlayer(a.effect, others.length);
     pushFront(a.c, ...others.map((p) => cardPay(a.c, p, { kind: 'player', id: a.drawer.id }, amount, a.cardId)));
   },
@@ -215,7 +225,10 @@ const handlers: Record<string, Handler> = {
       if (builder && p.id === builder.id) continue;
       const b = countBuildings(a.c, p.id);
       const base = b.houses * a.effect.perHouse + b.hotels * a.effect.perHotel;
-      if (base > 0) tasks.push(builder ? cardPay(a.c, p, to, base, a.cardId, { noMultiplier: true }) : cardPay(a.c, p, to, base, a.cardId));
+      if (base <= 0) continue;
+      // The builder's teammates pay the bank instead: money never moves between teammates.
+      if (builder && !teammates(a.c, p.id, builder.id)) tasks.push(cardPay(a.c, p, to, base, a.cardId, { noMultiplier: true }));
+      else tasks.push(cardPay(a.c, p, { kind: 'bank' }, base, a.cardId));
     }
     pushFront(a.c, ...tasks);
   },
@@ -238,7 +251,7 @@ const handlers: Record<string, Handler> = {
     if (owner && a.exempt.includes(owner.id)) return; // Giải hạn: the owner neither receives
     const to = owner ? { kind: 'player' as const, id: owner.id } : { kind: 'bank' as const };
     const tasks = affected(a)
-      .filter((p) => p.id !== owner?.id)
+      .filter((p) => p.id !== owner?.id && !(owner && teammates(a.c, p.id, owner.id)))
       .map((p) => cardPay(a.c, p, to, a.effect.amount, a.cardId));
     pushFront(a.c, ...tasks);
   },
@@ -301,7 +314,7 @@ const handlers: Record<string, Handler> = {
       return;
     }
     const tasks = affected(a)
-      .filter((p) => p.id !== target.id)
+      .filter((p) => p.id !== target.id && !teammates(a.c, p.id, target.id))
       .map((p) => cardPay(a.c, p, { kind: 'player', id: target.id }, a.effect.amount, a.cardId));
     pushFront(a.c, ...tasks);
   },

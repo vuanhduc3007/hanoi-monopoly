@@ -459,3 +459,92 @@ describe('eight seats and the 56-tile board', () => {
     else expect(after?.type ?? null).not.toBe('sicboBet');
   });
 });
+
+describe('teams', () => {
+  it('turning teams on deals seats evenly; newcomers join the smallest team; players switch teams', () => {
+    const h = lobby(4);
+    h.ctl.message('s1', 'setConfig', { teams: 2 });
+    expect(h.ctl.seats.map((s) => s.team)).toEqual([0, 1, 0, 1]);
+    h.ctl.join('s5');
+    expect(h.ctl.seats[4].team).toBe(0);
+    h.ctl.message('s5', 'setTeam', { team: 1 });
+    expect(h.ctl.seats[4].team).toBe(1);
+    h.ctl.message('s5', 'setTeam', { team: 2 });
+    expect(h.out.errors('s5')).toEqual(['BAD_CONFIG']);
+    h.ctl.message('s1', 'setConfig', { teams: 5 });
+    expect(h.out.errors('s1')).toEqual(['BAD_CONFIG']);
+    h.ctl.message('s1', 'setConfig', { teams: 0 });
+    expect(h.ctl.seats.every((s) => s.team === null)).toBe(true);
+  });
+
+  it('uneven teams cannot start; the host shuffle evens them out', () => {
+    const h = lobby(4);
+    h.ctl.message('s1', 'setConfig', { teams: 2 });
+    h.ctl.message('s3', 'setTeam', { team: 1 });
+    h.ctl.message('s3', 'ready', { ready: true });
+    h.ctl.message('s1', 'start', {});
+    expect(h.out.errors('s1')).toEqual(['BAD_CONFIG']);
+    h.ctl.message('s2', 'shuffleTeams', {});
+    expect(h.out.errors('s2')).toEqual(['NOT_HOST']);
+    h.ctl.message('s1', 'shuffleTeams', {});
+    const counts = [0, 1].map((t) => h.ctl.seats.filter((s) => s.team === t).length);
+    expect(counts).toEqual([2, 2]);
+    for (let i = 2; i <= 4; i++) h.ctl.message(`s${i}`, 'ready', { ready: true });
+    h.ctl.message('s1', 'start', {});
+    expect(h.ctl.phase).toBe('playing');
+  });
+
+  it('teams alternate around the table and carry into the game and its log', () => {
+    const h = lobby(6);
+    h.ctl.message('s1', 'setConfig', { teams: 3 });
+    h.ctl.message('s1', 'start', {});
+    const st = h.ctl.state!;
+    const teamsInOrder = st.players.map((p) => p.team);
+    expect(new Set(teamsInOrder.slice(0, 3)).size).toBe(3);
+    expect(teamsInOrder.slice(3)).toEqual(teamsInOrder.slice(0, 3));
+    for (const p of st.players) expect(p.team).toBe(h.ctl.seats.find((s) => s.id === p.id)!.team);
+    expect(h.ctl.log!.players.every((p) => p.team !== undefined)).toBe(true);
+  });
+
+  it('a team game played out by bots ends with a winning team and replays to the same state', () => {
+    const h = lobby(4);
+    h.ctl.message('s1', 'setConfig', { teams: 2, mode: 'quick' });
+    h.ctl.message('s1', 'start', {});
+    for (let i = 1; i <= 4; i++) h.ctl.leave(`s${i}`, true);
+    h.clock.advance(sec(D.config.quickMode.timeLimitMin * 60));
+    expect(h.ctl.phase).toBe('over');
+    const over = h.out.last('gameOver');
+    expect([0, 1]).toContain(over.winnerTeam);
+    expect(replay(h.finished[0]).winnerTeam).toBe(over.winnerTeam);
+  });
+});
+
+describe('Bốc thăm (random draft)', () => {
+  it('draws a character for everyone, one by one, without anyone choosing', () => {
+    const h = lobby(3, true);
+    h.ctl.message('s1', 'setConfig', { draft: 'random' });
+    h.ctl.message('s1', 'start', {});
+    expect(h.ctl.phase).toBe('picking');
+    const picker = h.ctl.seats.find((s) => s.id === h.out.last('room', 's1').picking.current)!;
+    h.ctl.message(picker.sessionId, 'pick', { character: 'C01' });
+    expect(h.out.errors(picker.sessionId)).toEqual([]); // still allowed to take one early
+    h.clock.advance(sec(T.drawRevealSec) * 3);
+    expect(h.ctl.phase).toBe('playing');
+    const chars = h.ctl.seats.map((s) => s.character);
+    expect(new Set(chars).size).toBe(3);
+    expect(chars.every((c) => c && D.characters[c])).toBe(true);
+  });
+
+  it('in normal picks, the player on the clock can ask for a random character', () => {
+    const h = lobby(2, true);
+    h.ctl.message('s1', 'start', {});
+    const room = h.out.last('room', 's1');
+    const first = h.ctl.seats.find((s) => s.id === room.picking.current)!;
+    const other = h.ctl.seats.find((s) => s.id !== first.id)!;
+    h.ctl.message(other.sessionId, 'pick', { random: true });
+    expect(h.out.errors(other.sessionId)).toEqual(['NOT_YOUR_PICK']);
+    h.ctl.message(first.sessionId, 'pick', { random: true });
+    expect(first.character).not.toBeNull();
+    expect(h.out.last('picked')).toMatchObject({ seat: first.id, random: true });
+  });
+});

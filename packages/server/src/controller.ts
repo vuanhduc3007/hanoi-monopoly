@@ -5,23 +5,24 @@
  * joins, leaves and messages here, so all of this is testable with a fake clock.
  */
 import {
+  type Action,
   actorOf,
   applyAction,
+  autoBoard,
+  type BoardId,
   botActionFor,
   createGame,
-  defaultConfig,
-  autoBoard,
   dataFor,
+  defaultConfig,
   defaultData,
-  publicView,
-  rollTurnOrder,
-  RuleError,
-  type Action,
-  type BoardId,
   type GameConfig,
   type GameData,
   type GameEvent,
   type GameState,
+  interleaveTeams,
+  publicView,
+  rollTurnOrder,
+  RuleError,
 } from '@hanoi-monopoly/engine';
 
 export interface Timer {
@@ -45,6 +46,10 @@ export interface RoomSettings extends Omit<GameConfig, 'board'> {
   board: BoardChoice;
   maxPlayers: number;
   allowSpectators: boolean;
+  /** Number of teams; 0 = no teams. */
+  teams: number;
+  /** 'pick': choose characters in reverse turn order; 'random': draw them for everyone. */
+  draft: 'pick' | 'random';
 }
 
 export type Phase = 'lobby' | 'picking' | 'playing' | 'over';
@@ -67,6 +72,8 @@ export interface Seat {
   secret: string | null;
   /** Panel the player has open: Tài sản (+2 min once) or Giao dịch (clock paused). */
   thinking: 'assets' | 'trade' | null;
+  /** Team games: 0-based team, null when teams are off. */
+  team: number | null;
 }
 
 export interface GameStats {
@@ -79,7 +86,7 @@ export interface GameLog {
   code: string;
   seed: number;
   config: GameConfig;
-  players: { id: string; name: string | null; character: string | null }[];
+  players: { id: string; name: string | null; character: string | null; team?: number }[];
   turnOrderRolls: Record<string, number[][]>;
   actions: { at: number; action: Action }[];
   startedAt: number;
@@ -195,6 +202,8 @@ export class GameController {
       board: room.defaults.board,
       maxPlayers: room.maxPlayers,
       allowSpectators: room.defaults.allowSpectators,
+      teams: room.defaults.teams ?? 0,
+      draft: room.defaults.draft ?? 'pick',
     };
   }
 
@@ -235,6 +244,7 @@ export class GameController {
           timedOutThisTurn: false,
           secret,
           thinking: null,
+          team: this.smallestTeam(),
         });
         this.broadcastRoom();
         return 'player';
@@ -392,6 +402,22 @@ export class GameController {
         if (!seat.host) throw new RoomError('NOT_HOST');
         this.applySettings(m);
         return this.broadcastRoom();
+      case 'setTeam': {
+        this.requirePhase('lobby');
+        const t = m.team;
+        if (!this.settings.teams || !Number.isInteger(t) || (t as number) < 0 || (t as number) >= this.settings.teams) {
+          throw new RoomError('BAD_CONFIG', 'team');
+        }
+        seat.team = t as number;
+        seat.ready = seat.host;
+        return this.broadcastRoom();
+      }
+      case 'shuffleTeams':
+        this.requirePhase('lobby');
+        if (!seat.host) throw new RoomError('NOT_HOST');
+        if (!this.settings.teams) throw new RoomError('BAD_CONFIG', 'teams');
+        this.balanceTeams(true);
+        return this.broadcastRoom();
       case 'start':
         this.requirePhase('lobby');
         if (!seat.host) throw new RoomError('NOT_HOST');
@@ -402,6 +428,10 @@ export class GameController {
         return this.rematch();
       case 'pick':
         this.requirePhase('picking');
+        if (m.random === true) {
+          if (this.currentPicker()?.id !== seat.id) throw new RoomError('NOT_YOUR_PICK');
+          return this.randomPick();
+        }
         return this.pick(seat, m.character);
       case 'action':
         this.requirePhase('playing');
@@ -432,6 +462,15 @@ export class GameController {
       if (typeof m[k] !== 'boolean') throw new RoomError('BAD_CONFIG', k);
       next[k] = m[k] as boolean;
     }
+    if (m.teams !== undefined) {
+      const n = m.teams;
+      if (n !== 0 && !room.teamCounts.includes(n as number)) throw new RoomError('BAD_CONFIG', 'teams');
+      next.teams = n as number;
+    }
+    if (m.draft !== undefined) {
+      if (m.draft !== 'pick' && m.draft !== 'random') throw new RoomError('BAD_CONFIG', 'draft');
+      next.draft = m.draft;
+    }
     if (m.maxPlayers !== undefined) {
       const n = m.maxPlayers;
       if (!Number.isInteger(n) || (n as number) < room.minPlayers || (n as number) > room.maxPlayers) {
@@ -440,7 +479,41 @@ export class GameController {
       if ((n as number) < this.seats.length) throw new RoomError('BAD_CONFIG', 'maxPlayers below current players');
       next.maxPlayers = n as number;
     }
+    const teamsChanged = next.teams !== this.settings.teams;
     this.settings = next;
+    if (teamsChanged) this.balanceTeams(false);
+  }
+
+  // ------------------------------------------------------------ teams
+
+  /** Team with the fewest seats (lowest number on ties), or null with teams off. */
+  private smallestTeam(): number | null {
+    const n = this.settings.teams;
+    if (!n) return null;
+    const counts = Array.from({ length: n }, (_, t) => this.seats.filter((s) => s.team === t).length);
+    return counts.indexOf(Math.min(...counts));
+  }
+
+  /** Deal every seat into teams evenly: in seat order, or shuffled. */
+  private balanceTeams(shuffle: boolean): void {
+    const n = this.settings.teams;
+    const seats = [...this.seats];
+    if (shuffle) {
+      for (let i = seats.length - 1; i > 0; i--) {
+        const j = Math.floor(this.random() * (i + 1));
+        [seats[i], seats[j]] = [seats[j], seats[i]];
+      }
+    }
+    seats.forEach((s, i) => (s.team = n ? i % n : null));
+  }
+
+  /** Teams must each have a player and differ by at most one. */
+  private teamsValid(): boolean {
+    const n = this.settings.teams;
+    if (!n) return true;
+    if (this.seats.some((s) => s.team === null || s.team < 0 || s.team >= n)) return false;
+    const counts = Array.from({ length: n }, (_, t) => this.seats.filter((s) => s.team === t).length);
+    return Math.min(...counts) >= 1 && Math.max(...counts) - Math.min(...counts) <= 1;
   }
 
   private chat(sessionId: string, type: 'chat' | 'emote', m: Record<string, unknown>): void {
@@ -471,12 +544,16 @@ export class GameController {
     if (!this.o.data && this.seats.length > dataFor(this.resolveBoard()).maxPlayers) {
       throw new RoomError('BAD_CONFIG', 'board too small for this many players');
     }
+    if (!this.teamsValid()) throw new RoomError('BAD_CONFIG', 'teams');
     const seed = Math.floor(this.random() * 2 ** 32) >>> 0;
     const order = rollTurnOrder(
       this.seats.map((s) => s.id),
       seed ^ 0x5bd1e995,
     );
-    this.turnOrder = order.order;
+    // Team games alternate teams around the table.
+    this.turnOrder = this.settings.teams
+      ? interleaveTeams(order.order, (id) => this.seats.find((s) => s.id === id)!.team!)
+      : order.order;
     this.seats.sort((a, b) => this.turnOrder.indexOf(a.id) - this.turnOrder.indexOf(b.id));
     this.log = {
       code: this.o.code,
@@ -493,7 +570,7 @@ export class GameController {
       actions: [],
       startedAt: this.clock.now(),
     };
-    this.out.broadcast('turnOrder', { order: this.turnOrder, rolls: order.rolls });
+    this.out.broadcast('turnOrder', { order: this.turnOrder, rolls: order.rolls, teams: this.settings.teams > 0 });
     if (this.settings.characters) {
       this.phase = 'picking';
       this.pickOrder = [...this.turnOrder].reverse();
@@ -516,6 +593,14 @@ export class GameController {
   }
 
   private startPickTimer(): void {
+    // Bốc thăm: nobody chooses; each draw is revealed after a short pause.
+    if (this.settings.draft === 'random') {
+      const index = this.pickIndex;
+      this.clock.setTimeout(() => {
+        if (this.phase === 'picking' && this.pickIndex === index) this.randomPick();
+      }, this.timers.drawRevealSec * 1000);
+      return;
+    }
     this.setDecision(`pick:${this.pickIndex}`, 'pick', this.d.characterRules.pickTimerSec * 1000, () => this.randomPick());
   }
 
@@ -549,7 +634,7 @@ export class GameController {
 
   private schedulePickBot(): void {
     const seat = this.currentPicker();
-    if (!seat || seat.control !== 'bot') return;
+    if (!seat || seat.control !== 'bot' || this.settings.draft === 'random') return;
     const index = this.pickIndex;
     this.clock.setTimeout(() => {
       if (this.phase === 'picking' && this.pickIndex === index) this.randomPick();
@@ -560,8 +645,9 @@ export class GameController {
 
   private beginGame(): void {
     const log = this.log!;
-    const players = this.seats.map((s) => ({ id: s.id, name: s.name ?? undefined, character: s.character }));
-    log.players = this.seats.map((s) => ({ id: s.id, name: s.name, character: s.character }));
+    const team = (s: Seat) => (this.settings.teams && s.team !== null ? { team: s.team } : {});
+    const players = this.seats.map((s) => ({ id: s.id, name: s.name ?? undefined, character: s.character, ...team(s) }));
+    log.players = this.seats.map((s) => ({ id: s.id, name: s.name, character: s.character, ...team(s) }));
     if (!this.o.data) this.d = dataFor(log.config.board);
     const created = createGame({ players, seed: log.seed, config: log.config }, this.d);
     this.state = created.state;
@@ -875,7 +961,14 @@ export class GameController {
     log.finishedAt = this.clock.now();
     log.winner = s.winner;
     this.out.broadcast('game', { state: publicView(s), events, clock: null });
-    this.out.broadcast('gameOver', { winner: s.winner, ranking: s.ranking, seed: s.seed, stats: this.stats, log });
+    this.out.broadcast('gameOver', {
+      winner: s.winner,
+      winnerTeam: s.winnerTeam ?? null,
+      ranking: s.ranking,
+      seed: s.seed,
+      stats: this.stats,
+      log,
+    });
     this.broadcastRoom();
     this.o.onFinished?.(log);
   }
@@ -916,6 +1009,7 @@ export class GameController {
         connected: s.connected,
         control: s.control,
         botReason: s.botReason,
+        team: s.team,
       })),
       spectators: this.spectators.size,
       picking: picker

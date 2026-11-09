@@ -9,7 +9,7 @@
  *   the player as the house; winners are paid the stake minus commission.
  */
 import { trait } from './characters';
-import { emit, fail, getPlayer, pushFront, type Ctx } from './ctx';
+import { type Ctx, emit, fail, getPlayer, pushFront, teammates } from './ctx';
 import { randomInt, rollDice } from './rng';
 import type { Effect, PlayerState, SicboPick, Task } from './types';
 
@@ -91,7 +91,7 @@ export function openSicbo(c: Ctx, host: PlayerState, skill: Effect): void {
   const order: string[] = [];
   for (let i = 1; i < n; i++) {
     const q = c.s.players[(start + i) % n];
-    if (!q.bankrupt) order.push(q.id);
+    if (!q.bankrupt && !teammates(c, q.id, host.id)) order.push(q.id);
   }
   if (order.length === 0) fail('No opponents to play with');
   const stake = sicboStake(skill, order.length);

@@ -1,4 +1,4 @@
-import { emit, hotelLevel, ownsFullGroup, ownedBy, pushFront, type Ctx } from './ctx';
+import { emit, hotelLevel, ownsFullGroup, ownedBy, pushFront, teammates, type Ctx } from './ctx';
 import { onPayRent } from './characters';
 import { rentBlocked, rentMultipliers } from './effects';
 import { payTask } from './money';
@@ -10,7 +10,7 @@ export interface RentQuote {
   raw: number;
   amount: number;
   owner: string | null;
-  note?: 'unowned' | 'self' | 'mortgaged' | 'blocked';
+  note?: 'unowned' | 'self' | 'mortgaged' | 'blocked' | 'team';
 }
 
 /**
@@ -23,6 +23,7 @@ export function quoteRent(c: Ctx, payer: PlayerState, id: string, ctx: LandConte
   const owner = own.owner;
   if (!owner) return { raw: 0, amount: 0, owner, note: 'unowned' };
   if (owner === payer.id) return { raw: 0, amount: 0, owner, note: 'self' };
+  if (teammates(c, owner, payer.id)) return { raw: 0, amount: 0, owner, note: 'team' };
   if (own.mortgaged) return { raw: 0, amount: 0, owner, note: 'mortgaged' };
   if (rentBlocked(c, owner)) return { raw: 0, amount: 0, owner, note: 'blocked' };
 

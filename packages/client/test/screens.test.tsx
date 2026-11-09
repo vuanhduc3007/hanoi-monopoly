@@ -26,7 +26,17 @@ afterEach(() => {
 const seats = (n: number, you = 'u1'): RoomView => ({
   code: 'ABC234',
   phase: 'playing',
-  settings: { mode: 'classic', board: 'auto', characters: true, scholarshipFund: true, buildingLimit: true, maxPlayers: 6, allowSpectators: true },
+  settings: {
+    mode: 'classic',
+    board: 'auto',
+    characters: true,
+    scholarshipFund: true,
+    buildingLimit: true,
+    maxPlayers: 6,
+    allowSpectators: true,
+    teams: 0,
+    draft: 'pick',
+  },
   you,
   seats: Array.from({ length: n }, (_, i) => ({
     id: `u${i + 1}`,
@@ -37,6 +47,7 @@ const seats = (n: number, you = 'u1'): RoomView => ({
     connected: true,
     control: 'human',
     botReason: null,
+    team: null,
   })),
   spectators: 0,
   picking: null,
@@ -70,6 +81,35 @@ describe('screens', () => {
     });
     render(<App />);
     expect(screen.getAllByText(t.pick.choose)).toHaveLength(Object.keys(defaultData.characters).length);
+  });
+
+  it('S3 pick: the player on the clock can pick at random; Bốc thăm hides the choose buttons', () => {
+    const picking = { order: ['u2', 'u1'], current: 'u1', available: ['C01', 'C02'], clock: null };
+    store.set({ room: { ...seats(2), phase: 'picking', picking } });
+    render(<App />);
+    fireEvent.click(screen.getByText(new RegExp(t.pick.random)));
+    expect(sent).toContainEqual({ type: 'pick', payload: { random: true } });
+    cleanup();
+    const draw = seats(2);
+    store.set({ room: { ...draw, settings: { ...draw.settings, draft: 'random' }, phase: 'picking', picking } });
+    render(<App />);
+    expect(screen.queryByText(new RegExp(t.pick.random))).toBeNull();
+    expect(screen.getByText(t.pick.drawing('Người 1'))).toBeTruthy();
+    for (const b of screen.getAllByText(t.pick.choose)) expect((b as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('S2 lobby with teams: seats listed per team, join another team, host shuffles; uneven teams block start', () => {
+    const r = seats(4);
+    r.seats.forEach((x, i) => (x.team = i < 3 ? 0 : 1));
+    store.set({ room: { ...r, settings: { ...r.settings, teams: 2 }, phase: 'lobby' } });
+    render(<App />);
+    expect(screen.getAllByText(t.teams.names[0]).length).toBeGreaterThan(0);
+    expect(screen.getByText(t.lobby.unevenTeams)).toBeTruthy();
+    expect((screen.getByText(t.lobby.start) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(screen.getByText(t.lobby.joinTeam));
+    expect(sent).toContainEqual({ type: 'setTeam', payload: { team: 1 } });
+    fireEvent.click(screen.getByText(new RegExp(t.lobby.shuffleTeams)));
+    expect(sent).toContainEqual({ type: 'shuffleTeams', payload: undefined });
   });
 
   it('S4 board: 40 tiles, roll button on my turn sends roll', () => {
@@ -166,6 +206,17 @@ describe('screens', () => {
     expect(screen.getByRole('dialog', { name: t.over.title })).toBeTruthy();
     fireEvent.click(screen.getByText(t.over.rematch));
     expect(sent).toContainEqual({ type: 'rematch', payload: undefined });
+  });
+
+  it('S9 team game: the winning team and its players are named', () => {
+    const s = createGame({ players: [0, 1, 0, 1].map((team, i) => ({ id: `u${i + 1}`, team })), seed: 3 }).state;
+    const r = applyAction(s, { type: 'endGame' });
+    receiveGame({ state: publicView(r.state), events: r.events, clock: null });
+    store.set({ room: seats(4), gameOver: { winner: r.state.winner, winnerTeam: r.state.winnerTeam, ranking: r.state.ranking, seed: 3 } });
+    render(<App />);
+    const team = r.state.winnerTeam!;
+    const names = r.state.players.filter((p) => p.team === team).map((p) => `Người ${p.id.slice(1)}`);
+    expect(screen.getByText(t.teams.won(t.teams.names[team], names.join(', ')))).toBeTruthy();
   });
 
   it('Nhân vật button: reads every character at the table, with skill status and the duel numbers', () => {

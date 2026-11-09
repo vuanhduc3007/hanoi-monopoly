@@ -15,7 +15,9 @@
       },
       "buildingLimit": true,
       "allowSpectators": true,
-      "board": "auto"
+      "board": "auto",
+      "teams": 0,
+      "draft": "pick"
     },
     "roomCodeLength": 6,
     "boards": [
@@ -26,7 +28,12 @@
     "autoBoardFrom": {
       "extended": 5,
       "large": 7
-    }
+    },
+    "teamCounts": [
+      2,
+      3,
+      4
+    ]
   },
   "timers": {
     "rollSec": 15,
@@ -40,7 +47,8 @@
     "disconnectBotSec": 60,
     "afkTurnsBeforeBot": 3,
     "sicboBetSec": 10,
-    "gambleSec": 15
+    "gambleSec": 15,
+    "drawRevealSec": 1.2
   },
   "quickMode": {
     "dealPropertiesPerPlayer": 2,

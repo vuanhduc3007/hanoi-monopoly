@@ -131,11 +131,17 @@ export interface RoomConfigData {
       allowSpectators: boolean;
       /** 'auto' picks the biggest board whose `autoBoardFrom` threshold the table reaches. */
       board: BoardId | 'auto';
+      /** Number of teams (0 = everyone for themselves). */
+      teams: number;
+      /** 'pick': players choose in reverse turn order; 'random': characters are drawn for everyone. */
+      draft: 'pick' | 'random';
     };
     roomCodeLength: number;
     boards: BoardId[];
     /** Seats from which 'auto' uses each bigger board (standard otherwise). */
     autoBoardFrom: Partial<Record<BoardId, number>>;
+    /** Team counts the lobby offers. */
+    teamCounts: number[];
   };
   timers: Record<string, number>;
   quickMode: {

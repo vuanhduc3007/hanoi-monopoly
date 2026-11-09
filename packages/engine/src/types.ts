@@ -41,6 +41,8 @@ export interface PlayerState {
   /** Tài xế Grab: ±1 uses this game (for an optional `maxUses`). */
   adjustUses: number;
   doublesCount: number;
+  /** Team games only: players sharing a team never pay each other and win together. */
+  team?: number;
 }
 
 export interface OwnableState {
@@ -174,6 +176,8 @@ export interface GameState {
     dice: number[] | null;
     /** Rolled doubles this turn and may roll again. */
     extraRoll: boolean;
+    /** Players the current player already sent a trade offer to this turn (bots offer once each). */
+    offeredTo?: PlayerId[];
   };
   ownables: Record<string, OwnableState>;
   decks: Record<DeckName, string[]>;
@@ -186,6 +190,8 @@ export interface GameState {
   bankruptOrder: PlayerId[];
   status: 'playing' | 'over';
   winner: PlayerId | null;
+  /** Team games: the winning team (winner is its best-placed player). */
+  winnerTeam?: number | null;
   ranking: { player: PlayerId; score: number }[] | null;
   /** Forced dice values (tests / replay). Consumed before the RNG. */
   riggedDice: number[];

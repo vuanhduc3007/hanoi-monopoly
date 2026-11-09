@@ -25,10 +25,12 @@ const again = await client.reconnect(room.reconnectionToken);  // after a droppe
 | `setName` | `{ name }` | any time |
 | `thinking` | `{ mode: 'assets' \| 'trade' \| null }` — open panel: Tài sản adds time once, Giao dịch pauses your clock | playing |
 | `ready` | `{ ready: boolean }` | lobby |
-| `setConfig` | `{ mode?, board?, characters?, scholarshipFund?, buildingLimit?, maxPlayers?, allowSpectators? }` — `board`: `auto` (40 tiles for 2–4, 48 for 5–6, 56 for 7–8 players) \| `standard` \| `extended` \| `large`; `maxPlayers` 2–8 | lobby, host |
-| `start` | `{}` | lobby, host (≥ 2 players, all ready) |
+| `setConfig` | `{ mode?, board?, characters?, scholarshipFund?, buildingLimit?, maxPlayers?, allowSpectators?, teams?, draft? }` — `board`: `auto` (40 tiles for 2–4, 48 for 5–6, 56 for 7–8 players) \| `standard` \| `extended` \| `large`; `maxPlayers` 2–8; `teams`: 0 (off) or one of `room.teamCounts` (2/3/4) — changing it deals every seat evenly; `draft`: `pick` \| `random` (Bốc thăm: characters drawn for everyone) | lobby, host |
+| `setTeam` | `{ team }` — 0-based; resets your ready flag | lobby, teams on |
+| `shuffleTeams` | `{}` — deal seats into teams evenly at random | lobby, host, teams on |
+| `start` | `{}` | lobby, host (≥ 2 players, all ready; with teams every team has a player and sizes differ by ≤ 1) |
 | `rematch` | `{}` | game over, host — back to the lobby with the connected players |
-| `pick` | `{ character: 'C01'… }` | picking, your turn to pick |
+| `pick` | `{ character: 'C01'… }` or `{ random: true }` | picking, your turn to pick |
 | `action` | `{ action }` — an engine `Action`; `player` is filled in by the server (incl. `revealCard`, `payRent`, `gamble`, `placeBet`, `buy` with `gamble`, `useSkill` with `propertyId`) | playing |
 | `chat` | `{ text }` | any time (≤ 200 chars, 1 / 0.5 s) |
 | `emote` | `{ emote }` | any time |
@@ -40,12 +42,12 @@ const again = await client.reconnect(room.reconnectionToken);  // after a droppe
 | Type | Payload |
 | --- | --- |
 | `joined` | `{ role: 'player' \| 'spectator', code }` |
-| `room` | `{ code, phase, settings, you, seats[], spectators, picking: { order, current, available, clock } \| null }` |
-| `turnOrder` | `{ order, rolls }` |
+| `room` | `{ code, phase, settings, you, seats[], spectators, picking: { order, current, available, clock } \| null }` — each seat has `team` (null when teams are off) |
+| `turnOrder` | `{ order, rolls, teams }` — with teams the rolled order is re-dealt so teams alternate |
 | `picked` | `{ seat, character, random }` |
 | `clock` | `{ clock }` — the clock changed without a game update (paused / extended) |
 | `game` | `{ state: PublicState, events: GameEvent[], clock: { kind, deadline } \| null }` — clock kinds: roll, buy, decision, reveal, rent, auction, turn, liquidation, pick; a face-down card has `pending.cardId = ''` |
 | `botTakeover` | `{ seat, reason: 'disconnect' \| 'afk' \| 'left' }` |
-| `gameOver` | `{ winner, ranking, seed, stats: { rentPaid, rentEarned, rentByTile }, log }` |
+| `gameOver` | `{ winner, winnerTeam, ranking, seed, stats: { rentPaid, rentEarned, rentByTile }, log }` — `winnerTeam` is null outside team games |
 | `chat` / `emote` | `{ from, spectator, text \| emote, at }` |
 | `error` | `{ code, message }` — codes in `ErrorCode` (`controller.ts`) |

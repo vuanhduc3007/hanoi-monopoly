@@ -1,4 +1,5 @@
-import { charName, money, t, tileName } from '../i18n/vi';
+import { charName, money, t, teamName, tileName } from '../i18n/vi';
+import { TeamTag } from '../components/TeamTag';
 import { colorOf, nameOf } from '../lib/selectors';
 import { leaveRoom, send } from '../net/connection';
 import type { RoomView } from '../net/protocol';
@@ -11,6 +12,8 @@ export function GameOver({ room }: { room: RoomView }) {
   const state = useStore((s) => s.game?.state);
   const ranking = over?.ranking ?? state?.ranking ?? [];
   const winner = over?.winner ?? state?.winner ?? null;
+  const winnerTeam = over?.winnerTeam ?? state?.winnerTeam ?? null;
+  const teamMates = winnerTeam !== null && state ? state.players.filter((p) => p.team === winnerTeam).map((p) => nameOf(room, p.id)) : [];
   const stats = over?.stats;
   const host = room.seats.find((s) => s.id === room.you)?.host;
   const best = stats ? Object.entries(stats.rentByTile).sort((a, b) => b[1] - a[1])[0] : undefined;
@@ -19,7 +22,11 @@ export function GameOver({ room }: { room: RoomView }) {
       <div className="modal modal-wide gameover" role="dialog" aria-label={t.over.title}>
         <Fireworks />
         <h2>{t.over.title}</h2>
-        {winner && <p className="winner">{t.over.winner(nameOf(room, winner))}</p>}
+        {winnerTeam !== null ? (
+          <p className="winner">{t.teams.won(teamName(winnerTeam), teamMates.join(', '))}</p>
+        ) : (
+          winner && <p className="winner">{t.over.winner(nameOf(room, winner))}</p>
+        )}
         <table className="ranking">
           <thead>
             <tr>
@@ -38,7 +45,7 @@ export function GameOver({ room }: { room: RoomView }) {
                   <td>{i + 1}</td>
                   <td>
                     <Token character={p?.character ?? null} name={nameOf(room, r.player)} color={colorOf(room, r.player)} size={26} />{' '}
-                    {nameOf(room, r.player)}{' '}
+                    {nameOf(room, r.player)} <TeamTag team={p?.team} short />{' '}
                     <span className="muted">{p?.character ? charName(p.character) : ''}</span>
                   </td>
                   <td>{p?.bankrupt ? t.over.bankruptAt : money(r.score)}</td>

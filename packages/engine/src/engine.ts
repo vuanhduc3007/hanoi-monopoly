@@ -32,6 +32,7 @@ import {
 } from './characters';
 import {
   activePlayers,
+  type Ctx,
   currentPlayer,
   emit,
   fail,
@@ -40,8 +41,9 @@ import {
   groupProperties,
   isMyTurn,
   jailMaxTurns,
+  opponentsOf,
   pushFront,
-  type Ctx,
+  teammates,
 } from './ctx';
 import { dataFor, defaultData, type GameData } from './data';
 import { addActiveEffect, singleDieActive } from './effects';
@@ -81,6 +83,8 @@ export interface NewPlayer {
   id: PlayerId;
   name?: string;
   character?: string | null;
+  /** Team games: every player has a team number, at least two different ones. */
+  team?: number;
 }
 
 export interface CreateGameOptions {
@@ -110,6 +114,11 @@ export function createGame(opts: CreateGameOptions, data?: GameData): ActionResu
   if (opts.players.length < minPlayers || opts.players.length > maxPlayers) {
     fail(`Need ${minPlayers}-${maxPlayers} players on this board`);
   }
+  const teams = opts.players.map((p) => p.team);
+  if (teams.some((t) => t !== undefined)) {
+    if (teams.some((t) => !Number.isInteger(t))) fail('Every player needs a team');
+    if (new Set(teams).size < 2) fail('Need at least two teams');
+  }
   const chars = opts.players.map((p) => p.character ?? null).filter((x): x is string => !!x);
   if (config.characters) {
     if (new Set(chars).size !== chars.length) fail('Characters must be unique');
@@ -134,6 +143,7 @@ export function createGame(opts: CreateGameOptions, data?: GameData): ActionResu
       lapAdjustUsed: false,
       adjustUses: 0,
       doublesCount: 0,
+      ...(p.team !== undefined ? { team: p.team } : {}),
     })),
     turn: { current: 0, number: 1, phase: 'roll', dice: null, extraRoll: false },
     ownables: Object.fromEntries(
@@ -180,6 +190,27 @@ function dealQuickProperties(c: Ctx): void {
 }
 
 /** Opening roll helper: highest 2-dice total first; ties re-roll among themselves. */
+/**
+ * Team games: reorder a rolled turn order so teams alternate. Teams go in the order their
+ * best roller appears; inside a team the rolled order is kept. Uneven teams simply run out.
+ */
+export function interleaveTeams(order: PlayerId[], teamOf: (id: PlayerId) => number): PlayerId[] {
+  const queues = new Map<number, PlayerId[]>();
+  for (const id of order) {
+    const t = teamOf(id);
+    if (!queues.has(t)) queues.set(t, []);
+    queues.get(t)!.push(id);
+  }
+  const out: PlayerId[] = [];
+  while (out.length < order.length) {
+    for (const q of queues.values()) {
+      const id = q.shift();
+      if (id !== undefined) out.push(id);
+    }
+  }
+  return out;
+}
+
 export function rollTurnOrder(ids: PlayerId[], seed: number): { order: PlayerId[]; rolls: Record<string, number[][]> } {
   const tmp = { rng: seed >>> 0, riggedDice: [] as number[] } as unknown as GameState;
   const rolls: Record<string, number[][]> = Object.fromEntries(ids.map((id) => [id, []]));
@@ -291,6 +322,7 @@ function advanceTurn(c: Ctx): void {
   }
   c.s.turn.current = idx;
   c.s.turn.number += 1;
+  delete c.s.turn.offeredTo;
   startTurn(c);
 }
 
@@ -405,7 +437,7 @@ function useSkill(c: Ctx, p: PlayerState, a: Extract<Action, { type: 'useSkill' 
       requireTurn(c, p.id);
       requireFree(c);
       const target = a.target ? getPlayer(c, a.target) : null;
-      if (!target || target.id === p.id || target.bankrupt) fail('Choose an opponent');
+      if (!target || target.id === p.id || target.bankrupt || teammates(c, p.id, target.id)) fail('Choose an opponent');
       useUpSkill(c, p);
       emit(c, 'skillUsed', { player: p.id, skill: sk.type, target: target.id });
       addActiveEffect(c, {
@@ -472,7 +504,7 @@ function useSkill(c: Ctx, p: PlayerState, a: Extract<Action, { type: 'useSkill' 
       useUpSkill(c, p);
       emit(c, 'skillUsed', { player: p.id, skill: sk.type });
       const tasks: Task[] = [];
-      const others = activePlayers(c).filter((q) => q.id !== p.id);
+      const others = opponentsOf(c, p);
       const { toSelf, toFund } = contributionShares(sk, others.length);
       for (const q of others) {
         tasks.push(payTask(q.id, { kind: 'player', id: p.id }, toSelf, 'other', 'contribution'));

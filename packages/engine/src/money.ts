@@ -1,13 +1,13 @@
 import { mortgageProperty, sellOneLevel } from './assets';
 import { canOwn, cardPayMultiplier, onBankrupt, onRentPaid } from './characters';
 import {
-  activePlayers,
+  aliveSides,
+  type Ctx,
   emit,
   getPlayer,
   hotelLevel,
   ownedBy,
   pushFront,
-  type Ctx,
 } from './ctx';
 import { expireEffectsOf } from './effects';
 import { gambleRule, gambleWorst } from './sicbo';
@@ -250,19 +250,49 @@ export function finishGame(c: Ctx): void {
   const out = ranking.filter((r) => r.score >= 0);
   const busted = [...c.s.bankruptOrder].reverse().map((id) => ({ player: id, score: 0 }));
   c.s.ranking = [...out, ...busted];
-  c.s.winner = out[0]?.player ?? null;
+  if (c.s.players.some((p) => p.team !== undefined)) rankTeams(c);
+  c.s.winner = out.length ? c.s.ranking[0].player : null;
   c.s.status = 'over';
   c.s.pending = null;
   c.s.queue = [];
-  emit(c, 'gameOver', { winner: c.s.winner, ranking: c.s.ranking });
+  emit(c, 'gameOver', {
+    winner: c.s.winner,
+    ranking: c.s.ranking,
+    ...(c.s.winnerTeam !== undefined ? { team: c.s.winnerTeam } : {}),
+  });
+}
+
+/**
+ * Team games: teams ranked by the summed net worth of their surviving players (a team
+ * still standing beats an eliminated one; eliminated teams by how long they lasted);
+ * players keep their order inside a team.
+ */
+function rankTeams(c: Ctx): void {
+  const totals = new Map<number, { worth: number; alive: number; lastOut: number }>();
+  for (const p of c.s.players) {
+    const t = totals.get(p.team!) ?? { worth: 0, alive: 0, lastOut: -1 };
+    if (!p.bankrupt) {
+      t.worth += score(c, p);
+      t.alive++;
+    } else t.lastOut = Math.max(t.lastOut, c.s.bankruptOrder.indexOf(p.id));
+    totals.set(p.team!, t);
+  }
+  const order = [...totals.entries()]
+    .sort(([, a], [, b]) => Number(b.alive > 0) - Number(a.alive > 0) || b.worth - a.worth || b.lastOut - a.lastOut)
+    .map(([team]) => team);
+  const teamRank = (id: string) => order.indexOf(getPlayer(c, id).team!);
+  c.s.ranking = c.s.ranking!
+    .map((r, i) => ({ r, i }))
+    .sort((a, b) => teamRank(a.r.player) - teamRank(b.r.player) || a.i - b.i)
+    .map(({ r }) => r);
+  c.s.winnerTeam = order[0] ?? null;
 }
 
 export function checkGameEnd(c: Ctx): boolean {
   if (c.s.status === 'over') return true;
-  const alive = activePlayers(c);
   const quickEnd =
     c.s.config.mode === 'quick' && c.s.bankruptOrder.length >= c.d.config.quickMode.endWhenBankrupt;
-  if (alive.length <= 1 || quickEnd) {
+  if (aliveSides(c) <= 1 || quickEnd) {
     finishGame(c);
     return true;
   }

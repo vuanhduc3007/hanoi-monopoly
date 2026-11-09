@@ -3,6 +3,7 @@ import type { PublicState } from '@hanoi-monopoly/engine';
 import { charName, formatEvent, money, t } from '../i18n/vi';
 import { colorOf, currentPlayer, nameOf, who } from '../lib/selectors';
 import { Token } from './Token';
+import { TeamTag } from './TeamTag';
 import { send } from '../net/connection';
 import type { ClockInfo, RoomView } from '../net/protocol';
 import { useStore } from '../store';
@@ -21,6 +22,7 @@ export function PlayerList({ state, room }: { state: PublicState; room: RoomView
             <div className="player-main">
               <div className="player-name">
                 {nameOf(room, p.id)}
+                <TeamTag team={p.team} short />
                 {p.id === room.you && <span className="tag">{t.you}</span>}
                 {seat?.control === 'bot' && (
                   <span className="tag tag-bot" title={t.botReason[seat.botReason ?? ''] ?? ''}>

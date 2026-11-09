@@ -325,10 +325,10 @@
       "rent": {
         "base": 2,
         "h1": 10,
-        "h2": 30,
-        "h3": 90,
-        "h4": 160,
-        "hotel": 250
+        "h2": 35,
+        "h3": 100,
+        "h4": 180,
+        "hotel": 280
       },
       "buildCost": 50,
       "mortgage": 30
@@ -342,10 +342,10 @@
       "rent": {
         "base": 4,
         "h1": 20,
-        "h2": 60,
-        "h3": 180,
-        "h4": 320,
-        "hotel": 450
+        "h2": 65,
+        "h3": 200,
+        "h4": 360,
+        "hotel": 500
       },
       "buildCost": 50,
       "mortgage": 30
@@ -359,10 +359,10 @@
       "rent": {
         "base": 6,
         "h1": 30,
-        "h2": 90,
-        "h3": 270,
-        "h4": 400,
-        "hotel": 550
+        "h2": 85,
+        "h3": 250,
+        "h4": 370,
+        "hotel": 510
       },
       "buildCost": 50,
       "mortgage": 50
@@ -376,10 +376,10 @@
       "rent": {
         "base": 6,
         "h1": 30,
-        "h2": 90,
-        "h3": 270,
-        "h4": 400,
-        "hotel": 550
+        "h2": 85,
+        "h3": 250,
+        "h4": 370,
+        "hotel": 510
       },
       "buildCost": 50,
       "mortgage": 50
@@ -391,12 +391,12 @@
       "group": "lightblue",
       "price": 120,
       "rent": {
-        "base": 8,
-        "h1": 40,
-        "h2": 100,
-        "h3": 300,
-        "h4": 450,
-        "hotel": 600
+        "base": 7,
+        "h1": 35,
+        "h2": 95,
+        "h3": 280,
+        "h4": 420,
+        "hotel": 560
       },
       "buildCost": 50,
       "mortgage": 60
@@ -410,10 +410,10 @@
       "rent": {
         "base": 10,
         "h1": 50,
-        "h2": 150,
-        "h3": 450,
-        "h4": 625,
-        "hotel": 750
+        "h2": 145,
+        "h3": 430,
+        "h4": 590,
+        "hotel": 710
       },
       "buildCost": 100,
       "mortgage": 70
@@ -427,10 +427,10 @@
       "rent": {
         "base": 10,
         "h1": 50,
-        "h2": 150,
-        "h3": 450,
-        "h4": 625,
-        "hotel": 750
+        "h2": 145,
+        "h3": 430,
+        "h4": 590,
+        "hotel": 710
       },
       "buildCost": 100,
       "mortgage": 70
@@ -442,12 +442,12 @@
       "group": "pink",
       "price": 160,
       "rent": {
-        "base": 12,
-        "h1": 60,
-        "h2": 180,
-        "h3": 500,
-        "h4": 700,
-        "hotel": 900
+        "base": 11,
+        "h1": 55,
+        "h2": 170,
+        "h3": 480,
+        "h4": 670,
+        "hotel": 860
       },
       "buildCost": 100,
       "mortgage": 80
@@ -459,12 +459,12 @@
       "group": "orange",
       "price": 180,
       "rent": {
-        "base": 14,
-        "h1": 70,
-        "h2": 200,
-        "h3": 550,
-        "h4": 750,
-        "hotel": 950
+        "base": 13,
+        "h1": 65,
+        "h2": 185,
+        "h3": 520,
+        "h4": 700,
+        "hotel": 890
       },
       "buildCost": 100,
       "mortgage": 90
@@ -476,12 +476,12 @@
       "group": "orange",
       "price": 180,
       "rent": {
-        "base": 14,
-        "h1": 70,
-        "h2": 200,
-        "h3": 550,
-        "h4": 750,
-        "hotel": 950
+        "base": 13,
+        "h1": 65,
+        "h2": 185,
+        "h3": 520,
+        "h4": 700,
+        "hotel": 890
       },
       "buildCost": 100,
       "mortgage": 90
@@ -493,12 +493,12 @@
       "group": "orange",
       "price": 200,
       "rent": {
-        "base": 16,
-        "h1": 80,
-        "h2": 220,
-        "h3": 600,
-        "h4": 800,
-        "hotel": 1000
+        "base": 15,
+        "h1": 75,
+        "h2": 210,
+        "h3": 560,
+        "h4": 750,
+        "hotel": 940
       },
       "buildCost": 100,
       "mortgage": 100
@@ -510,14 +510,14 @@
       "group": "red",
       "price": 220,
       "rent": {
-        "base": 18,
-        "h1": 90,
-        "h2": 250,
-        "h3": 700,
-        "h4": 875,
-        "hotel": 1050
+        "base": 23,
+        "h1": 115,
+        "h2": 320,
+        "h3": 910,
+        "h4": 1150,
+        "hotel": 1375
       },
-      "buildCost": 150,
+      "buildCost": 130,
       "mortgage": 110
     },
     {
@@ -527,14 +527,14 @@
       "group": "red",
       "price": 220,
       "rent": {
-        "base": 18,
-        "h1": 90,
-        "h2": 250,
-        "h3": 700,
-        "h4": 875,
-        "hotel": 1050
+        "base": 23,
+        "h1": 115,
+        "h2": 320,
+        "h3": 910,
+        "h4": 1150,
+        "hotel": 1375
       },
-      "buildCost": 150,
+      "buildCost": 130,
       "mortgage": 110
     },
     {
@@ -544,14 +544,14 @@
       "group": "red",
       "price": 240,
       "rent": {
-        "base": 20,
-        "h1": 100,
-        "h2": 300,
-        "h3": 750,
-        "h4": 925,
-        "hotel": 1100
+        "base": 26,
+        "h1": 130,
+        "h2": 390,
+        "h3": 980,
+        "h4": 1200,
+        "hotel": 1425
       },
-      "buildCost": 150,
+      "buildCost": 130,
       "mortgage": 120
     },
     {
@@ -561,14 +561,14 @@
       "group": "yellow",
       "price": 260,
       "rent": {
-        "base": 22,
-        "h1": 110,
-        "h2": 330,
-        "h3": 800,
-        "h4": 975,
-        "hotel": 1150
+        "base": 29,
+        "h1": 145,
+        "h2": 430,
+        "h3": 1050,
+        "h4": 1275,
+        "hotel": 1500
       },
-      "buildCost": 150,
+      "buildCost": 130,
       "mortgage": 130
     },
     {
@@ -578,14 +578,14 @@
       "group": "yellow",
       "price": 260,
       "rent": {
-        "base": 22,
-        "h1": 110,
-        "h2": 330,
-        "h3": 800,
-        "h4": 975,
-        "hotel": 1150
+        "base": 29,
+        "h1": 145,
+        "h2": 430,
+        "h3": 1050,
+        "h4": 1275,
+        "hotel": 1500
       },
-      "buildCost": 150,
+      "buildCost": 130,
       "mortgage": 130
     },
     {
@@ -595,14 +595,14 @@
       "group": "yellow",
       "price": 280,
       "rent": {
-        "base": 24,
-        "h1": 120,
-        "h2": 360,
-        "h3": 850,
-        "h4": 1025,
-        "hotel": 1200
+        "base": 31,
+        "h1": 155,
+        "h2": 470,
+        "h3": 1100,
+        "h4": 1325,
+        "hotel": 1550
       },
-      "buildCost": 150,
+      "buildCost": 130,
       "mortgage": 140
     },
     {
@@ -612,14 +612,14 @@
       "group": "green",
       "price": 300,
       "rent": {
-        "base": 26,
-        "h1": 130,
-        "h2": 390,
-        "h3": 900,
-        "h4": 1100,
-        "hotel": 1275
+        "base": 34,
+        "h1": 170,
+        "h2": 510,
+        "h3": 1175,
+        "h4": 1425,
+        "hotel": 1650
       },
-      "buildCost": 200,
+      "buildCost": 130,
       "mortgage": 150
     },
     {
@@ -629,14 +629,14 @@
       "group": "green",
       "price": 300,
       "rent": {
-        "base": 26,
-        "h1": 130,
-        "h2": 390,
-        "h3": 900,
-        "h4": 1100,
-        "hotel": 1275
+        "base": 34,
+        "h1": 170,
+        "h2": 510,
+        "h3": 1175,
+        "h4": 1425,
+        "hotel": 1650
       },
-      "buildCost": 200,
+      "buildCost": 130,
       "mortgage": 150
     },
     {
@@ -646,14 +646,14 @@
       "group": "green",
       "price": 320,
       "rent": {
-        "base": 28,
-        "h1": 150,
-        "h2": 450,
-        "h3": 1000,
-        "h4": 1200,
-        "hotel": 1400
+        "base": 36,
+        "h1": 195,
+        "h2": 580,
+        "h3": 1300,
+        "h4": 1550,
+        "hotel": 1825
       },
-      "buildCost": 200,
+      "buildCost": 130,
       "mortgage": 160
     },
     {
@@ -661,34 +661,34 @@
       "position": 37,
       "name": "Phố cổ Hà Nội",
       "group": "darkblue",
-      "price": 350,
+      "price": 380,
       "rent": {
-        "base": 35,
-        "h1": 175,
-        "h2": 500,
-        "h3": 1100,
-        "h4": 1300,
-        "hotel": 1500
+        "base": 38,
+        "h1": 195,
+        "h2": 550,
+        "h3": 1200,
+        "h4": 1425,
+        "hotel": 1650
       },
-      "buildCost": 200,
-      "mortgage": 175
+      "buildCost": 220,
+      "mortgage": 190
     },
     {
       "id": "P22",
       "position": 39,
       "name": "Hồ Gươm",
       "group": "darkblue",
-      "price": 400,
+      "price": 430,
       "rent": {
-        "base": 50,
-        "h1": 200,
-        "h2": 600,
-        "h3": 1400,
-        "h4": 1700,
-        "hotel": 2000
+        "base": 55,
+        "h1": 220,
+        "h2": 660,
+        "h3": 1550,
+        "h4": 1875,
+        "hotel": 2200
       },
-      "buildCost": 200,
-      "mortgage": 200
+      "buildCost": 220,
+      "mortgage": 215
     }
   ],
   "transports": [
@@ -736,5 +736,13 @@
       "price": 150,
       "mortgage": 75
     }
-  ]
+  ],
+  "economy": {
+    "transportRent": [
+      25,
+      45,
+      95,
+      190
+    ]
+  }
 }

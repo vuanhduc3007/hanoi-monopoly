@@ -182,23 +182,24 @@ describe('buying and auctions', () => {
 
 describe('rent', () => {
   const landOn = (g: G, pos: number) => g.setCurrent('p1').at('p1', pos - 3).roll('p1', 1, 2);
+  const R = (id: string) => D.ownables[id].rent!;
 
   it('base, ×2 full group (even with one mortgaged), houses, hotel', () => {
     const g = two().give('p2', ['P04']);
     landOn(g, 8);
-    expect(g.cash('p1')).toBe(1494);
+    expect(g.cash('p1')).toBe(1500 - R('P04').base);
 
     const h = two().give('p2', ['P03', 'P04']).give('p2', ['P05'], { mortgaged: true });
     landOn(h, 8);
-    expect(h.cash('p1')).toBe(1488);
+    expect(h.cash('p1')).toBe(1500 - 2 * R('P04').base);
 
     const k = two().give('p2', ['P03', 'P04', 'P05'], { level: 3 });
     landOn(k, 8);
-    expect(k.cash('p1')).toBe(1500 - 270);
+    expect(k.cash('p1')).toBe(1500 - R('P04').h3);
 
     const m = two().give('p2', ['P03', 'P04', 'P05'], { level: 5 });
     landOn(m, 8);
-    expect(m.cash('p1')).toBe(1500 - 550);
+    expect(m.cash('p1')).toBe(1500 - R('P04').hotel);
   });
 
   it('mortgaged: no rent; owner in jail still collects', () => {
@@ -208,13 +209,13 @@ describe('rent', () => {
     const h = two().give('p2', ['P04']);
     h.p('p2').inJail = true;
     landOn(h, 8);
-    expect(h.cash('p2')).toBe(1506);
+    expect(h.cash('p2')).toBe(1500 + R('P04').base);
   });
 
-  it('transports: 25 / 50 / 100 / 200 by count', () => {
+  it('transports: rent by how many the owner has', () => {
     const g = two().give('p2', ['T01', 'T02', 'T03']);
     landOn(g, 15);
-    expect(g.cash('p1')).toBe(1400);
+    expect(g.cash('p1')).toBe(1500 - D.economy.transportRent[2]);
   });
 
   it('utilities: 4 × dice with one, 10 × with both', () => {
@@ -228,13 +229,15 @@ describe('rent', () => {
 
   it('cash short → liquidation, then pay', () => {
     const g = two().give('p2', ['P22'], { level: 1 }).give('p1', ['T01']).setCash('p1', 150);
+    expect(R('P22').h1).toBeGreaterThan(150);
+    expect(R('P22').h1).toBeLessThanOrEqual(150 + D.ownables.T01.mortgage);
     landOn(g, 39);
     expect(g.s.pending).toMatchObject({ type: 'liquidation', player: 'p1' });
     expect(() => g.do({ type: 'payDebt', player: 'p1' })).toThrow(/not enough/);
     g.do({ type: 'mortgage', player: 'p1', propertyId: 'T01' });
     g.do({ type: 'payDebt', player: 'p1' });
-    expect(g.cash('p1')).toBe(50);
-    expect(g.cash('p2')).toBe(1700);
+    expect(g.cash('p1')).toBe(150 + D.ownables.T01.mortgage - R('P22').h1);
+    expect(g.cash('p2')).toBe(1500 + R('P22').h1);
   });
 });
 
@@ -418,9 +421,11 @@ describe('quick mode', () => {
     g.setCurrent('p2').at('p2', 1).roll('p2', 1, 2);
     g.do({ type: 'declareBankruptcy', player: 'p2' });
     expect(g.s.status).toBe('over');
-    // p3: 100 + 350 + 400 + hotel 4×200 + 4×200 ; p4: 100 + 30
+    // p3: 100 + both prices + 4 houses each at build cost ; p4: 100 + half of P01
+    const p21 = D.ownables.P21;
+    const p22 = D.ownables.P22;
     expect(g.s.ranking).toEqual([
-      { player: 'p3', score: 100 + 750 + 1600 },
+      { player: 'p3', score: 100 + p21.price + p22.price + 4 * (p21.buildCost! + p22.buildCost!) },
       { player: 'p4', score: 130 },
       { player: 'p2', score: 0 },
       { player: 'p1', score: 0 },
@@ -455,10 +460,12 @@ describe('timeouts', () => {
       .give('p1', ['P22'])
       .give('p2', ['P21'])
       .setCash('p1', 0);
-    g.setCurrent('p1').at('p1', 34).roll('p1', 1, 2); // P21 rent 35
+    g.setCurrent('p1').at('p1', 34).roll('p1', 1, 2); // P21 base rent
     g.do({ type: 'timeout' });
-    // sells P01/P02 houses (+50) → pays 35 → 15 left, no mortgage needed
-    expect(g.cash('p1')).toBe(15);
+    // sells the P01/P02 houses (half their cost back) → pays the rent, no mortgage needed
+    const sold = 2 * D.ownables.P01.buildCost! * D.economy.buildingSellRate;
+    expect(sold).toBeGreaterThanOrEqual(D.ownables.P21.rent!.base);
+    expect(g.cash('p1')).toBe(sold - D.ownables.P21.rent!.base);
     expect(g.s.ownables.P22.mortgaged).toBe(false);
   });
 });

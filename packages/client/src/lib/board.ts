@@ -26,6 +26,9 @@ export const groupColor = (group?: string): string | undefined => (group ? D.gro
 /** Token colours for up to 6 players (seat order). */
 export const PLAYER_COLORS = ['#B8312F', '#2E4A7D', '#5F7F3A', '#E3A72F', '#7A3E9D', '#2B2522', '#1F8A8A', '#D96C9E'];
 
+/** Team colours (Rồng, Phượng, Lân, Quy). */
+export const TEAM_COLORS = ['#B8312F', '#2E4A7D', '#C98E1A', '#3F7A4A'];
+
 export const ownableIds = (): string[] => Object.keys(D.ownables);
 
 /** Ownables grouped for the asset / trade screens: colour groups, then transport, utility. */

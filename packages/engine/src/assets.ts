@@ -247,6 +247,9 @@ export function proposeTrade(
   };
   validateTrade(c, trade, []);
   c.s.trades.push(trade);
+  if (c.s.players[c.s.turn.current].id === from.id) {
+    c.s.turn.offeredTo = [...new Set([...(c.s.turn.offeredTo ?? []), to.id])];
+  }
   emit(c, 'tradeProposed', { trade });
   return trade;
 }

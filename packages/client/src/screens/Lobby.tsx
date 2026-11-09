@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { D } from '../lib/gameData';
 import { Chat } from '../components/Side';
 import { Token } from '../components/Token';
+import { TeamTag } from '../components/TeamTag';
+import { TEAM_COLORS } from '../lib/board';
 import { MuteButton } from '../sound/MuteButton';
 import { charName, t } from '../i18n/vi';
 import { colorOf, nameOf } from '../lib/selectors';
 import { leaveRoom, send } from '../net/connection';
-import type { RoomSettings, RoomView } from '../net/protocol';
+import type { RoomSettings, RoomView, SeatView } from '../net/protocol';
 
 /** S2 — players, room settings, ready, chat. */
 export function Lobby({ room }: { room: RoomView }) {
@@ -14,9 +16,24 @@ export function Lobby({ room }: { room: RoomView }) {
   const host = !!mySeat?.host;
   const [copied, setCopied] = useState(false);
   const link = `${location.origin}${location.pathname}?room=${room.code}`;
-  const allReady = room.seats.length >= D.config.room.minPlayers && room.seats.every((s) => s.host || s.ready);
-  const set = (patch: Partial<RoomSettings>) => send('setConfig', patch);
   const s = room.settings;
+  const teamCount = s.teams ?? 0;
+  const teamSizes = Array.from({ length: teamCount }, (_, i) => room.seats.filter((x) => x.team === i).length);
+  const teamsOk = !teamCount || (Math.min(...teamSizes) >= 1 && Math.max(...teamSizes) - Math.min(...teamSizes) <= 1);
+  const allReady = room.seats.length >= D.config.room.minPlayers && room.seats.every((x) => x.host || x.ready) && teamsOk;
+  const set = (patch: Partial<RoomSettings>) => send('setConfig', patch);
+  const seatRow = (seat: SeatView) => (
+    <div key={seat.id} className="player">
+      <Token character={null} name={nameOf(room, seat.id)} color={colorOf(room, seat.id)} size={30} />
+      <span className="player-main">
+        {nameOf(room, seat.id)}
+        {seat.id === room.you && <span className="tag">{t.you}</span>}
+        {seat.host && <span className="tag">{t.host}</span>}
+        {!seat.connected && <span className="tag">{t.board.disconnected}</span>}
+      </span>
+      <span className={`ready-state ${seat.host || seat.ready ? 'ok' : 'muted'}`}>{seat.host || seat.ready ? t.lobby.ready : t.lobby.notReady}</span>
+    </div>
+  );
   return (
     <main className="lobby">
       <header className="lobby-head">
@@ -41,18 +58,27 @@ export function Lobby({ room }: { room: RoomView }) {
           <h3>
             {t.lobby.players} ({room.seats.length}/{s.maxPlayers})
           </h3>
-          {room.seats.map((seat) => (
-            <div key={seat.id} className="player">
-              <Token character={null} name={nameOf(room, seat.id)} color={colorOf(room, seat.id)} size={30} />
-              <span className="player-main">
-                {nameOf(room, seat.id)}
-                {seat.id === room.you && <span className="tag">{t.you}</span>}
-                {seat.host && <span className="tag">{t.host}</span>}
-                {!seat.connected && <span className="tag">{t.board.disconnected}</span>}
-              </span>
-              <span className={`ready-state ${seat.host || seat.ready ? 'ok' : 'muted'}`}>{seat.host || seat.ready ? t.lobby.ready : t.lobby.notReady}</span>
+          {teamCount === 0 && room.seats.map(seatRow)}
+          {teamCount > 0 && (
+            <div className="teams">
+              {teamSizes.map((n, team) => (
+                <div key={team} className="team" style={{ borderColor: TEAM_COLORS[team % TEAM_COLORS.length] }}>
+                  <div className="team-head">
+                    <TeamTag team={team} />
+                    <span className="muted">{n}</span>
+                    {mySeat && mySeat.team !== team && (
+                      <button className="small" onClick={() => send('setTeam', { team })}>
+                        {t.lobby.joinTeam}
+                      </button>
+                    )}
+                  </div>
+                  {room.seats.filter((x) => x.team === team).map(seatRow)}
+                </div>
+              ))}
+              {host && <button onClick={() => send('shuffleTeams')}>🔀 {t.lobby.shuffleTeams}</button>}
+              {!teamsOk && <p className="warn">{t.lobby.unevenTeams}</p>}
             </div>
-          ))}
+          )}
           {room.spectators > 0 && <p className="muted">{t.lobby.spectators(room.spectators)}</p>}
           {mySeat && <Rename current={mySeat.name ?? ''} />}
           <div className="buttons">
@@ -88,6 +114,25 @@ export function Lobby({ room }: { room: RoomView }) {
           <p className="muted setting-hint">
             {t.lobby.boards.hint(D.config.room.autoBoardFrom.extended ?? 5, D.config.room.autoBoardFrom.large ?? 7)}
           </p>
+          <Setting label={t.lobby.teams}>
+            <select disabled={!host} value={teamCount} onChange={(e) => set({ teams: Number(e.target.value) })}>
+              {[0, ...D.config.room.teamCounts].map((n) => (
+                <option key={n} value={n}>
+                  {t.lobby.teamOptions(n)}
+                </option>
+              ))}
+            </select>
+          </Setting>
+          {teamCount > 0 && <p className="muted setting-hint">{t.lobby.teamHint}</p>}
+          {s.characters && (
+            <Setting label={t.lobby.draft}>
+              <select disabled={!host} value={s.draft ?? 'pick'} onChange={(e) => set({ draft: e.target.value as RoomSettings['draft'] })}>
+                <option value="pick">{t.lobby.drafts.pick}</option>
+                <option value="random">{t.lobby.drafts.random}</option>
+              </select>
+            </Setting>
+          )}
+          {s.characters && s.draft === 'random' && <p className="muted setting-hint">{t.lobby.draftHint}</p>}
           {(['characters', 'scholarshipFund', 'buildingLimit', 'allowSpectators'] as const).map((k) => (
             <Setting key={k} label={t.lobby[k]}>
               <input type="checkbox" disabled={!host} checked={s[k]} onChange={(e) => set({ [k]: e.target.checked })} />

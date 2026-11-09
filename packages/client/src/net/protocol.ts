@@ -19,6 +19,8 @@ export interface SeatView {
   connected: boolean;
   control: 'human' | 'bot';
   botReason: 'disconnect' | 'afk' | 'left' | null;
+  /** Team games: 0-based team; null when teams are off. */
+  team: number | null;
 }
 
 export interface RoomSettings {
@@ -29,6 +31,10 @@ export interface RoomSettings {
   buildingLimit: boolean;
   maxPlayers: number;
   allowSpectators: boolean;
+  /** Number of teams; 0 = no teams. */
+  teams: number;
+  /** 'pick': choose in reverse turn order; 'random': characters drawn for everyone. */
+  draft: 'pick' | 'random';
 }
 
 export interface RoomView {
@@ -55,6 +61,7 @@ export interface GameStats {
 
 export interface GameOverMsg {
   winner: string | null;
+  winnerTeam?: number | null;
   ranking: { player: string; score: number }[] | null;
   seed: number;
   stats?: GameStats;

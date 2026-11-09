@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { gambleWorst, whyCantBuild, type PublicState } from '@hanoi-monopoly/engine';
 import { D } from '../lib/gameData';
 import { cardName, describeCard, groupName, money, sicboName, t, tileName } from '../i18n/vi';
-import { hasTrait, isMyTurn, me, nameOf, ownedBy, skillOf, unmortgageCost, waitingFor } from '../lib/selectors';
+import { hasTrait, isMyTurn, me, nameOf, ownedBy, skillOf, teammates, unmortgageCost, waitingFor } from '../lib/selectors';
 import { act, send } from '../net/connection';
 import type { RoomView } from '../net/protocol';
 import { useAnimSettled } from '../store';
@@ -302,7 +302,7 @@ function TurnSkill({ state, room }: { state: PublicState; room: RoomView }) {
     );
   }
   if (skill.type !== 'block_rent' && skill.type !== 'rent_multiplier') return null;
-  const opponents = state.players.filter((p) => p.id !== self.id && !p.bankrupt);
+  const opponents = state.players.filter((p) => p.id !== self.id && !p.bankrupt && !teammates(state, self.id, p.id));
   return (
     <div className="skill">
       <button onClick={() => setOpen(!open)}>

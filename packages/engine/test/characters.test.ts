@@ -63,11 +63,13 @@ describe('C01 Thiếu gia Vin', () => {
 
   it('bailout (onBankrupt): bank covers a shortfall up to maxAmount', () => {
     const g = G.create(['C01', null]).give('p2', ['P01']).give('p2', ['P02'], { level: 5 }).setCash('p1', 100);
-    g.setCurrent('p1').at('p1', 0).roll('p1', 1, 2); // → P02 hotel, rent 450
+    const hotel = D.ownables.P02.rent!.hotel;
+    expect(hotel - 100).toBeLessThanOrEqual(num(CH.C01.skill.maxAmount));
+    g.setCurrent('p1').at('p1', 0).roll('p1', 1, 2); // → P02 hotel
     expect(g.s.pending).toMatchObject({ type: 'liquidation', player: 'p1' });
     g.do({ type: 'declareBankruptcy', player: 'p1' });
     expect(g.p('p1')).toMatchObject({ bankrupt: false, skillUsed: true, cash: 0 });
-    expect(g.cash('p2')).toBe(1950);
+    expect(g.cash('p2')).toBe(1500 + hotel);
   });
 
   it('bailout does not save a shortfall above maxAmount', () => {
@@ -124,11 +126,13 @@ describe('C02 Ninja Lead', () => {
         exempt: [],
       });
     }
-    g.setCurrent('p1').at('p1', 36).roll('p1', 1, 2); // → 39, 50×2×1.5×1.5 = 225
-    expect(g.s.pending).toMatchObject({ type: 'payRent', discount: true, raw: 225 });
+    g.setCurrent('p1').at('p1', 36).roll('p1', 1, 2); // → 39, base × 2 (full group) × 1.5 × 1.5
+    const raw = D.ownables.P22.rent!.base * 2 * 1.5 * 1.5;
+    const half = Math.ceil(raw / 2 - 1e-9);
+    expect(g.s.pending).toMatchObject({ type: 'payRent', discount: true, raw });
     g.do({ type: 'useSkill', player: 'p1' });
-    expect(g.cash('p1')).toBe(1500 - 30 - 113);
-    expect(g.cash('p2')).toBe(1613);
+    expect(g.cash('p1')).toBe(1500 - 30 - half);
+    expect(g.cash('p2')).toBe(1500 + half);
     expect(g.p('p1').skillUsed).toBe(true);
   });
 
@@ -222,7 +226,8 @@ describe('C04 Idol TikTok', () => {
 
     const h = G.create([null, 'C04']).give('p2', ['P01']).give('p2', ['P02'], { level: 5 });
     h.setCurrent('p1').at('p1', 0).roll('p1', 1, 2);
-    expect(h.cash('p2')).toBe(1500 + 450 + 45);
+    const hotel = D.ownables.P02.rent!.hotel;
+    expect(h.cash('p2')).toBe(1500 + hotel + Math.ceil(hotel * 0.1 - 1e-9));
   });
 
   it('card_payment_multiplier ×1.5 on card payments', () => {

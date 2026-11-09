@@ -5,7 +5,11 @@ import type { GameLog } from './controller';
 export function replay(log: GameLog, data?: GameData): GameState {
   const d = data ?? dataFor(log.config.board);
   let s = createGame(
-    { players: log.players.map((p) => ({ id: p.id, name: p.name ?? undefined, character: p.character })), seed: log.seed, config: log.config },
+    {
+      players: log.players.map((p) => ({ id: p.id, name: p.name ?? undefined, character: p.character, team: p.team })),
+      seed: log.seed,
+      config: log.config,
+    },
     d,
   ).state;
   for (const { action } of log.actions) s = applyAction(s, action, d).state;

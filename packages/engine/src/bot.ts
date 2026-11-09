@@ -20,7 +20,19 @@ import {
   taxAmount,
   trait,
 } from './characters';
-import { activePlayers, getPlayer, groupHasBuildings, groupProperties, hotelLevel, jailMaxTurns, ownedBy, ownsFullGroup, type Ctx } from './ctx';
+import {
+  activePlayers,
+  type Ctx,
+  getPlayer,
+  groupHasBuildings,
+  groupProperties,
+  hotelLevel,
+  jailMaxTurns,
+  opponentsOf,
+  ownedBy,
+  ownsFullGroup,
+  teammates,
+} from './ctx';
 import { dataFor, type GameData } from './data';
 import { applyActionInPlace } from './engine';
 import { quoteRent } from './rent';
@@ -173,7 +185,7 @@ function botPick(s: GameState, playerId: string): 'tai' | 'xiu' {
 function turnStartSkill(c: Ctx, p: PlayerState): Action | null {
   const sk = skillOf(c, p);
   if (sk && skillAvailable(c, p, sk.type)) {
-    const opponents = activePlayers(c).filter((q) => q.id !== p.id);
+    const opponents = opponentsOf(c, p);
     if (sk.type === 'collect_contribution' && opponents.length > 0) return { type: 'useSkill', player: p.id };
     if (sk.type === 'host_sicbo' && opponents.length > 0 && p.cash >= sicboStake(sk, opponents.length) * opponents.length) {
       return { type: 'useSkill', player: p.id };
@@ -185,8 +197,7 @@ function turnStartSkill(c: Ctx, p: PlayerState): Action | null {
   }
   if (skillAvailable(c, p, 'block_rent')) {
     let best: { id: string; levels: number } | null = null;
-    for (const opp of c.s.players) {
-      if (opp.id === p.id || opp.bankrupt) continue;
+    for (const opp of opponentsOf(c, p)) {
       const levels = ownedBy(c, opp.id).reduce((a, id) => a + c.s.ownables[id].level, 0);
       if (levels >= 6 && (!best || levels > best.levels)) best = { id: opp.id, levels };
     }
@@ -250,8 +261,10 @@ function endOfTurn(c: Ctx, p: PlayerState, o: BotOptions): Action {
   for (const id of mortgaged) {
     if (p.cash - unmortgageCost(c, p, id) >= o.unmortgageReserve) return { type: 'unmortgage', player: p.id, propertyId: id };
   }
-  const swap = findSwap(c, p);
-  if (swap) return swap;
+  // One offer at a time, and at most one per partner each turn: an unanswered or refused
+  // offer must not be sent again and again (the server asks bots in seat order).
+  const swap = c.s.trades.some((t) => t.from === p.id) ? null : findSwap(c, p);
+  if (swap && swap.type === 'proposeTrade' && !(c.s.turn.offeredTo ?? []).includes(swap.to)) return swap;
   // Build evenly, most valuable group first, up to maxHouses.
   const candidates = ownedBy(c, p.id)
     .filter((id) => c.d.ownables[id].kind === 'property')
@@ -409,6 +422,8 @@ function tradable(c: Ctx, group: string): boolean {
  */
 function findSwap(c: Ctx, p: PlayerState): Action | null {
   const groups = Object.keys(c.d.groups);
+  const gift = teamGift(c, p);
+  if (gift) return gift;
   for (const g of groups) {
     const need = missing(c, p.id, g);
     if (need.length === 0 || need.length === groupProperties(c, g).length || !tradable(c, g)) continue;
@@ -428,11 +443,45 @@ function findSwap(c: Ctx, p: PlayerState): Action | null {
   return null;
 }
 
-/** GDD 7.4: accept only if the trade completes one of the bot's colour groups. */
+/**
+ * Team games: hand a teammate the last tiles of a colour group it is closer to completing
+ * (it holds more of the group than this bot, and this bot holds all it is missing).
+ */
+function teamGift(c: Ctx, p: PlayerState): Action | null {
+  for (const q of activePlayers(c)) {
+    if (!teammates(c, p.id, q.id)) continue;
+    for (const g of Object.keys(c.d.groups)) {
+      if (!tradable(c, g)) continue;
+      const need = missing(c, q.id, g);
+      const held = groupProperties(c, g).length - need.length;
+      if (need.length === 0 || held === 0 || need.length >= held) continue;
+      if (!need.every((id) => c.s.ownables[id].owner === p.id && !c.s.ownables[id].mortgaged && canOwn(c, q, id))) continue;
+      return { type: 'proposeTrade', player: p.id, to: q.id, offer: { properties: need }, request: { properties: [] } };
+    }
+  }
+  return null;
+}
+
+/**
+ * GDD 7.4: accept only if the trade completes one of the bot's colour groups. In team games
+ * a teammate's offer is also fine when it completes a group for the teammate and breaks none of ours.
+ */
 export function botAcceptsTrade(s: GameState, playerId: string, trade: Trade, data?: GameData): boolean {
   const d = data ?? dataFor(s.config.board);
   if (trade.to !== playerId) return false;
   const c: Ctx = { s, ev: [], d };
+  if (teammates(c, playerId, trade.from)) {
+    const mine = new Set([...ownedBy(c, playerId).filter((id) => !trade.request.properties.includes(id)), ...trade.offer.properties]);
+    const theirs = new Set([...ownedBy(c, trade.from).filter((id) => !trade.offer.properties.includes(id)), ...trade.request.properties]);
+    const breaks = Object.keys(d.groups).some((g) => ownsFullGroup(c, playerId, g) && !groupProperties(c, g).every((id) => mine.has(id)));
+    const completes = Object.entries(d.groups).some(
+      ([g, def]) =>
+        (!ownsFullGroup(c, playerId, g) && def.properties.every((id) => mine.has(id))) ||
+        (!ownsFullGroup(c, trade.from, g) && def.properties.every((id) => theirs.has(id))),
+    );
+    const cashOk = (trade.request.cash ?? 0) <= (trade.offer.cash ?? 0) + getPlayer(c, playerId).cash / 4;
+    if (!breaks && completes && cashOk) return true;
+  }
   const after = new Set([...ownedBy(c, playerId).filter((id) => !trade.request.properties.includes(id)), ...trade.offer.properties]);
   return Object.entries(d.groups).some(
     ([g, def]) => !ownsFullGroup(c, playerId, g) && def.properties.every((id) => after.has(id)),

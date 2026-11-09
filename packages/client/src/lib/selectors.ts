@@ -28,6 +28,13 @@ export function me(room: RoomView | null, state: PublicState | null): PlayerStat
   return state.players.find((p) => p.id === room.you) ?? null;
 }
 
+/** Two different players on the same team (team games only). */
+export function teammates(state: PublicState, a: string, b: string): boolean {
+  if (a === b) return false;
+  const ta = state.players.find((p) => p.id === a)?.team;
+  return ta !== undefined && ta === state.players.find((p) => p.id === b)?.team;
+}
+
 export function currentPlayer(state: PublicState): PlayerState {
   return state.players[state.turn.current];
 }

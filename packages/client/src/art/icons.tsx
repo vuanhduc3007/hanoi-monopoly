@@ -539,6 +539,31 @@ export function Hotel({ size = 14, color = INDIGO }: { size?: number; color?: st
   );
 }
 
+/** Cờ cắm đất: cán tre, lá cờ màu người chủ. Thế chấp = cờ rủ, có gạch chéo. */
+export function Flag({ color, mortgaged = false }: { color: string; mortgaged?: boolean }) {
+  return (
+    <svg viewBox="0 0 16 20" className="flag" aria-hidden>
+      <ellipse cx={3.2} cy={18.6} rx={2.6} ry={1} fill={INK} opacity={0.35} />
+      <line x1={3.2} y1={1} x2={3.2} y2={18.6} stroke={BROWN} strokeWidth={1.6} strokeLinecap="round" />
+      {mortgaged ? (
+        <>
+          <path d="M3.8 2 L8.5 2.4 L8 11 L3.8 10.2 Z" fill={color} stroke={INK} strokeWidth={1} strokeLinejoin="round" />
+          <path d="M4.2 3 L7.8 10" stroke={PAPER} strokeWidth={1.2} />
+        </>
+      ) : (
+        <path
+          d="M3.8 1.6 C7 0.4 9.5 3.4 15 1.8 L13 5.6 L15 9.4 C9.5 11 7 8 3.8 9.2 Z"
+          fill={color}
+          stroke={INK}
+          strokeWidth={1.1}
+          strokeLinejoin="round"
+        />
+      )}
+      <circle cx={3.2} cy={1.2} r={1.1} fill={GOLD} stroke={INK} strokeWidth={0.6} />
+    </svg>
+  );
+}
+
 export function CardBack({ deck, size = 48 }: { deck: 'chance' | 'community' | 'event'; size?: number }) {
   return (
     <svg viewBox="0 0 48 48" width={size} height={size} className="card-back" aria-hidden>

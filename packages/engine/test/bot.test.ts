@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyActionInPlace, botAcceptsTrade, botAction, createGame } from '../src';
+import { applyActionInPlace, botAcceptsTrade, botAction, botActionFor, createGame } from '../src';
 import { D, G } from './helpers';
 
 describe('bot policy (GDD 7.4)', () => {
@@ -63,6 +63,20 @@ describe('bot policy (GDD 7.4)', () => {
     g.do(a);
     g.do(botAction(g.s)!); // p2 answers: completes light blue → accept
     expect([g.owner('P02'), g.owner('P03'), g.owner('P04')]).toEqual(['p1', 'p2', 'p2']);
+  });
+
+  it('never re-sends an offer: waits while it is open, and offers each partner once per turn', () => {
+    const g = G.create([null, null]).give('p1', ['P01', 'P03', 'P04']).give('p2', ['P02', 'P05']);
+    g.s.turn.phase = 'end';
+    const offer = botActionFor(g.s, 'p1', g.d)!;
+    expect(offer.type).toBe('proposeTrade');
+    g.do(offer);
+    // the server asks p1's bot before p2's: it must not stack a second copy
+    expect(botActionFor(g.s, 'p1', g.d)).toEqual({ type: 'endTurn', player: 'p1' });
+    g.do({ type: 'respondTrade', player: 'p2', tradeId: g.s.trades[0].id, accept: false });
+    expect(botActionFor(g.s, 'p1', g.d)).toEqual({ type: 'endTurn', player: 'p1' });
+    g.do({ type: 'endTurn', player: 'p1' });
+    expect(g.s.turn.offeredTo).toBeUndefined();
   });
 
   it('Ăn vạ only for big rents', () => {

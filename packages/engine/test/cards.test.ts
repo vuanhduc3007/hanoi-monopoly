@@ -42,7 +42,7 @@ describe('Cơ hội / Cộng đồng effects', () => {
     const g = plain();
     g.draw('p1', 'CH01');
     expect(g.p('p1').position).toBe(39);
-    expect(g.s.pending).toMatchObject({ type: 'buy', propertyId: 'P22', price: 400 });
+    expect(g.s.pending).toMatchObject({ type: 'buy', propertyId: 'P22', price: D.ownables.P22.price });
   });
 
   it('move_to: CH02 to GO pays salary once', () => {
@@ -70,8 +70,8 @@ describe('Cơ hội / Cộng đồng effects', () => {
     const g = plain().give('p2', ['T02', 'T03']);
     g.draw('p1', 'CH06');
     expect(g.p('p1').position).toBe(15);
-    expect(g.cash('p1')).toBe(1500 - 100);
-    expect(g.cash('p2')).toBe(1600);
+    expect(g.cash('p1')).toBe(1500 - 2 * D.economy.transportRent[1]);
+    expect(g.cash('p2')).toBe(1500 + 2 * D.economy.transportRent[1]);
   });
 
   it('move_to_nearest transport: unowned → may buy', () => {
@@ -325,7 +325,7 @@ describe('Hanoi Event ⏳ effects', () => {
     expect(g.s.activeEffects).toHaveLength(1);
     g.do({ type: 'endTurn', player: 'p1' });
     g.at('p2', 36).roll('p2', 1, 2); // → 39
-    expect(g.cash('p2')).toBe(1500 - 75);
+    expect(g.cash('p2')).toBe(1500 - Math.ceil(D.ownables.P22.rent!.base * 1.5));
   });
 
   it('rent_multiplier expires at the drawer’s next turn start', () => {

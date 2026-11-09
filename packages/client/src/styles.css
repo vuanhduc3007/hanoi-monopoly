@@ -347,18 +347,6 @@ select {
 .tile-card {
   background: #f8edd0;
 }
-.tile-owner {
-  position: absolute;
-  right: 2px;
-  bottom: 2px;
-  width: 9px;
-  height: 9px;
-  border-radius: 2px;
-  border: 1px solid #fff;
-}
-.tile-owner.mortgaged {
-  opacity: 0.35;
-}
 .tile-buildings {
   font-size: 9px;
 }
@@ -812,12 +800,6 @@ button.link,
   display: flex;
   gap: 1px;
 }
-.tile-owner {
-  width: 11px;
-  height: 11px;
-  border: 1.5px solid var(--ink);
-  border-radius: 50%;
-}
 
 .token {
   display: inline-block;
@@ -1007,12 +989,6 @@ h2,
 h3,
 .center-title {
   font-variant-numeric: lining-nums;
-}
-.tile-owner {
-  top: 2px;
-  right: 2px;
-  bottom: auto;
-  z-index: 3;
 }
 .board-wrap {
   isolation: isolate;
@@ -1600,4 +1576,116 @@ button.bet {
   cursor: pointer;
   font-weight: 700;
   margin-bottom: 8px;
+}
+
+/* ---------------------------------------------------------------- ownership: planted flag + owner tint */
+.tile-owned {
+  box-shadow: inset 0 0 0 2px var(--owner);
+  background-image: linear-gradient(color-mix(in srgb, var(--owner) 13%, transparent), color-mix(in srgb, var(--owner) 13%, transparent));
+}
+.tile-owner {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  z-index: 3;
+  width: clamp(10px, calc(100cqw / var(--units) * 0.42), 22px);
+  line-height: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 1px #fff);
+  animation: flag-plant 0.45s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+  transform-origin: 20% 95%;
+}
+.tile-owner .flag {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.tile-owner:not(.mortgaged) .flag path {
+  animation: flag-wave 2.4s ease-in-out infinite;
+  transform-origin: 25% 50%;
+}
+.tile-owner.mortgaged {
+  opacity: 0.75;
+}
+@keyframes flag-plant {
+  from {
+    transform: translateY(-60%) scale(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes flag-wave {
+  0%,
+  100% {
+    transform: skewY(0deg);
+  }
+  50% {
+    transform: skewY(-5deg) scaleX(0.94);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tile-owner,
+  .tile-owner .flag path {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------- teams & random draft */
+.teams {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.team {
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  padding: 6px;
+  min-width: 0;
+}
+.team-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.team-head button {
+  margin-left: auto;
+}
+.team-tag {
+  color: #fff;
+  font-weight: 700;
+}
+button.small {
+  padding: 2px 8px;
+  font-size: 12px;
+}
+.warn {
+  color: var(--red);
+  font-weight: 600;
+  grid-column: 1 / -1;
+}
+.pick-turn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.pick-order .pick-now {
+  font-weight: 700;
+  color: var(--ink);
+}
+.drawing {
+  animation: draw-pulse 0.9s ease-in-out infinite alternate;
+}
+@keyframes draw-pulse {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
 }

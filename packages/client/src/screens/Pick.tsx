@@ -3,6 +3,7 @@ import { autoBoard } from '@hanoi-monopoly/engine';
 import { D, setBoard, setTablePlayers } from '../lib/gameData';
 import { Avatar } from '../art/icons';
 import { Clock } from '../components/Side';
+import { TeamTag } from '../components/TeamTag';
 import { describeCharacter, t } from '../i18n/vi';
 import { colorOf, nameOf } from '../lib/selectors';
 import { makeCharacter } from '../three/models';
@@ -19,6 +20,7 @@ export function Pick({ room }: { room: RoomView }) {
   if (!pick) return null;
   const myColor = colorOf(room, room.you ?? '');
   const mine = pick.current === room.you;
+  const draw = room.settings.draft === 'random';
   const takenBy = (id: string) => room.seats.find((s) => s.character === id);
   // Characters have their own numbers at 2–3 player tables, and bigger boards scale salary / cash.
   const players = room.seats.length;
@@ -27,12 +29,34 @@ export function Pick({ room }: { room: RoomView }) {
   return (
     <main className="pick">
       <header className="lobby-head">
-        <h1>{t.pick.title}</h1>
-        <Clock clock={pick.clock} />
+        <h1>{draw ? t.pick.drawTitle : t.pick.title}</h1>
+        {!draw && <Clock clock={pick.clock} />}
       </header>
-      <p className={mine ? 'your-turn' : 'muted'}>{mine ? t.pick.yourTurn : t.pick.waiting(nameOf(room, pick.current))}</p>
-      <p className="muted">
-        {t.pick.order}: {pick.order.map((id) => nameOf(room, id)).join(' → ')}
+      {draw ? (
+        <p className="your-turn drawing">{t.pick.drawing(nameOf(room, pick.current))}</p>
+      ) : (
+        <div className="pick-turn">
+          <p className={mine ? 'your-turn' : 'muted'}>{mine ? t.pick.yourTurn : t.pick.waiting(nameOf(room, pick.current))}</p>
+          {mine && (
+            <button className="primary random-pick" onClick={() => send('pick', { random: true })}>
+              🎲 {t.pick.random}
+            </button>
+          )}
+        </div>
+      )}
+      <p className="muted pick-order">
+        {t.pick.order}:{' '}
+        {pick.order.map((id, i) => {
+          const seat = room.seats.find((s) => s.id === id);
+          return (
+            <span key={id} className={id === pick.current ? 'pick-now' : undefined}>
+              {i > 0 && ' → '}
+              {nameOf(room, id)}
+              <TeamTag team={seat?.team} short />
+              {seat?.character && ` (${describeCharacter(seat.character, players).name})`}
+            </span>
+          );
+        })}
       </p>
       {turnOrder && (
         <p className="muted">
@@ -91,7 +115,7 @@ export function Pick({ room }: { room: RoomView }) {
               {owner ? (
                 <p className="ok">{t.pick.taken(nameOf(room, owner.id))}</p>
               ) : (
-                <button className="primary" disabled={!mine || !free} onClick={() => send('pick', { character: id })}>
+                <button className="primary" disabled={!mine || !free || draw} onClick={() => send('pick', { character: id })}>
                   {t.pick.choose}
                 </button>
               )}

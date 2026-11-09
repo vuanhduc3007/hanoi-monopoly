@@ -245,3 +245,63 @@ Bàn 2 người: Tổ trưởng góp tổng 10 + 10, SVBK tốt nghiệp sau 3 l
 | C12 Tổ trưởng dân phố | −1,6 | +0,4 | +2,2 | +1,1 | +0,8 | +0,9 | +0,7 |
 
 20.000 ván ở 2–4 người, 15.000 ở 6, 12.000 ở 7–8; *cột 5 người chạy lại 25.000 ván sau khi chỉnh Tài xế Grab. Người đi đầu thắng: 40% / 32,5% / 33,5% / 28,1% / 23,6% / 21,5% / 18,1% (công bằng 50 / 33 / 25 / 20 / 16,7 / 14,3 / 12,5%).
+
+## Giá và tiền thuê theo tần suất dừng chân, chế độ đội, bốc thăm nhân vật, cờ cắm đất
+
+### Tính lại giá và tiền thuê từng ô
+
+Đo bằng bot: với mỗi nhóm, **tổng tiền thuê thu được / tổng tiền bỏ ra (mua đất + xây nhà)** qua cả ván. Con số này gộp sẵn tần suất dừng chân (ô sau Bãi giữ xe, ô bị thẻ dịch chuyển tới…), độ khó gom đủ nhóm và thời gian kịp xây. Trước khi chỉnh, nhóm lệch xa nhất so với trung vị là:
+
+| Bàn | Trước | Sau (seed kiểm chứng 7700, chưa dùng khi chỉnh) |
+| --- | --- | --- |
+| 40 ô, 4 người | Xanh lá −40%, Vàng −25%, Đỏ −22% | Xanh lá −19%, các nhóm khác trong ±10% |
+| 48 ô, 6 người | Giao thông +38%, Xanh đậm +34%, Xanh lá −34% | Xanh lá −15%, các nhóm khác trong ±13% |
+| 56 ô, 8 người | Giao thông +67%, Tiện ích +59%, Bạc −28% | Tiện ích +12%, các nhóm khác trong ±8% |
+
+Cách chỉnh (lặp mô phỏng, mỗi bàn 8 vòng × 1.500–3.000 ván, rồi kiểm chứng bằng seed khác):
+- **Tiền thuê** mỗi nhóm nhân cùng một hệ số cho mọi mức (đất trống → khách sạn), giới hạn −10% đến +30% để bậc giá không bị đảo.
+- Nhóm vẫn lời ít khi tiền thuê đã +30% (Đỏ, Vàng, Xanh lá, Tím, Bạc): **giảm giá xây nhà** thay vì giảm giá đất, nên giá đất vẫn tăng dần theo vòng bàn.
+- Nhóm 2 ô cuối bàn (Xanh đậm; thêm Mận ở bàn 56 ô) gom đủ bộ quá dễ nên lời nhiều nhất. Không hạ tiền thuê, mà giữ chúng là **đất vàng thu thuê cao nhất bàn** và tăng giá đất / giá xây nhà (bàn 56 ô: 340–360 tỷ một căn).
+- **Giao thông và tiện ích** ở bàn lớn (5–6 bến) hạ tiền thuê 15–30%. Riêng bàn 56 ô tăng thêm giá mua (bến 250, tiện ích 180).
+
+Bàn 2 người không dùng để chỉnh: ván ngắn, ít nhóm được xây, trung vị lợi nhuận chỉ 0,38 nên tỉ lệ lệch không có nghĩa.
+
+Cân bằng nhân vật sau khi đổi giá (seed 77; 12.000 / 10.000 / 8.000 / 6.000 / 6.000 / 5.000 / 5.000 ván; sai số 95% ±2,2 → ±1,0 điểm):
+
+| | 2 người | 3 | 4 | 5 (48 ô) | 6 (48 ô) | 7 (56 ô) | 8 (56 ô) |
+|---|---|---|---|---|---|---|---|
+| C01 Thiếu gia Vin | +1,9 | +3,2 | +1,4 | +1,6 | +0,2 | −0,6 | −2,1 |
+| C02 Ninja Lead | +1,4 | +0,9 | +2,5 | +1,2 | +0,4 | −0,5 | −1,0 |
+| C03 Tài xế Grab | +1,3 | +0,1 | −0,4 | −0,4 | +1,7 | +0,9 | +0,3 |
+| C04 Idol TikTok | −2,0 | −2,6 | +0,4 | +0,6 | −0,9 | −1,1 | −0,8 |
+| C05 Cò đất | +1,5 | −0,3 | +1,6 | +0,9 | −0,9 | −0,4 | +0,3 |
+| C06 Nghiện Tarot | −0,6 | −1,0 | −2,1 | −3,5 | −0,3 | +0,2 | +2,3 |
+| C07 SVBK | +1,2 | −0,8 | −1,4 | +0,8 | +0,9 | −0,2 | −0,0 |
+| C08 Nô lệ tư bản | +0,9 | +1,3 | −0,4 | −1,4 | −0,3 | +0,6 | +0,5 |
+| C09 Con bạc | −1,3 | −0,3 | −1,4 | +0,2 | +0,2 | −0,0 | +0,1 |
+| C10 Thợ xây | −1,8 | +0,4 | −0,1 | −0,1 | −0,5 | +0,7 | +0,5 |
+| C11 F0 chứng khoán | −0,1 | −2,2 | −2,5 | −0,5 | −1,2 | −1,7 | −1,6 |
+| C12 Tổ trưởng dân phố | −2,4 | +1,2 | +2,6 | +0,5 | +0,6 | +2,1 | +1,6 |
+
+Người đi đầu thắng: 39,6% / 32,7% / 33,6% / 29,6% / 25,3% / 24,0% / 20,3%, gần như cũ. Nghiện Tarot ở bàn 5 người (−3,5) là điểm yếu nhất, theo dõi thêm.
+
+### Chế độ đội
+
+Chủ phòng chọn 2, 3 hoặc 4 đội (Rồng, Phượng, Lân, Quy). Người chơi tự bấm "Vào đội", chủ phòng có nút xáo đều. Ván chỉ bắt đầu khi đội nào cũng có người và các đội lệch nhau tối đa 1 người. Luật:
+- Ví tiền và đất của ai người nấy giữ. **Tiền không bao giờ chuyển giữa đồng đội**: vào đất đồng đội thì miễn thuê. Thẻ "trả mỗi người" / "thu của mỗi người" chỉ tính đối thủ, và tổng tiền chia cho số đối thủ. Kỹ năng Họp tổ, Mở sòng chỉ áp vào đội khác. Bóc phốt không nhắm được đồng đội. Thẻ thu tiền về cho một nhân vật thì đồng đội của người đó được miễn, riêng tiền sửa nhà thì đồng đội nộp cho ngân hàng.
+- Giao dịch giữa đồng đội vẫn như thường. Bot sẽ nhường đồng đội ô cuối của một nhóm mà đồng đội đang gom gần đủ, và nhận đề nghị của đồng đội nếu nó giúp một bên gom đủ nhóm mà không phá nhóm nào của mình.
+- Thứ tự lượt: tung xúc xắc như cũ, rồi **xếp xen kẽ các đội**. Đội có người tung cao nhất đi trước; trong đội giữ thứ tự tung.
+- Thắng: **đội cuối cùng còn người chưa phá sản**. Hết giờ (chế độ Nhanh) thì cộng tài sản những người còn trụ của mỗi đội. Bảng xếp hạng xếp theo đội, trong đội theo tài sản.
+
+### Bốc thăm nhân vật
+
+Cấu hình phòng "Chọn nhân vật: Bốc thăm ngẫu nhiên": thứ tự lượt do xúc xắc quyết định như cũ, còn nhân vật thì máy bốc lần lượt cho từng người, mỗi lần cách nhau 1,2 giây (`timers.drawRevealSec`), không ai được chọn. Ở chế độ chọn bình thường, người đang đến lượt chọn có thêm nút **Chọn ngẫu nhiên**.
+
+### Cờ cắm đất
+
+Chấm màu nhỏ ở góc ô được thay bằng **lá cờ cán tre** mang màu người chủ, kèm viền và nền ô ngả màu chủ đất. Đất đang thế chấp thì cờ rủ, có gạch chéo. Cờ to theo kích cỡ ô (10–22px).
+
+
+### Sửa lỗi bot gửi đi gửi lại một đề nghị giao dịch
+
+Server hỏi bot theo thứ tự ghế, nên bot đề nghị đổi đất cho một người ngồi sau nó sẽ được hỏi lại trước khi người kia kịp trả lời. Kết quả là nó gửi lại đúng đề nghị đó liên tục cho đến hết đồng hồ lượt (test với số liệu giá mới làm lộ ra lỗi này). Giờ bot chờ khi còn đề nghị đang mở, và mỗi lượt chỉ đề nghị mỗi người một lần (`turn.offeredTo`).

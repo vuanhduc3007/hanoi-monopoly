@@ -192,10 +192,23 @@ select {
 }
 .setting {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: 4px 8px;
   margin: 6px 0;
+}
+.setting > span {
+  flex: 1 1 8em;
+  min-width: 0;
+}
+.setting select {
+  max-width: 100%;
+  min-width: 0;
+}
+.setting-hint {
+  margin: -2px 0 6px;
+  font-size: 0.85em;
 }
 .your-turn {
   font-weight: 700;
@@ -244,6 +257,13 @@ select {
 .player-main {
   flex: 1;
   min-width: 0;
+}
+.player-main .tag {
+  display: inline-block;
+}
+.ready-state {
+  flex: none;
+  white-space: nowrap;
 }
 .player-name {
   font-weight: 600;
@@ -1525,3 +1545,38 @@ button.bet {
   margin: 2px 0;
 }
 
+
+/* ---------------------------------------------------------------- tile text follows the tile size
+   (40 / 48 / 56 tiles: the board's grid has side + 2 cells, corners 1.6× wide). */
+.board {
+  container-type: inline-size;
+  --units: calc(var(--side, 9) + 3.2);
+}
+.board .tile {
+  font-size: clamp(6px, calc(100cqw / var(--units) * 0.215), 12px);
+  line-height: 1.08;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+.board .tile-corner {
+  font-size: clamp(6px, calc(100cqw / var(--units) * 0.23), 13px);
+}
+.board .tile-price {
+  font-size: 0.9em;
+}
+/* Tiles narrower than ~30px: icon and price only (tap a tile, or zoom in, for its name). */
+@container (max-width: 365px) {
+  .board-standard .tile:not(.tile-corner) .tile-name {
+    display: none;
+  }
+}
+@container (max-width: 425px) {
+  .board-extended .tile:not(.tile-corner) .tile-name {
+    display: none;
+  }
+}
+@container (max-width: 485px) {
+  .board-large .tile:not(.tile-corner) .tile-name {
+    display: none;
+  }
+}

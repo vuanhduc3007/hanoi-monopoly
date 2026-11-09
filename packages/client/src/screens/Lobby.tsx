@@ -50,7 +50,7 @@ export function Lobby({ room }: { room: RoomView }) {
                 {seat.host && <span className="tag">{t.host}</span>}
                 {!seat.connected && <span className="tag">{t.board.disconnected}</span>}
               </span>
-              <span className={seat.host || seat.ready ? 'ok' : 'muted'}>{seat.host || seat.ready ? t.lobby.ready : t.lobby.notReady}</span>
+              <span className={`ready-state ${seat.host || seat.ready ? 'ok' : 'muted'}`}>{seat.host || seat.ready ? t.lobby.ready : t.lobby.notReady}</span>
             </div>
           ))}
           {room.spectators > 0 && <p className="muted">{t.lobby.spectators(room.spectators)}</p>}
@@ -79,12 +79,15 @@ export function Lobby({ room }: { room: RoomView }) {
           </Setting>
           <Setting label={t.lobby.board}>
             <select disabled={!host} value={s.board ?? 'auto'} onChange={(e) => set({ board: e.target.value as RoomSettings['board'] })}>
-              <option value="auto">{t.lobby.boards.auto(D.config.room.autoBoardFrom.extended ?? 5, D.config.room.autoBoardFrom.large ?? 7)}</option>
+              <option value="auto">{t.lobby.boards.auto}</option>
               <option value="standard">{t.lobby.boards.standard}</option>
               <option value="extended">{t.lobby.boards.extended}</option>
               <option value="large">{t.lobby.boards.large}</option>
             </select>
           </Setting>
+          <p className="muted setting-hint">
+            {t.lobby.boards.hint(D.config.room.autoBoardFrom.extended ?? 5, D.config.room.autoBoardFrom.large ?? 7)}
+          </p>
           {(['characters', 'scholarshipFund', 'buildingLimit', 'allowSpectators'] as const).map((k) => (
             <Setting key={k} label={t.lobby[k]}>
               <input type="checkbox" disabled={!host} checked={s[k]} onChange={(e) => set({ [k]: e.target.checked })} />

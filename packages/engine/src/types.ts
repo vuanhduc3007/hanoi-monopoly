@@ -134,15 +134,17 @@ export type Pending =
   | { type: 'inheritMortgage'; player: PlayerId; propertyId: string }
   /** Con bạc: bet on this tax / fine / card payment (Liều ăn nhiều)? */
   | { type: 'gamble'; player: PlayerId; task: PayTask }
-  /** Con bạc's Mở sòng: opponents bet one after another (`player` = whose bet it is). */
+  /** Con bạc's Mở sòng: every opponent bets at the same time; the dice roll once `waiting` is empty. */
   | {
       type: 'sicboBet';
-      player: PlayerId;
       host: PlayerId;
       stake: number;
       commission: number;
       bets: Record<PlayerId, SicboPick>;
+      /** Everyone at the table who bets, in seat order from the host. */
       order: PlayerId[];
+      /** Bettors who have not picked yet. */
+      waiting: PlayerId[];
     };
 
 export interface TradeBundle {

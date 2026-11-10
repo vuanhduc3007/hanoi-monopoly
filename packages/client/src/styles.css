@@ -485,10 +485,70 @@ select {
 }
 .side-top {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 8px;
+}
+.side-status {
+  display: flex;
   align-items: center;
   gap: 8px;
+}
+/* The clock takes whatever room is left and never pushes the buttons around;
+   when space runs out the label shrinks, never the seconds. */
+.side-clock {
+  flex: 1;
+  min-width: 0;
+}
+.clock {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35em;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.clock-kind,
+.clock-extra {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.clock-time {
+  flex: none;
+}
+.room-code {
+  flex: none;
+  white-space: nowrap;
+  font-size: 13px;
+  padding: 4px 8px;
+}
+.room-code strong {
+  letter-spacing: 0.08em;
+}
+@media (max-width: 480px) {
+  .room-code-label {
+    display: none;
+  }
+}
+.side-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.side-actions button {
+  white-space: nowrap;
+  min-width: 0;
+}
+.sicbo-bets {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
   flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 13px;
+}
+.sicbo-bets .bet-done {
+  font-weight: 700;
 }
 .decision {
   border-color: var(--red);

@@ -216,15 +216,17 @@ export class GameController {
   /** Returns the role given to the new connection. Throws RoomError to refuse it. */
   join(
     sessionId: string,
-    options: { name?: unknown; spectator?: unknown; secret?: unknown; resume?: unknown } = {},
+    options: { name?: unknown; spectator?: unknown; secret?: unknown; resume?: unknown; reclaim?: unknown } = {},
   ): 'player' | 'spectator' {
     const secret = cleanSecret(options.secret);
     const mine = secret ? this.seats.find((s) => s.secret === secret) : undefined;
-    if (mine) {
+    // `reclaim`: a new tab in the same browser re-entering the room code. It may only
+    // take a seat nobody is using, so it never kicks out a tab that is still open.
+    if (mine && !(options.reclaim === true && mine.connected)) {
       this.takeOver(mine, sessionId);
       return 'player';
     }
-    if (options.resume === true) throw new RoomError('NO_SEAT');
+    if (options.resume === true || options.reclaim === true) throw new RoomError('NO_SEAT');
     const wantsSpectator = options.spectator === true;
     if (!wantsSpectator && this.phase === 'lobby') {
       if (this.seats.length >= this.settings.maxPlayers) {
@@ -799,7 +801,7 @@ export class GameController {
       ms = Math.max(1000, this.turnStartedAt + t.turnSec * 1000 - this.clock.now());
     }
     const key = pend
-      ? `${base}:${pend.type}:${pend.player}:${'propertyId' in pend ? pend.propertyId : ''}:${pend.type === 'liquidation' ? pend.task.amount : ''}`
+      ? `${base}:${pend.type}:${'player' in pend ? pend.player : ''}:${'propertyId' in pend ? pend.propertyId : ''}:${pend.type === 'liquidation' ? pend.task.amount : ''}`
       : `${base}:${kind}`;
     this.setDecision(key, kind, ms, () => this.onDecisionTimeout());
   }

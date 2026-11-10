@@ -80,18 +80,19 @@ describe('C09 Con bạc', () => {
     expect(r.s.pending).toBeNull();
   });
 
-  it('host_sicbo (Mở sòng): opponents bet in turn order, losers pay the house, winners get stake minus commission', () => {
+  it('host_sicbo (Mở sòng): opponents bet at the same time, losers pay the house, winners get stake minus commission', () => {
     const g = G.create(['C09', null, null]);
     const sk = CH.C09.skill;
     const stake = sicboStake(sk, 2);
     g.setCurrent('p1').do({ type: 'useSkill', player: 'p1' });
-    expect(g.s.pending).toMatchObject({ stake });
-    expect(g.s.pending).toMatchObject({ type: 'sicboBet', player: 'p2', host: 'p1' });
+    expect(g.s.pending).toMatchObject({ type: 'sicboBet', host: 'p1', stake, waiting: ['p2', 'p3'] });
+    expect(() => g.do({ type: 'placeBet', player: 'p1', pick: 'tai' })).toThrow(/Not your bet/);
+    // Any order: p3 bets before p2, and nobody bets twice.
+    g.do({ type: 'placeBet', player: 'p3', pick: 'xiu' });
+    expect(g.s.pending).toMatchObject({ type: 'sicboBet', waiting: ['p2'], bets: { p3: 'xiu' } });
     expect(() => g.do({ type: 'placeBet', player: 'p3', pick: 'tai' })).toThrow(/Not your bet/);
-    g.do({ type: 'placeBet', player: 'p2', pick: 'tai' });
-    expect(g.s.pending).toMatchObject({ type: 'sicboBet', player: 'p3' });
     g.rig(6, 5, 1); // 12 = Tài
-    const ev = g.do({ type: 'placeBet', player: 'p3', pick: 'xiu' });
+    const ev = g.do({ type: 'placeBet', player: 'p2', pick: 'tai' });
     const payout = stake - up(stake * num(sk.commission));
     expect(has(ev, 'sicboRolled', { result: 'tai' })).toBe(true);
     expect(g.cash('p2')).toBe(1500 + payout);
@@ -100,13 +101,15 @@ describe('C09 Con bạc', () => {
     expect(g.p('p1').skillUsed).toBe(true);
   });
 
-  it('bão: the house takes every bet; a timed-out bet is placed at random', () => {
+  it('bão: the house takes every bet; when the clock runs out the undecided bet at random', () => {
     const g = G.create(['C09', null, null]);
     g.setCurrent('p1').do({ type: 'useSkill', player: 'p1' });
-    g.do({ type: 'timeout' });
-    expect(g.s.pending).toMatchObject({ type: 'sicboBet', player: 'p3' });
+    g.do({ type: 'placeBet', player: 'p2', pick: 'tai' });
     g.rig(3, 3, 3);
-    g.do({ type: 'placeBet', player: 'p3', pick: 'tai' });
+    const ev = g.do({ type: 'timeout' });
+    expect(has(ev, 'betPlaced', { player: 'p3', auto: true })).toBe(true);
+    expect(has(ev, 'sicboRolled', { result: 'bao' })).toBe(true);
+    expect(g.s.pending).toBeNull();
     expect(g.cash('p1')).toBe(start09() + 2 * sicboStake(CH.C09.skill, 2));
   });
 

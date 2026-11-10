@@ -14,6 +14,7 @@ const client = new Client('ws://localhost:2567');
 const room = await client.create('hanoi', { name });            // host; room.roomId is the 6-char code
 const room2 = await client.joinById(code, { name, secret });   // player (lobby) or spectator (game started / full)
 const again2 = await client.joinById(code, { secret, resume: true }); // after a reload: take the same seat back
+const again3 = await client.joinById(code, { secret, reclaim: true }); // new tab, same browser: only an unused seat (disconnected / bot-played)
 const watch = await client.joinById(code, { spectator: true });
 const again = await client.reconnect(room.reconnectionToken);  // after a dropped connection
 ```

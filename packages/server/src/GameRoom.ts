@@ -65,7 +65,10 @@ export class GameRoom extends Room {
     });
   }
 
-  onJoin(client: Client, options: { name?: unknown; spectator?: unknown; secret?: unknown; resume?: unknown } = {}): void {
+  onJoin(
+    client: Client,
+    options: { name?: unknown; spectator?: unknown; secret?: unknown; resume?: unknown; reclaim?: unknown } = {},
+  ): void {
     try {
       const role = this.ctl.join(client.sessionId, options);
       client.send('joined', { role, code: this.roomId });

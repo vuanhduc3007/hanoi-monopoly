@@ -43,10 +43,10 @@ export function isMyTurn(room: RoomView | null, state: PublicState | null): bool
   return !!state && !!room?.you && currentPlayer(state).id === room.you && state.status === 'playing';
 }
 
-/** Who the game waits for (null during auctions — anyone may bid). */
+/** Who the game waits for (null during auctions and Mở sòng — several players act at once). */
 export function waitingFor(state: PublicState): string | null {
   if (state.status !== 'playing') return null;
-  if (state.pending) return state.pending.type === 'auction' ? null : state.pending.player;
+  if (state.pending) return state.pending.type === 'auction' || state.pending.type === 'sicboBet' ? null : state.pending.player;
   return currentPlayer(state).id;
 }
 

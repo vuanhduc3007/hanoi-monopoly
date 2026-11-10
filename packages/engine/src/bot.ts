@@ -71,11 +71,12 @@ const clone = (s: GameState): GameState => JSON.parse(JSON.stringify(s));
 /**
  * Who must act next: the player a pending decision belongs to, or the
  * current player. Null during an auction (anyone eligible may bid; the
- * server's clock closes it) and when the game is over.
+ * server's clock closes it), during Mở sòng (everyone bets at once) and
+ * when the game is over.
  */
 export function actorOf(s: GameState): string | null {
   if (s.status !== 'playing') return null;
-  if (s.pending) return s.pending.type === 'auction' ? null : s.pending.player;
+  if (s.pending) return s.pending.type === 'auction' || s.pending.type === 'sicboBet' ? null : s.pending.player;
   return s.players[s.turn.current].id;
 }
 
@@ -86,6 +87,7 @@ export function botAction(s: GameState, data?: GameData, opts: Partial<BotOption
   const offer = s.trades[0];
   if (offer) return botActionFor(s, offer.to, d, opts);
   if (s.pending?.type === 'auction') return auctionAction({ s, ev: [], d });
+  if (s.pending?.type === 'sicboBet') return botActionFor(s, s.pending.waiting[0], d, opts);
   return botActionFor(s, actorOf(s)!, d, opts);
 }
 
@@ -118,6 +120,9 @@ export function botActionFor(
     const value = Math.min(d.ownables[pend.propertyId].price, me.cash);
     return value >= minBid ? { type: 'bid', player: playerId, amount: minBid } : null;
   }
+  if (pend?.type === 'sicboBet') {
+    return pend.waiting.includes(playerId) ? { type: 'placeBet', player: playerId, pick: botPick(s, playerId) } : null;
+  }
   if (actorOf(s) !== playerId) return null;
   if (pend) {
     switch (pend.type) {
@@ -133,8 +138,6 @@ export function botActionFor(
         const bet = rule && me.cash - gambleWorst(rule, pend.task.amount) >= o.buildReserve;
         return { type: 'gamble', player: playerId, pick: bet ? botPick(s, playerId) : null };
       }
-      case 'sicboBet':
-        return { type: 'placeBet', player: playerId, pick: botPick(s, playerId) };
       case 'postRoll':
         return postRollAction(c, me, pend.dice, pend.context, o);
       case 'chooseCard':

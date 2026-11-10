@@ -154,7 +154,7 @@ Mỗi phương án chạy 10.000 ván × 3 cấu hình (Truyền thống 4 ngư�
 
 - **C09 Con bạc** — tài xỉu dùng **3 xúc xắc riêng** (không đụng xúc xắc đi quân): 11–17 Tài, 4–10 Xỉu, ba mặt giống nhau = **bão**.
   - Nội tại *Liều ăn nhiều* (`gamble_payment`): khi mua đất của ngân hàng, nộp thuế, phạt Bãi giữ xe hoặc tiền thẻ (từ 50 tỷ) được chọn chơi: thắng trả bớt 30%, thua trả thêm 40% (phạt cao hơn thưởng như ý tưởng gốc), ra bão khỏi trả. Xác suất thắng 48,6% → trung bình đắt hơn ~2%, chủ yếu là may rủi. Mua đất chỉ được cược khi đủ tiền nếu thua. Không áp dụng cho tiền thuê.
-  - Kỹ năng *Mở sòng* (`host_sicbo`): mọi đối thủ lần lượt đặt Tài/Xỉu (mỗi người 10 giây, hết giờ chọn ngẫu nhiên), Con bạc làm nhà cái; người thắng nhận 80% tiền cược, bão nhà cái ăn hết. Tổng tiền cược cố định **240 tỷ chia đều** (làm tròn lên hàng chục) — nếu mỗi người cược cố định thì bàn 8 người mạnh gấp đôi bàn 4 người (+10 đ%).
+  - Kỹ năng *Mở sòng* (`host_sicbo`): mọi đối thủ đặt Tài/Xỉu **cùng lúc** (chung một đồng hồ; hết giờ ai chưa đặt thì chọn ngẫu nhiên — trước đây đặt lần lượt từng người, bàn đông phải chờ lâu), Con bạc làm nhà cái; người thắng nhận 80% tiền cược, bão nhà cái ăn hết. Tổng tiền cược cố định **240 tỷ chia đều** (làm tròn lên hàng chục) — nếu mỗi người cược cố định thì bàn 8 người mạnh gấp đôi bàn 4 người (+10 đ%).
   - Điểm yếu: bắt đầu 1.400 tỷ.
 - **C10 Thợ xây** — xây rẻ hơn 25%; *Tự tay xây* (`free_build`): xây 1 nhà miễn phí, được xây **"nhà chui"** (1 nhà) lên ô chưa đủ nhóm màu, tối đa 1 căn cùng lúc; bắt đầu 1.450 tỷ. Không giới hạn số nhà chui thì quá mạnh (+20 đ% ở bàn 6–8 người, vì cuối ván ô nào cũng có nhà).
   - Vì nhà chui, một nhóm màu có thể chia nhiều chủ mà có nhà: luật *"bán hết nhà trong nhóm trước khi thế chấp / giao dịch"* giờ chỉ xét **nhà của chính người đó** trong nhóm.
@@ -337,3 +337,9 @@ Thử 4 bộ số trên seed 901 trước khi chọn. Riêng việc tăng tổng
 | C12 Tổ trưởng dân phố | +1,7 | −0,5 | +1,3 | +0,7 | +1,2 | +0,1 | +0,7 |
 
 Mọi nhân vật ở mọi cỡ bàn đều trong ±2,8 điểm % (trước đó ±3,5). Người đi đầu thắng: 39,6% / 32,7% / 33,9% / 28,5% / 25,5% / 24,2% / 20,1%.
+
+## Mở sòng đặt cùng lúc, mã phòng trong ván, thanh nút cố định
+
+- **Mở sòng**: `sicboBet` không còn `player` (người đang đặt) mà có `waiting` — danh sách người chưa đặt. Mọi đối thủ đặt cùng lúc theo thứ tự bất kỳ; người cuối cùng đặt xong thì tung ngay. Một đồng hồ chung (`timers.sicboBetSec`); hết giờ, ai chưa đặt được chọn ngẫu nhiên (nhật ký ghi "hết giờ, chọn ngẫu nhiên"). `actorOf` trả `null` như lúc đấu giá, bot của từng ghế tự đặt phần mình.
+- **Mã phòng trong ván**: góc trên thanh bên hiện mã phòng; bấm vào để chép link mời. Trước đây khóa giữ ghế chỉ sống trong một tab, nên đóng tab rồi nhập lại mã chỉ được vào xem. Nay trình duyệt nhớ khóa ghế theo mã phòng (`hanoi-monopoly:seats`, 10 phòng gần nhất, chỉ ghi khi thật sự có ghế). Nhập lại mã thì client thử `reclaim` trước; server chỉ trả ghế khi ghế đó đang mất kết nối hoặc đã giao cho bot, nên không bao giờ giật ghế của một tab khác còn mở. Vào từ máy hoặc trình duyệt khác thì vẫn chỉ xem được.
+- **Thanh nút**: Tài sản · Giao dịch · Nhân vật nằm riêng một hàng lưới 3 cột, không chung hàng với đồng hồ nên không bao giờ bị đẩy xuống dòng. Đồng hồ khi chật thì cắt bớt chữ, luôn giữ số giây. Người đã phá sản / khán giả thấy hai nút đầu bị mờ thay vì biến mất.

@@ -9,6 +9,8 @@ const NAME_KEY = 'hanoi-monopoly:name';
 const SECRET_KEY = 'hanoi-monopoly:secret';
 /** Last room + secret, for browsers that lose sessionStorage on reload (in-app webviews). */
 const LAST_KEY = 'hanoi-monopoly:last';
+/** Room code → seat secret for recent rooms, so re-entering a code in a new tab takes the seat back. */
+const SEATS_KEY = 'hanoi-monopoly:seats';
 /** Colyseus close code for a deliberate leave. */
 const CONSENTED = 4000;
 
@@ -44,6 +46,24 @@ function local(): Storage | null {
     return window.localStorage;
   } catch {
     return null;
+  }
+}
+
+function seatSecrets(): Record<string, string> {
+  try {
+    const v = JSON.parse(local()?.getItem(SEATS_KEY) ?? '{}') as unknown;
+    return v && typeof v === 'object' ? (v as Record<string, string>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function rememberSeat(code: string, secret: string): void {
+  const all = Object.entries(seatSecrets()).filter(([c]) => c !== code);
+  try {
+    local()?.setItem(SEATS_KEY, JSON.stringify(Object.fromEntries([...all.slice(-9), [code, secret]])));
+  } catch {
+    /* ignore */
   }
 }
 
@@ -115,7 +135,11 @@ function attach(r: Room, secret: string = mySecret()): void {
   storage()?.setItem(TOKEN_KEY, r.reconnectionToken);
   storage()?.setItem(SECRET_KEY, secret);
   local()?.setItem(LAST_KEY, JSON.stringify({ code: r.roomId, secret }));
-  r.onMessage('joined', (m: { role: 'player' | 'spectator' }) => store.set({ role: m.role }));
+  r.onMessage('joined', (m: { role: 'player' | 'spectator' }) => {
+    // Only a seat is worth coming back to (a spectator must not overwrite it).
+    if (m.role === 'player') rememberSeat(r.roomId, secret);
+    store.set({ role: m.role });
+  });
   r.onMessage('room', (m: RoomView) =>
     store.set((s) =>
       m.phase === 'lobby' && s.room?.phase !== 'lobby'
@@ -162,8 +186,19 @@ export async function createRoom(name: string): Promise<void> {
 export async function joinRoom(code: string, name: string, spectator = false): Promise<void> {
   saveName(name);
   store.set({ conn: 'connecting' });
+  const id = code.trim().toUpperCase();
+  // Played in this room from this browser before (tab closed, phone restarted…)? Take that seat back.
+  const saved = seatSecrets()[id];
+  if (saved && saved !== mySecret() && !spectator) {
+    try {
+      attach(await getClient().joinById(id, { secret: saved, reclaim: true }), saved);
+      return;
+    } catch {
+      /* seat gone, or still open in another tab: join as usual */
+    }
+  }
   try {
-    attach(await getClient().joinById(code.trim().toUpperCase(), { name, spectator, secret: mySecret() }));
+    attach(await getClient().joinById(id, { name, spectator, secret: mySecret() }));
   } catch (e) {
     failed(e);
   }

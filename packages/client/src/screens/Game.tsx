@@ -15,6 +15,29 @@ import { GameOver } from './GameOver';
 import { MuteButton } from '../sound/MuteButton';
 import { useGameSounds } from '../sound/useSounds';
 
+/** Room code for coming back later; a click copies the invite link. */
+function RoomCode({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      className="room-code"
+      title={t.lobby.copyLink}
+      onClick={() => {
+        void navigator.clipboard?.writeText(`${location.origin}${location.pathname}?room=${code}`);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1500);
+      }}
+    >
+      {copied ? t.lobby.copied : (
+        <>
+          <span className="room-code-label">{t.board.roomCode} </span>
+          <strong>{code}</strong>
+        </>
+      )}
+    </button>
+  );
+}
+
 /** S4 layout: board on the left, panels on the right (drawer on mobile). */
 export function Game({ room }: { room: RoomView }) {
   const game = useStore((s) => s.game);
@@ -34,6 +57,7 @@ export function Game({ room }: { room: RoomView }) {
   const state = game.state;
   const self = me(room, state);
   const incoming = self ? state.trades.filter((x) => x.to === self.id).length : 0;
+  const playing = !!self && !self.bankrupt;
   return (
     <main className="game">
       <div className="board-wrap">
@@ -53,21 +77,27 @@ export function Game({ room }: { room: RoomView }) {
       </div>
       <aside className="side">
         <div className="side-top">
-          <Clock clock={clock} />
-          {self && !self.bankrupt && (
-            <div className="buttons">
-              <button onClick={() => setPanel('assets')}>{t.board.assets}</button>
-              <button onClick={() => setPanel('trade')}>
-                {t.board.trade}
-                {incoming > 0 && <span className="badge">{incoming}</span>}
-              </button>
+          <div className="side-status">
+            <RoomCode code={room.code} />
+            <div className="side-clock">
+              <Clock clock={clock} />
             </div>
-          )}
-          <button onClick={() => setChars(true)}>{t.characters.button}</button>
-          <MuteButton />
-          <button className="link" onClick={() => void leaveRoom()}>
-            {t.lobby.leave}
-          </button>
+            <MuteButton />
+            <button className="link" onClick={() => void leaveRoom()}>
+              {t.lobby.leave}
+            </button>
+          </div>
+          {/* Fixed three-column row: the buttons never move, whatever the clock says. */}
+          <div className="side-actions">
+            <button onClick={() => setPanel('assets')} disabled={!playing}>
+              {t.board.assets}
+            </button>
+            <button onClick={() => setPanel('trade')} disabled={!playing}>
+              {t.board.trade}
+              {incoming > 0 && <span className="badge">{incoming}</span>}
+            </button>
+            <button onClick={() => setChars(true)}>{t.characters.button}</button>
+          </div>
         </div>
         <Decision state={state} room={room} openAssets={() => setPanel('assets')} openTrade={() => setPanel('trade')} />
         <button className="drawer-toggle" onClick={() => setDrawer(!drawer)} aria-expanded={drawer}>

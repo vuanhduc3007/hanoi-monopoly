@@ -5,13 +5,13 @@
  * - `gamble_payment` (Liều ăn nhiều): before buying from the bank or paying a
  *   tax / fine / card payment, the player may bet on Tài or Xỉu: win → pay
  *   less, lose → pay more, bão → jackpot.
- * - `host_sicbo` (Mở sòng): every opponent bets the stake in turn order with
- *   the player as the house; winners are paid the stake minus commission.
+ * - `host_sicbo` (Mở sòng): every opponent bets the stake at the same time
+ *   with the player as the house; winners are paid the stake minus commission.
  */
 import { trait } from './characters';
 import { type Ctx, emit, fail, getPlayer, pushFront, teammates } from './ctx';
 import { randomInt, rollDice } from './rng';
-import type { Effect, PlayerState, SicboPick, Task } from './types';
+import type { Effect, Pending, PlayerState, SicboPick, Task } from './types';
 
 export type SicboResult = SicboPick | 'bao';
 
@@ -97,30 +97,29 @@ export function openSicbo(c: Ctx, host: PlayerState, skill: Effect): void {
   const stake = sicboStake(skill, order.length);
   c.s.pending = {
     type: 'sicboBet',
-    player: order[0],
     host: host.id,
     stake,
     commission: (skill.commission as number | undefined) ?? 0,
     bets: {},
     order,
+    waiting: [...order],
   };
   emit(c, 'sicboOpened', { host: host.id, stake, order });
-  emit(c, 'decisionRequired', { decision: 'sicboBet', player: order[0], host: host.id, stake });
+  for (const id of order) emit(c, 'decisionRequired', { decision: 'sicboBet', player: id, host: host.id, stake });
 }
 
 export function placeBet(c: Ctx, p: PlayerState, pick: SicboPick): void {
   const pend = c.s.pending;
-  if (pend?.type !== 'sicboBet' || pend.player !== p.id) fail('Not your bet');
+  if (pend?.type !== 'sicboBet' || !pend.waiting.includes(p.id)) fail('Not your bet');
   if (!isPick(pick)) fail('Pick tai or xiu');
   pend.bets[p.id] = pick;
+  pend.waiting = pend.waiting.filter((id) => id !== p.id);
   emit(c, 'betPlaced', { player: p.id, pick, host: pend.host });
-  const i = pend.order.indexOf(p.id);
-  const next = pend.order.slice(i + 1).find((id) => !getPlayer(c, id).bankrupt);
-  if (next) {
-    pend.player = next;
-    emit(c, 'decisionRequired', { decision: 'sicboBet', player: next, host: pend.host, stake: pend.stake });
-    return;
-  }
+  if (pend.waiting.some((id) => !getPlayer(c, id).bankrupt)) return;
+  rollTable(c, pend);
+}
+
+function rollTable(c: Ctx, pend: Extract<Pending, { type: 'sicboBet' }>): void {
   c.s.pending = null;
   const r = rollSicbo(c);
   const payout = pend.stake - Math.ceil(pend.stake * pend.commission - 1e-9);
@@ -145,10 +144,16 @@ export function placeBet(c: Ctx, p: PlayerState, pick: SicboPick): void {
   pushFront(c, ...tasks);
 }
 
-/** Server timer ran out on a bet: pick at random. */
+/** Server timer ran out: everyone still undecided bets at random. */
 export function timeoutBet(c: Ctx): void {
   const pend = c.s.pending;
   if (pend?.type !== 'sicboBet') return;
-  placeBet(c, getPlayer(c, pend.player), randomInt(c.s, 2) === 0 ? 'tai' : 'xiu');
+  for (const id of pend.waiting) {
+    if (getPlayer(c, id).bankrupt) continue;
+    pend.bets[id] = randomInt(c.s, 2) === 0 ? 'tai' : 'xiu';
+    emit(c, 'betPlaced', { player: id, pick: pend.bets[id], host: pend.host, auto: true });
+  }
+  pend.waiting = [];
+  rollTable(c, pend);
 }
 

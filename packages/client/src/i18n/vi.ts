@@ -124,6 +124,7 @@ export const t = {
 
   // S4
   board: {
+    roomCode: 'Phòng',
     fund: 'Quỹ khuyến học',
     fundOff: 'Quỹ tắt',
     active: 'Đang hiệu lực',
@@ -223,8 +224,8 @@ export const t = {
     betXiu: 'Cược Xỉu (4–10)',
     payNormal: (amount: string) => `Trả bình thường (${amount})`,
     sicboBetPrompt: (host: string, stake: string) => `${host} mở sòng tài xỉu — bạn đặt ${stake} vào…`,
-    sicboWaiting: (host: string, who: string) => `Sòng của ${host}: đang chờ ${who} đặt cược…`,
-    sicboBets: 'Đã đặt',
+    sicboWaiting: (left: number) => `Mọi người đặt cùng lúc — còn ${left} người chưa đặt…`,
+    sicboChoosing: 'đang chọn…',
     hostSicbo: 'Mở sòng tài xỉu',
     collect: 'Họp tổ dân phố',
     chooseMortgaged: 'Chọn ô đối thủ đang thế chấp',
@@ -524,7 +525,7 @@ export function describeTrait(e: Effect): string {
     case 'gamble_payment':
       return `Khi mua đất của ngân hàng hoặc nộp thuế, phạt, tiền thẻ từ ${money(e.minAmount ?? 0)}: được chơi tài xỉu — thắng trả bớt ${pct(e.winRate)}, thua trả thêm ${pct(e.loseRate)}, ra bão ${e.jackpotRate >= 1 ? 'khỏi trả' : `trả bớt ${pct(e.jackpotRate)}`}`;
     case 'host_sicbo':
-      return `Bạn làm nhà cái tài xỉu: mọi đối thủ lần lượt đặt Tài hoặc Xỉu, ${
+      return `Bạn làm nhà cái tài xỉu: mọi đối thủ cùng lúc đặt Tài hoặc Xỉu, ${
         e.pot !== undefined
           ? `tổng tiền cược ${money(e.pot)} chia đều (làm tròn lên hàng chục)${perOpponent((n) => money(sicboStake(e, n)))}`
           : `mỗi người ${money(e.stake)}`
@@ -741,7 +742,7 @@ export function formatEvent(e: GameEvent, who: Who): string | null {
     case 'sicboOpened':
       return `${name(e.host as string)} mở sòng tài xỉu: mỗi người cược ${money(e.stake as number)}`;
     case 'betPlaced':
-      return `${p} đặt ${sicboName(e.pick)}`;
+      return `${p} đặt ${sicboName(e.pick)}${e.auto ? ' (hết giờ, chọn ngẫu nhiên)' : ''}`;
     case 'sicboRolled':
       return `Sòng của ${name(e.host as string)}: ${(e.dice as number[]).join(' + ')} = ${e.total} → ${sicboName(e.result)}${
         e.result === 'bao' ? ', nhà cái ăn hết' : ''

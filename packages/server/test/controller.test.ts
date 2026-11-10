@@ -367,6 +367,24 @@ describe('page reload', () => {
     expect(h.ctl.leave('s2', false)).toBe(0);
   });
 
+  it('re-entering the room code (reclaim) takes back an empty seat but never one still open in another tab', () => {
+    const h = harness();
+    h.ctl.join('s1', { secret: 'a'.repeat(32) });
+    h.ctl.join('s2', { secret: 'b'.repeat(32) });
+    h.ctl.message('s1', 'setConfig', { characters: false });
+    h.ctl.message('s2', 'ready', { ready: true });
+    h.ctl.message('s1', 'start', {});
+    // The other tab is still connected: refused, and it keeps its seat.
+    expect(() => h.ctl.join('tab2', { secret: 'b'.repeat(32), reclaim: true })).toThrow(RoomError);
+    expect(h.ctl.seats.find((x) => x.id === 'u2')).toMatchObject({ sessionId: 's2', connected: true });
+    // Tab closed (and a bot took over meanwhile): the code brings the player back to their seat.
+    h.ctl.leave('s2', true);
+    expect(h.ctl.join('tab3', { secret: 'b'.repeat(32), reclaim: true })).toBe('player');
+    expect(h.ctl.seats.find((x) => x.id === 'u2')).toMatchObject({ sessionId: 'tab3', connected: true, control: 'human' });
+    // An unknown secret never becomes a spectator through reclaim.
+    expect(() => h.ctl.join('x', { secret: 'z'.repeat(32), reclaim: true })).toThrow(RoomError);
+  });
+
   it('resume with an unknown secret is refused (no seat stolen, no spectator)', () => {
     const h = started(2);
     expect(() => h.ctl.join('x', { secret: 'z'.repeat(32), resume: true })).toThrow(RoomError);
@@ -441,7 +459,7 @@ describe('eight seats and the 56-tile board', () => {
     expect(h.ctl.phase).toBe('lobby');
   });
 
-  it('Con bạc’s Mở sòng: each bettor gets a clock; a timed-out bet is placed for them', () => {
+  it('Con bạc’s Mở sòng: everyone bets at once on one clock; undecided bets are placed when it runs out', () => {
     const h = started(3);
     const s = h.ctl.state!;
     const host = s.players[s.turn.current];
@@ -451,12 +469,14 @@ describe('eight seats and the 56-tile board', () => {
     h.ctl.message(hostSession, 'action', { action: { type: 'useSkill' } });
     const pend = h.ctl.state!.pending;
     expect(pend?.type).toBe('sicboBet');
-    const bettor = (pend as { player: string }).player;
-    const timeouts = D.config.timers.sicboBetSec * 1000;
-    h.clock.advance(timeouts + 10);
-    const after = h.ctl.state!.pending as { type: string; bets?: Record<string, string> } | null;
-    if (after?.type === 'sicboBet') expect(after.bets?.[bettor]).toBeDefined();
-    else expect(after?.type ?? null).not.toBe('sicboBet');
+    const waiting = (pend as { waiting: string[] }).waiting;
+    expect(waiting).toHaveLength(2);
+    // The last bettor answers first; the table still waits for the other one.
+    const last = h.ctl.seats.find((x) => x.id === waiting[1])!;
+    h.ctl.message(last.sessionId, 'action', { action: { type: 'placeBet', pick: 'tai' } });
+    expect(h.ctl.state!.pending).toMatchObject({ type: 'sicboBet', waiting: [waiting[0]] });
+    h.clock.advance(D.config.timers.sicboBetSec * 1000 + 10);
+    expect(h.ctl.state!.pending?.type ?? null).not.toBe('sicboBet');
   });
 });
 

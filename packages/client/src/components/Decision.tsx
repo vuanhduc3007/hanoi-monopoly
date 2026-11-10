@@ -43,8 +43,8 @@ export function Decision({ state, room, openAssets, openTrade }: Props) {
 
   if (pend?.type === 'auction') return <Auction state={state} room={room} />;
 
+  if (pend?.type === 'sicboBet') return <SicboBet state={state} room={room} />;
   const mine = !!self && waiting === self.id && !self.bankrupt;
-  if (pend?.type === 'sicboBet') return <SicboBet state={state} room={room} mine={mine} />;
   if (!mine) {
     return (
       <section className="panel decision">
@@ -362,10 +362,11 @@ function reasonOf(reason: string): string {
   return '';
 }
 
-/** Mở sòng: bettors pick Tài / Xỉu one after another; everyone sees the bets so far. */
-function SicboBet({ state, room, mine }: { state: PublicState; room: RoomView; mine: boolean }) {
+/** Mở sòng: every bettor picks Tài / Xỉu at the same time; everyone sees who has bet what. */
+function SicboBet({ state, room }: { state: PublicState; room: RoomView }) {
   const pend = state.pending as Extract<PublicState['pending'], { type: 'sicboBet' }>;
-  const placed = Object.entries(pend.bets);
+  const self = me(room, state);
+  const mine = !!self && !self.bankrupt && pend.waiting.includes(self.id);
   return (
     <section className="panel decision sicbo-table">
       <p>
@@ -380,13 +381,15 @@ function SicboBet({ state, room, mine }: { state: PublicState; room: RoomView; m
           </div>
         </>
       ) : (
-        <p className="muted">{t.act.sicboWaiting(nameOf(room, pend.host), nameOf(room, pend.player))}</p>
+        <p className="muted">{t.act.sicboWaiting(pend.waiting.length)}</p>
       )}
-      {placed.length > 0 && (
-        <p className="muted">
-          {t.act.sicboBets}: {placed.map(([id, pick]) => `${nameOf(room, id)} → ${sicboName(pick)}`).join(' · ')}
-        </p>
-      )}
+      <ul className="sicbo-bets">
+        {pend.order.map((id) => (
+          <li key={id} className={pend.bets[id] ? 'bet-done' : 'muted'}>
+            {nameOf(room, id)}: {pend.bets[id] ? sicboName(pend.bets[id]) : t.act.sicboChoosing}
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

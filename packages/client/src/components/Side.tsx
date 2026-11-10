@@ -30,6 +30,11 @@ export function PlayerList({ state, room }: { state: PublicState; room: RoomView
                   </span>
                 )}
                 {seat && !seat.connected && seat.control === 'human' && <span className="tag">{t.board.disconnected}</span>}
+                {seat?.learner && seat.control === 'human' && (
+                  <span className="tag tag-learner" title={t.tutorial.learnerTitle}>
+                    🎓
+                  </span>
+                )}
               </div>
               <div className="muted">
                 {state.config.characters ? charName(p.character) : ''}

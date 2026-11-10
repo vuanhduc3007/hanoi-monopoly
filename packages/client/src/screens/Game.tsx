@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Assets } from '../components/Assets';
 import { Characters } from '../components/Characters';
+import { Coach, TutorialButton } from '../components/Coach';
 import { Board } from '../components/Board';
 import { Decision } from '../components/Decision';
 import { Chat, Clock, Log, PlayerList } from '../components/Side';
@@ -60,7 +61,7 @@ export function Game({ room }: { room: RoomView }) {
   const playing = !!self && !self.bankrupt;
   return (
     <main className="game">
-      <div className="board-wrap">
+      <div className="board-wrap" data-coach="board">
         <div className="board-scroll">
           <div className="board-scale" style={{ width: `${zoom * 100}%` }}>
             <Board state={state} room={room} onTile={setTile} />
@@ -82,23 +83,27 @@ export function Game({ room }: { room: RoomView }) {
             <div className="side-clock">
               <Clock clock={clock} />
             </div>
+            <TutorialButton />
             <MuteButton />
             <button className="link" onClick={() => void leaveRoom()}>
               {t.lobby.leave}
             </button>
           </div>
           {/* Fixed three-column row: the buttons never move, whatever the clock says. */}
-          <div className="side-actions">
-            <button onClick={() => setPanel('assets')} disabled={!playing}>
+          <div className="side-actions" data-coach="actions">
+            <button data-coach="assets" onClick={() => setPanel('assets')} disabled={!playing}>
               {t.board.assets}
             </button>
-            <button onClick={() => setPanel('trade')} disabled={!playing}>
+            <button data-coach="trade" onClick={() => setPanel('trade')} disabled={!playing}>
               {t.board.trade}
               {incoming > 0 && <span className="badge">{incoming}</span>}
             </button>
-            <button onClick={() => setChars(true)}>{t.characters.button}</button>
+            <button data-coach="chars" onClick={() => setChars(true)}>
+              {t.characters.button}
+            </button>
           </div>
         </div>
+        {playing && <Coach state={state} room={room} scope="game" />}
         <Decision state={state} room={room} openAssets={() => setPanel('assets')} openTrade={() => setPanel('trade')} />
         <button className="drawer-toggle" onClick={() => setDrawer(!drawer)} aria-expanded={drawer}>
           {drawer ? t.mobile.less : t.mobile.more}

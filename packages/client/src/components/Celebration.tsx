@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { type GameEvent, type PublicState } from '@hanoi-monopoly/engine';
 import { D } from '../lib/gameData';
-import { Hotel, House, TileIcon } from '../art/icons';
-import { artFor } from '../art/tileArt';
+import { Flag, Hotel, House } from '../art/icons';
 import { money, t, tileName } from '../i18n/vi';
 import { colorOf, nameOf } from '../lib/selectors';
 import type { RoomView } from '../net/protocol';
@@ -71,7 +70,9 @@ export function Celebration({ room }: { state: PublicState; room: RoomView }) {
   const tile = tileName(current.propertyId);
   const color = colorOf(room, current.player);
   const text =
-    current.kind === 'buy' ? t.celebrate.bought(who, tile) : current.kind === 'hotel' ? t.celebrate.hotel(who, tile) : t.celebrate.house(who, tile);
+    current.kind === 'buy'
+      ? t.celebrate.bought(who, tile, D.ownables[current.propertyId]?.kind === 'property')
+      : current.kind === 'hotel' ? t.celebrate.hotel(who, tile) : t.celebrate.house(who, tile);
   const group = D.ownables[current.propertyId]?.group;
   return (
     <div className="celebration" key={current.key} role="status" onClick={() => setQueue((q) => q.slice(1))}>
@@ -81,7 +82,17 @@ export function Celebration({ room }: { state: PublicState; room: RoomView }) {
         make={() => (current.kind === 'buy' ? makeDeed(color) : current.kind === 'hotel' ? makeHotel(color) : makeHouse(color))}
         height={current.kind === 'hotel' ? 1.3 : current.kind === 'house' ? 0.75 : 1.05}
         size={170}
-        fallback={current.kind === 'buy' ? <TileIcon kind={artFor(current.propertyId) ?? 'district'} size={96} /> : current.kind === 'hotel' ? <Hotel size={64} /> : <House size={56} />}
+        fallback={
+          current.kind === 'buy' ? (
+            <span className="celebration-flag">
+              <Flag color={color} />
+            </span>
+          ) : current.kind === 'hotel' ? (
+            <Hotel size={64} />
+          ) : (
+            <House size={56} />
+          )
+        }
       />
       <div className="celebration-text" style={{ borderColor: color }}>
         {text}

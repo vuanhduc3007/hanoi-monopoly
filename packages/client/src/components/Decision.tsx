@@ -67,7 +67,7 @@ export function Decision({ state, room, openAssets, openTrade }: Props) {
         <>
           <p>{t.act.buyPrompt(tileName(pend.propertyId))}</p>
           <div className="buttons">
-            <button className="primary" disabled={self.cash < pend.price} onClick={() => act({ type: 'buy' })}>
+            <button className="primary" data-coach="buy" disabled={self.cash < pend.price} onClick={() => act({ type: 'buy' })}>
               {t.act.buy(money(pend.price))}
             </button>
             {canBet && (
@@ -90,8 +90,8 @@ export function Decision({ state, room, openAssets, openTrade }: Props) {
           <p className="rent-due">{t.act.gamblePrompt(money(pend.task.amount), reasonOf(pend.task.reason))}</p>
           {rule && <p className="muted">{betHint(rule, pend.task.amount)}</p>}
           <div className="buttons">
-            <button className="bet" onClick={() => act({ type: 'gamble', pick: 'tai' })}>{t.act.betTai}</button>
-            <button className="bet" onClick={() => act({ type: 'gamble', pick: 'xiu' })}>{t.act.betXiu}</button>
+            <button className="bet" data-coach="bet" onClick={() => act({ type: 'gamble', pick: 'tai' })}>{t.act.betTai}</button>
+            <button className="bet" data-coach="bet" onClick={() => act({ type: 'gamble', pick: 'xiu' })}>{t.act.betXiu}</button>
             <button className="primary pay" onClick={() => act({ type: 'gamble', pick: null })}>
               {t.act.payNormal(money(pend.task.amount))}
             </button>
@@ -144,11 +144,11 @@ export function Decision({ state, room, openAssets, openTrade }: Props) {
             {t.act.rentDue(tileName(pend.propertyId), nameOf(room, owner), money(pend.task.amount))}
           </p>
           <div className="buttons">
-            <button className="primary pay" onClick={() => act({ type: 'payRent' })}>
+            <button className="primary pay" data-coach="pay" onClick={() => act({ type: 'payRent' })}>
               {t.act.payRent(money(pend.task.amount))}
             </button>
             {pend.discount && (
-              <button onClick={() => act({ type: 'useSkill' })}>{t.act.rentDiscountUse(money(Math.ceil(pend.raw * (1 - ((skillOf(self.character)?.rate as number) ?? 0)) - 1e-9)))}</button>
+              <button data-coach="skill" onClick={() => act({ type: 'useSkill' })}>{t.act.rentDiscountUse(money(Math.ceil(pend.raw * (1 - ((skillOf(self.character)?.rate as number) ?? 0)) - 1e-9)))}</button>
             )}
           </div>
         </>
@@ -177,8 +177,8 @@ export function Decision({ state, room, openAssets, openTrade }: Props) {
         <>
           <p>{t.act.liquidation(money(pend.task.amount), money(self.cash))}</p>
           <div className="buttons">
-            <button onClick={openAssets}>{t.board.assets}</button>
-            <button onClick={openTrade}>{t.board.trade}</button>
+            <button data-coach="assets" onClick={openAssets}>{t.board.assets}</button>
+            <button data-coach="trade" onClick={openTrade}>{t.board.trade}</button>
             <button className="primary" disabled={self.cash < pend.task.amount} onClick={() => act({ type: 'payDebt' })}>
               {t.act.payDebt}
             </button>
@@ -223,7 +223,7 @@ function TurnActions({ state, room }: { state: PublicState; room: RoomView }) {
       <div className="buttons">
         {self.inJail && roll && (
           <>
-            <button disabled={self.cash < D.economy.jailFine} onClick={() => act({ type: 'payJailFine' })}>
+            <button data-coach="roll" disabled={self.cash < D.economy.jailFine} onClick={() => act({ type: 'payJailFine' })}>
               {t.act.payFine(money(D.economy.jailFine))}
             </button>
             {self.jailCards.length > 0 && <button onClick={() => act({ type: 'useJailCard' })}>{t.act.useJailCard}</button>}
@@ -233,11 +233,11 @@ function TurnActions({ state, room }: { state: PublicState; room: RoomView }) {
           </>
         )}
         {roll ? (
-          <button className="primary" onClick={() => act({ type: 'roll' })}>
+          <button className="primary" data-coach="roll" onClick={() => act({ type: 'roll' })}>
             {t.act.roll}
           </button>
         ) : (
-          <button className="primary" onClick={() => act({ type: 'endTurn' })}>
+          <button className="primary" data-coach="endTurn" onClick={() => act({ type: 'endTurn' })}>
             {t.act.endTurn}
           </button>
         )}
@@ -261,7 +261,7 @@ function TurnSkill({ state, room }: { state: PublicState; room: RoomView }) {
   if (skill.type === 'host_sicbo' || skill.type === 'collect_contribution') {
     return (
       <div className="skill">
-        <button onClick={() => act({ type: 'useSkill' })}>
+        <button data-coach="skill" onClick={() => act({ type: 'useSkill' })}>
           {t.act.skills}: {skill.name}
         </button>
       </div>
@@ -279,7 +279,7 @@ function TurnSkill({ state, room }: { state: PublicState; room: RoomView }) {
           );
     return (
       <div className="skill">
-        <button onClick={() => setOpen(!open)}>
+        <button data-coach="skill" onClick={() => setOpen(!open)}>
           {t.act.skills}: {skill.name}
         </button>
         {open && (
@@ -376,8 +376,8 @@ function SicboBet({ state, room }: { state: PublicState; room: RoomView }) {
         <>
           <p>{t.act.sicboBetPrompt(nameOf(room, pend.host), money(pend.stake))}</p>
           <div className="buttons">
-            <button className="bet" onClick={() => act({ type: 'placeBet', pick: 'tai' })}>{t.act.betTai}</button>
-            <button className="bet" onClick={() => act({ type: 'placeBet', pick: 'xiu' })}>{t.act.betXiu}</button>
+            <button className="bet" data-coach="bet" onClick={() => act({ type: 'placeBet', pick: 'tai' })}>{t.act.betTai}</button>
+            <button className="bet" data-coach="bet" onClick={() => act({ type: 'placeBet', pick: 'xiu' })}>{t.act.betXiu}</button>
           </div>
         </>
       ) : (
@@ -403,7 +403,7 @@ function Auction({ state, room }: { state: PublicState; room: RoomView }) {
   const eligible = !!self && pend.eligible.includes(self.id) && !self.bankrupt;
   const value = Math.max(amount, min);
   return (
-    <section className="panel decision">
+    <section className="panel decision" data-coach="auction">
       <p>
         <strong>{t.act.auction(tileName(pend.propertyId))}</strong> · {money(D.ownables[pend.propertyId].price)}
       </p>

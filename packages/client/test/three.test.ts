@@ -43,7 +43,9 @@ describe('3D models', () => {
     for (const m of [makeHouse(), makeHotel(), makeDeed('#5F7F3A'), makeYouMarker('#B8312F')]) {
       expect(m.children.length).toBeGreaterThan(0);
     }
-    expect(makeDeed('#5F7F3A').getObjectByName('house')).toBeTruthy();
+    // Buying gives bare land: a flag, no house (players mistook it for a free house).
+    expect(makeDeed('#5F7F3A').getObjectByName('flag')).toBeTruthy();
+    expect(makeDeed('#5F7F3A').getObjectByName('house')).toBeUndefined();
   });
 });
 

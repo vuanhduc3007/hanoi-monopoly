@@ -117,6 +117,21 @@ describe('playing', () => {
     expect(h.ctl.log!.actions).toHaveLength(1);
   });
 
+  it('a learner (tutorial on) is marked for the table and gets learnerExtraSec more on decisions', () => {
+    const h = lobby(2, false);
+    h.ctl.message('s1', 'learner', { on: true });
+    h.ctl.message('s2', 'learner', { on: true });
+    expect(h.out.last('room', 's1').seats.map((x: { learner: boolean }) => x.learner)).toEqual([true, true]);
+    h.ctl.message('s1', 'start', {});
+    h.ctl.state!.riggedDice = [3, 4];
+    h.clock.advance(sec(T.rollSec) + 10);
+    expect(h.ctl.state!.turn.dice).toBeNull(); // still thinking
+    h.clock.advance(sec(T.learnerExtraSec));
+    expect(h.ctl.state!.turn.dice).toEqual([3, 4]);
+    h.ctl.message('s1', 'learner', { on: false });
+    expect(h.ctl.seatBySession('s1')!.learner).toBe(false);
+  });
+
   it('roll clock: auto-roll after 15s, then the turn clock ends the turn', () => {
     const h = started(2);
     const first = h.ctl.state!.turn.current;

@@ -5,6 +5,7 @@ import { groupColor, groupedOwnables } from '../lib/board';
 import { me, nameOf, ownedBy, unmortgageCost } from '../lib/selectors';
 import { act } from '../net/connection';
 import type { RoomView } from '../net/protocol';
+import { Coach } from './Coach';
 import { Modal } from './Modal';
 
 /** S7 — two columns (land + cash + CH11), send / accept / reject / cancel. */
@@ -29,6 +30,7 @@ export function Trade({ state, room, onClose }: { state: PublicState; room: Room
 
   return (
     <Modal title={t.trade.title} onClose={onClose} wide>
+      <Coach state={state} room={room} scope="trade" />
       {incoming.map((x) => (
         <Incoming key={x.id} trade={x} state={state} room={room} />
       ))}

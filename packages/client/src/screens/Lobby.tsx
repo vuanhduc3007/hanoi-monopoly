@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TutorialSetting } from '../components/Coach';
 import { D } from '../lib/gameData';
 import { Chat } from '../components/Side';
 import { Token } from '../components/Token';
@@ -30,6 +31,11 @@ export function Lobby({ room }: { room: RoomView }) {
         {seat.id === room.you && <span className="tag">{t.you}</span>}
         {seat.host && <span className="tag">{t.host}</span>}
         {!seat.connected && <span className="tag">{t.board.disconnected}</span>}
+        {seat.learner && (
+          <span className="tag tag-learner" title={t.tutorial.learnerTitle}>
+            {t.tutorial.learnerTag}
+          </span>
+        )}
       </span>
       <span className={`ready-state ${seat.host || seat.ready ? 'ok' : 'muted'}`}>{seat.host || seat.ready ? t.lobby.ready : t.lobby.notReady}</span>
     </div>
@@ -81,6 +87,7 @@ export function Lobby({ room }: { room: RoomView }) {
           )}
           {room.spectators > 0 && <p className="muted">{t.lobby.spectators(room.spectators)}</p>}
           {mySeat && <Rename current={mySeat.name ?? ''} />}
+          {mySeat && <TutorialSetting label={t.tutorial.lobbyToggle} />}
           <div className="buttons">
             {mySeat && !host && (
               <button className="primary" onClick={() => send('ready', { ready: !mySeat.ready })}>

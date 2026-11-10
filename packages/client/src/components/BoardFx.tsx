@@ -42,6 +42,7 @@ export function CardDraw({ state, room }: { state: PublicState; room: RoomView }
     return (
       <div className={`card-draw${flipping ? ' flipping' : ''}`} role="dialog" aria-label={t.cardDraw.title}>
         <button
+          data-coach="card"
           className={`card-big face-down deck-${pend.deck}`}
           disabled={!mine || flipping}
           onClick={() => {

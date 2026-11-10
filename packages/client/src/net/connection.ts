@@ -1,4 +1,5 @@
 import { Client, type Room } from 'colyseus.js';
+import { tutorial } from '../lib/tutorialStore';
 import { pushToast, receiveGame, store } from '../store';
 import type { ChatMsg, ClientAction, ClockInfo, GameOverMsg, RoomView } from './protocol';
 
@@ -137,7 +138,10 @@ function attach(r: Room, secret: string = mySecret()): void {
   local()?.setItem(LAST_KEY, JSON.stringify({ code: r.roomId, secret }));
   r.onMessage('joined', (m: { role: 'player' | 'spectator' }) => {
     // Only a seat is worth coming back to (a spectator must not overwrite it).
-    if (m.role === 'player') rememberSeat(r.roomId, secret);
+    if (m.role === 'player') {
+      rememberSeat(r.roomId, secret);
+      r.send('learner', { on: tutorial.get().enabled });
+    }
     store.set({ role: m.role });
   });
   r.onMessage('room', (m: RoomView) =>
@@ -261,6 +265,13 @@ export async function leaveRoom(): Promise<void> {
 
 export function send(type: string, payload: unknown = {}): void {
   room?.send(type, payload);
+}
+
+/** Tutorial on/off (or start over): saved in this browser and shown to the table as 🎓. */
+export function setTutorial(on: boolean, restart = false): void {
+  if (restart) tutorial.restart();
+  else tutorial.setEnabled(on);
+  if (store.get().role === 'player') send('learner', { on: tutorial.get().enabled });
 }
 
 export function act(action: ClientAction): void {

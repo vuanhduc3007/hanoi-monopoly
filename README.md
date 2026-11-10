@@ -41,8 +41,9 @@ Tạo phòng, gửi mã 6 ký tự hoặc link mời cho bạn bè, chọn nhân
 - **Chơi theo đội** (2–4 đội: Rồng, Phượng, Lân, Quy): đồng đội không thu tiền thuê của nhau, thẻ và kỹ năng chỉ nhắm vào đội khác, lượt đi xen kẽ giữa các đội, đội cuối cùng còn trụ thắng.
 - **Bốc thăm nhân vật**: chủ phòng có thể để máy bốc ngẫu nhiên nhân vật cho cả bàn. Khi chọn lần lượt, người đến lượt cũng có nút chọn ngẫu nhiên.
 - **Giá đất và tiền thuê được tính lại theo tần suất dừng chân** bằng mô phỏng bot cho từng bàn, để không nhóm màu nào là "đất chết". Nhóm 2 ô cuối bàn là đất vàng: thu thuê cao nhất nhưng xây nhà đắt. Đất đã có chủ được cắm cờ màu người chủ.
+- **Hướng dẫn người mới (bật/tắt được)**: 28 mẹo hiện dần đúng lúc trong ván — lần đầu mua đất, trả tiền thuê, rút thẻ, vào Bãi giữ xe, đủ nhóm màu thì chỉ nút Tài sản để xây nhà, thiếu 1 ô thì gợi ý Giao dịch, sắp hết tiền thì giải thích thế chấp… Nút được nhắc tới sẽ nhấp nháy. Người bật hướng dẫn có dấu 🎓 cạnh tên và thêm vài giây cho mỗi quyết định.
 - **Chơi online**: mua đất, đấu giá, xây nhà, thế chấp, giao dịch. Mỗi quyết định có đồng hồ đếm ngược. Người mất kết nối được bot chơi thay và có thể quay lại bất cứ lúc nào, kể cả khi tải lại trang. Có khán giả và chat.
-- **Phong cách Đông Hồ, kết hợp 2D và 3D**: bàn cờ 2D, nhân vật và nhà cửa 3D đứng trên bàn (nhà mang màu người chủ), xúc xắc 3D, mô hình nhà 3D hiện lên khi mua đất hoặc xây nhà. Có âm thanh (xúc xắc trong bát, còi CSGT, chuông xe đạp, trống hội…), chơi được trên điện thoại.
+- **Phong cách Đông Hồ, kết hợp 2D và 3D**: bàn cờ 2D, nhân vật và nhà cửa 3D đứng trên bàn (nhà mang màu người chủ), xúc xắc 3D, mô hình 3D hiện lên khi mua đất (mảnh đất trống cắm cờ) hoặc xây nhà. Có âm thanh (xúc xắc trong bát, còi CSGT, chuông xe đạp, trống hội…), chơi được trên điện thoại.
 
 ## Công nghệ
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TutorialSetting } from '../components/Coach';
 import { t } from '../i18n/vi';
 import { createRoom, joinRoom, savedName } from '../net/connection';
 import { useStore } from '../store';
@@ -41,6 +42,7 @@ export function Home() {
             {t.home.watch}
           </button>
         </div>
+        <TutorialSetting label={t.tutorial.homeToggle} />
         {busy && <p className="muted">{conn === 'reconnecting' ? t.home.reconnecting : t.home.connecting}</p>}
       </div>
       <details className="panel howto">

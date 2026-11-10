@@ -209,22 +209,34 @@ export function makeHotel(ownerColor: number | string = COLORS.indigo): THREE.Gr
   return g;
 }
 
-/** A purchase: green plot with a little fence, a tube house and a flag in the buyer's colour. */
+/**
+ * A purchase: an empty plot (buying land gives land, not a house) with a low
+ * fence, boundary stakes at the corners and a flag in the buyer's colour —
+ * the same flag that marks owned tiles on the board.
+ */
 export function makeDeed(color: string): THREE.Group {
   const g = new THREE.Group();
   g.name = 'deed';
   g.add(at(inked(new THREE.BoxGeometry(1.1, 0.08, 0.8), COLORS.green, 0.03), 0, 0.04, 0));
+  // Bare soil patch: nothing built yet.
+  g.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.012, 0.4), toon(COLORS.brown)), -0.12, 0.086, -0.04));
   for (let i = 0; i < 6; i++) {
     const x = -0.5 + i * 0.2;
     g.add(at(inked(new THREE.BoxGeometry(0.04, 0.14, 0.04), COLORS.paper, 0.1), x, 0.15, 0.36));
   }
   g.add(at(inked(new THREE.BoxGeometry(1.0, 0.03, 0.03), COLORS.paper, 0.1), 0, 0.17, 0.36));
-  const house = makeHouse(color);
-  house.scale.setScalar(1.35);
-  house.position.set(-0.12, 0.08, -0.05);
-  g.add(house);
-  g.add(at(inked(new THREE.CylinderGeometry(0.02, 0.02, 0.9, 6), COLORS.brown), 0.38, 0.53, 0.05));
-  g.add(at(inked(new THREE.BoxGeometry(0.32, 0.2, 0.02), color), 0.55, 0.86, 0.05));
+  // Mốc giới: white stakes with red tops at the plot's corners.
+  for (const [x, z] of [[-0.5, -0.34], [0.5, -0.34], [-0.5, 0.2], [0.5, 0.2]]) {
+    g.add(at(inked(new THREE.BoxGeometry(0.06, 0.2, 0.06), COLORS.paper, 0.08), x, 0.18, z));
+    g.add(at(new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.05, 0.065), toon(COLORS.red)), x, 0.3, z));
+  }
+  const flag = new THREE.Group();
+  flag.name = 'flag';
+  flag.add(at(inked(new THREE.CylinderGeometry(0.025, 0.025, 1.0, 6), COLORS.brown), 0, 0.58, 0));
+  flag.add(at(inked(new THREE.SphereGeometry(0.045, 8, 6), COLORS.gold), 0, 1.1, 0));
+  flag.add(at(inked(new THREE.BoxGeometry(0.42, 0.26, 0.02), color), 0.22, 0.93, 0));
+  flag.position.set(0.12, 0, -0.05);
+  g.add(flag);
   return g;
 }
 

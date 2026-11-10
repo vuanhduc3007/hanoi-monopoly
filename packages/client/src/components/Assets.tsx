@@ -5,6 +5,7 @@ import { groupColor, groupedOwnables } from '../lib/board';
 import { hotelLevel, isMyTurn, me, ownedBy, unmortgageCost } from '../lib/selectors';
 import { act } from '../net/connection';
 import type { RoomView } from '../net/protocol';
+import { Coach } from './Coach';
 import { Modal } from './Modal';
 
 /** S8 — build, sell, mortgage, unmortgage by colour group. The server checks the rules. */
@@ -17,6 +18,7 @@ export function Assets({ state, room, onClose }: { state: PublicState; room: Roo
   const canManage = isMyTurn(room, state) || liquidating;
   return (
     <Modal title={t.assets.title} onClose={onClose} wide>
+      <Coach state={state} room={room} scope="assets" />
       <details className="build-rules">
         <summary>{t.assets.rulesTitle}</summary>
         <ul>

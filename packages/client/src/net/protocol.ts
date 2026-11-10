@@ -21,6 +21,8 @@ export interface SeatView {
   botReason: 'disconnect' | 'afk' | 'left' | null;
   /** Team games: 0-based team; null when teams are off. */
   team: number | null;
+  /** Tutorial on: a new player (🎓), with a few extra seconds per decision. */
+  learner?: boolean;
 }
 
 export interface RoomSettings {

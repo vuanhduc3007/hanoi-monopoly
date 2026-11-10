@@ -24,6 +24,7 @@ const again = await client.reconnect(room.reconnectionToken);  // after a droppe
 | Type | Payload | When |
 | --- | --- | --- |
 | `setName` | `{ name }` | any time |
+| `learner` | `{ on }` — tutorial on/off for this player: shows 🎓 in `room.seats[].learner`, and their decision clocks get `timers.learnerExtraSec` more (not the 90 s turn clock) | any time |
 | `thinking` | `{ mode: 'assets' \| 'trade' \| null }` — open panel: Tài sản adds time once, Giao dịch pauses your clock | playing |
 | `ready` | `{ ready: boolean }` | lobby |
 | `setConfig` | `{ mode?, board?, characters?, scholarshipFund?, buildingLimit?, maxPlayers?, allowSpectators?, teams?, draft? }` — `board`: `auto` (40 tiles for 2–4, 48 for 5–6, 56 for 7–8 players) \| `standard` \| `extended` \| `large`; `maxPlayers` 2–8; `teams`: 0 (off) or one of `room.teamCounts` (2/3/4) — changing it deals every seat evenly; `draft`: `pick` \| `random` (Bốc thăm: characters drawn for everyone) | lobby, host |

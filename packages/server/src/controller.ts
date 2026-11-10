@@ -72,6 +72,8 @@ export interface Seat {
   secret: string | null;
   /** Panel the player has open: Tài sản (+2 min once) or Giao dịch (clock paused). */
   thinking: 'assets' | 'trade' | null;
+  /** Tutorial on: the player is new, so their decision clocks run a little longer. */
+  learner: boolean;
   /** Team games: 0-based team, null when teams are off. */
   team: number | null;
 }
@@ -246,6 +248,7 @@ export class GameController {
           timedOutThisTurn: false,
           secret,
           thinking: null,
+          learner: false,
           team: this.smallestTeam(),
         });
         this.broadcastRoom();
@@ -392,6 +395,9 @@ export class GameController {
         this.applyThinking();
         return;
       }
+      case 'learner':
+        seat.learner = m.on === true;
+        return this.broadcastRoom();
       case 'setName':
         seat.name = cleanName(m.name);
         return this.broadcastRoom();
@@ -820,6 +826,9 @@ export class GameController {
     this.clearDecision();
     const actor =
       this.phase === 'picking' ? (this.currentPicker()?.id ?? null) : this.state ? actorOf(this.state) : null;
+    // New players (tutorial on) read a hint before answering: a few extra seconds per decision.
+    const seat = this.seats.find((x) => x.id === actor);
+    if (seat?.learner && seat.control === 'human' && kind !== 'turn' && kind !== 'pick') ms += (this.timers.learnerExtraSec ?? 0) * 1000;
     this.decision = { key, kind, deadline: this.clock.now() + ms, timer: null, fire, actor, extended: false, paused: null };
     this.armDecision();
     this.applyThinking(false);
@@ -1012,6 +1021,7 @@ export class GameController {
         control: s.control,
         botReason: s.botReason,
         team: s.team,
+        learner: s.learner,
       })),
       spectators: this.spectators.size,
       picking: picker

@@ -12,6 +12,9 @@ export const pct = (rate: number) => `${Math.round(rate * 100)}%`;
 
 export const tileName = (ref: string) => D.ownables[ref]?.name ?? D.board.find((t) => t.ref === ref)?.name ?? ref;
 export const groupName = (g: string) => D.groups[g]?.name ?? g;
+/** Tip parameters (lib/tutorial.ts). */
+type P = Record<string, string | number | boolean>;
+const n = (x: string | number | boolean | undefined) => Number(x ?? 0);
 export const charName = (id: string | null | undefined) => (id ? (D.characters[id]?.name ?? id) : 'Không nhân vật');
 export const cardName = (id: string) => D.cards[id]?.name ?? id;
 
@@ -327,8 +330,209 @@ export const t = {
   } as Record<string, string>,
 
   sound: { mute: 'Tắt tiếng', unmute: 'Bật tiếng' },
+  // Hướng dẫn người mới (lib/tutorial.ts decides when each tip shows)
+  tutorial: {
+    name: 'Hướng dẫn người mới',
+    homeToggle: '🎓 Tôi mới chơi — bật hướng dẫn từng bước trong ván',
+    lobbyToggle: '🎓 Hướng dẫn người mới (giải thích dần trong lúc chơi)',
+    restart: 'Xem lại hướng dẫn từ đầu',
+    button: (on: boolean) => (on ? 'Hướng dẫn người mới: đang bật (bấm để tắt)' : 'Hướng dẫn người mới: đang tắt (bấm để bật)'),
+    learnerTag: '🎓 Người mới',
+    learnerTitle: 'Đang bật hướng dẫn — có thêm vài giây mỗi lần quyết định',
+    gotIt: 'Đã hiểu',
+    turnOff: 'Tắt hướng dẫn',
+    progress: (done: number, total: number) => `${done}/${total}`,
+    tips: {
+      welcome: (p: P) => ({
+        title: 'Chào mừng đến Cờ Tỷ Phú Hà Nội!',
+        body: [
+          `Mỗi lượt bạn tung 2 xúc xắc và đi theo số bước. Mỗi lần đi qua ${p.start} bạn nhận lương ${money(n(p.salary))}.`,
+          'Mua đất, thu tiền thuê khi người khác dừng trên đất của bạn, gom đủ nhóm màu để xây nhà cho tiền thuê tăng vọt.',
+          p.quick
+            ? `Ván Nhanh: hết ${p.minutes} phút, ai có tổng tài sản cao nhất thì thắng (hoặc sớm hơn nếu những người khác phá sản).`
+            : 'Ai phá sản thì bị loại; người cuối cùng còn trụ lại là người thắng.',
+          'Hướng dẫn sẽ hiện dần theo ván chơi. Bật/tắt bất cứ lúc nào bằng nút 🎓 ở trên.',
+        ],
+      }),
+      team: () => ({
+        title: 'Chơi theo đội',
+        body: [
+          'Người cùng đội có cùng nhãn đội cạnh tên. Dừng trên đất của đồng đội thì không mất tiền thuê.',
+          'Đội thắng khi mọi đội khác phá sản hết. Giúp nhau bằng Giao dịch, ví dụ cho đồng đội ô còn thiếu để đủ nhóm màu.',
+        ],
+      }),
+      roll: () => ({
+        title: 'Tới lượt bạn!',
+        body: ['Bấm Tung xúc xắc (nút đang nhấp nháy). Đồng hồ ở trên đếm ngược; hết giờ máy sẽ tung giúp bạn.'],
+      }),
+      doubles: () => ({
+        title: 'Tung đôi — được tung tiếp',
+        body: ['Hai xúc xắc ra cùng số nên bạn được đi thêm một lần nữa. Cẩn thận: tung đôi 3 lần liền sẽ bị đưa vào Bãi giữ xe.'],
+      }),
+      jail: (p: P) => ({
+        title: 'Bạn đang ở Bãi giữ xe',
+        body: [
+          `Có 3 cách ra: Nộp phạt ${money(n(p.fine))} để ra ngay; dùng thẻ Giấy tờ xe nếu có; hoặc bấm Tung xúc xắc — ra đôi là được ra miễn phí.`,
+          `Sau ${p.turns} lượt không tung được đôi thì phải nộp phạt để ra.`,
+        ],
+      }),
+      buy: (p: P) => ({
+        title: p.land ? 'Đất chưa có chủ' : 'Ô chưa có chủ',
+        body: [
+          `${tileName(String(p.tile))} đang bán giá ${money(n(p.price))}. Bấm Mua để sở hữu: từ giờ ai dừng ở đây phải trả tiền thuê cho bạn. Ô của bạn sẽ được cắm cờ màu của bạn.`,
+          ...(p.land ? ['Mua là mua đất trống — nhà thì xây sau, khi bạn có đủ cả nhóm màu.'] : []),
+          p.afford
+            ? 'Không muốn mua thì bấm Đấu giá: ô được đem ra đấu cho cả bàn (bạn cũng được trả giá). Đầu ván nên mua nhiều — đất là thứ sinh ra tiền.'
+            : 'Bạn chưa đủ tiền nên chỉ có thể bấm Đấu giá.',
+        ],
+      }),
+      auction: (p: P) => ({
+        title: `Đấu giá ${tileName(String(p.tile))}`,
+        body: [
+          'Ai trả cao nhất khi đồng hồ hết thì được ô này, kể cả khi rẻ hơn giá gốc. Nhập số tiền rồi bấm Trả giá.',
+          'Mỗi lần có người trả giá, đồng hồ đếm lại vài giây. Không muốn mua thì cứ để yên.',
+        ],
+      }),
+      payRent: (p: P) => ({
+        title: 'Trả tiền thuê',
+        body: [
+          `${tileName(String(p.tile))} là đất của ${p.owner} nên bạn phải trả ${money(n(p.amount))}. Bấm Trả tiền.`,
+          'Tiền thuê gấp đôi khi chủ có đủ nhóm màu, và tăng mạnh theo số nhà — đó cũng là cách bạn sẽ kiếm tiền từ người khác.',
+        ],
+      }),
+      revealCard: () => ({
+        title: 'Rút thẻ',
+        body: [
+          'Bạn dừng ở ô thẻ (Cơ hội, Cộng đồng hoặc Hanoi Event). Bấm vào lá bài giữa bàn cờ để lật.',
+          'Có thẻ cho tiền, có thẻ bắt trả tiền, có thẻ ảnh hưởng cả bàn một thời gian — xem mục Đang hiệu lực giữa bàn cờ.',
+        ],
+      }),
+      chooseCard: () => ({
+        title: 'Chọn 1 trong 2 thẻ',
+        body: ['Bạn được xem 2 lá và giữ 1. Đọc kỹ rồi bấm vào lá có lợi hơn cho bạn.'],
+      }),
+      sicbo: (p: P) => ({
+        title: `Sòng tài xỉu của ${p.host}`,
+        body: [
+          'Chọn Tài (tổng 3 xúc xắc 11–17) hoặc Xỉu (4–10). Đoán đúng bạn được trả tiền, đoán sai mất tiền cược; ra bộ ba giống nhau (bão) thì nhà cái ăn hết.',
+          'Mọi người đặt cùng lúc; hết giờ máy chọn ngẫu nhiên giúp bạn.',
+        ],
+      }),
+      gamble: () => ({
+        title: 'Liều ăn nhiều',
+        body: [
+          'Nhân vật Con bạc của bạn được cược tài xỉu cho khoản phải trả này: thắng thì trả ít đi, thua thì trả nhiều hơn, ra bão thì khỏi trả.',
+          'Không muốn liều thì bấm Trả bình thường.',
+        ],
+      }),
+      postRoll: () => ({
+        title: 'Chỉnh nước đi',
+        body: ['Nhân vật của bạn được chỉnh ±1 bước hoặc tung lại trước khi đi. Muốn giữ nguyên thì bấm Đi.'],
+      }),
+      inheritMortgage: (p: P) => ({
+        title: 'Nhận đất đang thế chấp',
+        body: [
+          `${tileName(String(p.tile))} bạn vừa nhận đang bị thế chấp. Chuộc ngay thì ô thu tiền thuê lại luôn; giữ thế chấp thì trả trước tiền lãi, chuộc sau ở Tài sản.`,
+        ],
+      }),
+      incomingTrade: (p: P) => ({
+        title: `${p.from} muốn giao dịch với bạn`,
+        body: [
+          'Bấm Giao dịch (nút có số đỏ) để xem họ đưa gì và đòi gì, rồi Chấp nhận hoặc Từ chối.',
+          'Đề nghị tự hủy sau ít giây nếu bạn không trả lời.',
+        ],
+      }),
+      fullGroup: (p: P) => ({
+        title: `Đủ nhóm ${groupName(String(p.group))} — xây nhà được rồi!`,
+        body: [
+          `Bạn sở hữu cả nhóm nên tiền thuê đất trống đã gấp đôi. Bấm Tài sản để xây nhà (${money(n(p.cost))} mỗi nhà) — mỗi nhà làm tiền thuê tăng vọt, đây là cách thắng chính.`,
+          'Xây lúc nào cũng được trong lượt của bạn, không cần đứng trên ô đó.',
+        ],
+      }),
+      built: (p: P) => ({
+        title: 'Có nhà rồi — xây tiếp',
+        body: [
+          `Tiền thuê tăng theo từng nhà. Xây đều các ô trong nhóm; đủ ${p.hotelAt} nhà trên mọi ô thì Lên khách sạn.`,
+          'Cần tiền gấp thì bán nhà lại cho ngân hàng ở Tài sản (được một nửa giá xây).',
+        ],
+      }),
+      nearGroup: (p: P) => ({
+        title: `Chỉ thiếu 1 ô để đủ nhóm ${groupName(String(p.group))}`,
+        body: [
+          `${tileName(String(p.tile))} đang thuộc ${p.owner}. Thử bấm Giao dịch: đưa tiền hoặc đổi một ô khác để lấy nó.`,
+          'Phải đủ cả nhóm màu mới xây được nhà.',
+        ],
+      }),
+      lowCash: (p: P) => ({
+        title: 'Sắp hết tiền',
+        body: [
+          `Khi phải trả mà không đủ tiền, mở Tài sản: Thế chấp đất để nhận ngay ${p.rate}% giá đất (đất thế chấp không thu được tiền thuê), hoặc bán nhà.`,
+          'Chỉ khi bán và thế chấp hết mà vẫn thiếu thì mới phá sản.',
+        ],
+      }),
+      liquidation: (p: P) => ({
+        title: 'Thiếu tiền trả nợ!',
+        body: [
+          `Bạn phải trả ${money(n(p.amount))} nhưng chỉ có ${money(n(p.cash))}. Mở Tài sản để bán nhà hoặc thế chấp đất, hoặc Giao dịch bán đất cho người khác.`,
+          'Gom đủ rồi bấm Trả nợ. Không cứu được nữa thì bấm Tuyên bố phá sản.',
+        ],
+      }),
+      mortgaged: (p: P) => ({
+        title: 'Chuộc đất về',
+        body: [
+          `${tileName(String(p.tile))} đang thế chấp nên không thu được tiền thuê. Bạn đang dư tiền: vào Tài sản bấm Chuộc (trả lại tiền thế chấp cộng ${p.interest}% lãi).`,
+        ],
+      }),
+      rentIncome: (p: P) => ({
+        title: 'Có tiền thuê về!',
+        body: [`${p.from} vừa trả bạn ${money(n(p.amount))} tiền thuê. Càng nhiều đất, đủ nhóm và nhiều nhà thì khoản này càng lớn.`],
+      }),
+      skill: (p: P) => {
+        const c = charOf(String(p.character));
+        return {
+          title: `Nhân vật của bạn: ${c.name}`,
+          body: [
+            `Nhân vật có nội tại (tự có tác dụng), điểm yếu và kỹ năng ${c.skill.name}. Nút kỹ năng hiện trong khung bên dưới khi dùng được (một số kỹ năng tự kích hoạt); dùng xong phải chờ vài lượt.`,
+            'Bấm Nhân vật để đọc chi tiết nhân vật của mọi người.',
+          ],
+        };
+      },
+      endTurn: () => ({
+        title: 'Xong lượt',
+        body: ['Trước khi bấm Kết thúc lượt bạn vẫn có thể xây nhà, thế chấp hay gửi giao dịch. Hết đồng hồ lượt thì tự kết thúc.'],
+      }),
+      tileInfo: () => ({
+        title: 'Xem thông tin ô đất',
+        body: ['Bấm vào bất kỳ ô nào trên bàn cờ để xem giá, tiền thuê theo số nhà và ai đang sở hữu. Cờ cắm trên ô mang màu của chủ đất.'],
+      }),
+      waiting: () => ({
+        title: 'Trong lúc chờ người khác',
+        body: [
+          'Bạn vẫn có thể mở Tài sản, gửi Giao dịch, xem Nhân vật hoặc trò chuyện.',
+          'Trên điện thoại, danh sách người chơi, nhật ký và chat nằm trong nút Người chơi · Nhật ký · Trò chuyện.',
+        ],
+      }),
+      assetsIntro: (p: P) => ({
+        title: 'Quản lý tài sản',
+        body: [
+          `Đất xếp theo nhóm màu. Xây: thêm một nhà (cần đủ nhóm, xây đều các ô); đủ ${p.hotelAt} nhà thì Lên khách sạn.`,
+          `Bán: bán nhà lại cho ngân hàng được ${p.sellRate}% giá xây. Thế chấp: nhận ngay ${p.rate}% giá đất, ô đó ngưng thu tiền thuê. Chuộc: trả lại tiền thế chấp cộng ${p.interest}% lãi.`,
+          `Chỉ thao tác được trong lượt của bạn. Mở bảng này được cộng thêm ${p.minutes} phút vào đồng hồ (một lần mỗi quyết định).`,
+        ],
+      }),
+      tradeIntro: (p: P) => ({
+        title: 'Giao dịch',
+        body: [
+          'Chọn người ở ô Với. Cột Bạn đưa: chọn đất và nhập tiền bạn đưa; cột Bạn nhận: những gì bạn muốn lấy. Rồi bấm Gửi đề nghị.',
+          `Gửi được cả khi không phải lượt mình. Đồng hồ của bạn tạm dừng khi bảng này mở; đề nghị tự hủy sau ${p.sec} giây nếu không được trả lời.`,
+        ],
+      }),
+    } as Record<string, (p: P) => { title: string; body: string[] }>,
+  },
+
   celebrate: {
-    bought: (name: string, tile: string) => `${name} mua ${tile}`,
+    /** Land is bought bare: say so, houses come later from Tài sản. */
+    bought: (name: string, tile: string, land = false) => (land ? `${name} mua đất ${tile} (đất trống)` : `${name} mua ${tile}`),
     house: (name: string, tile: string) => `${name} xây nhà ở ${tile}`,
     hotel: (name: string, tile: string) => `${name} lên khách sạn ở ${tile}`,
   },

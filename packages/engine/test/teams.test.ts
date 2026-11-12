@@ -57,26 +57,30 @@ describe('team games: money never moves between teammates', () => {
     const total16 = perPlayer(D.cards.CH16.effect, 2);
     const c = pay.s.players.map((p) => p.cash);
     pay.draw('p1', 'CH16');
-    expect(pay.cash('p3')).toBe(c[2]);
-    expect(pay.cash('p2')).toBe(c[1] + total16);
-    expect(pay.cash('p4')).toBe(c[3] + total16);
+    // Both opponents are paid into their one wallet; the drawer's team pays twice.
     expect(pay.cash('p1')).toBe(c[0] - 2 * total16);
+    expect(pay.cash('p3')).toBe(pay.cash('p1'));
+    expect(pay.cash('p2')).toBe(c[1] + 2 * total16);
+    expect(pay.cash('p4')).toBe(pay.cash('p2'));
 
     const col = teams([null, null, null, null], [0, 1, 0, 1]);
     const each10 = perPlayer(D.cards.CD10.effect, 2);
     const k = col.s.players.map((p) => p.cash);
     col.draw('p1', 'CD10');
-    expect(col.cash('p3')).toBe(k[2]);
     expect(col.cash('p1')).toBe(k[0] + 2 * each10);
+    expect(col.cash('p3')).toBe(col.cash('p1'));
+    expect(col.cash('p2')).toBe(k[1] - 2 * each10);
   });
 
   it('Họp tổ dân phố (C12) collects from opponents only', () => {
     const g = teams(['C12', null, null, null], [0, 1, 0, 1]);
     const k = g.s.players.map((p) => p.cash);
     g.setCurrent('p1').do({ type: 'useSkill', player: 'p1' });
-    expect(g.cash('p3')).toBe(k[2]);
-    expect(g.cash('p2')).toBeLessThan(k[1]);
-    expect(g.cash('p4')).toBeLessThan(k[3]);
+    const got = g.cash('p1') - k[0];
+    expect(got).toBeGreaterThan(0);
+    expect(g.cash('p3')).toBe(g.cash('p1'));
+    expect(g.cash('p2')).toBeLessThanOrEqual(k[1] - got);
+    expect(g.cash('p4')).toBe(g.cash('p2'));
   });
 
   it('Bóc phốt (C04) cannot target a teammate; Mở sòng (C09) seats only opponents', () => {
@@ -89,27 +93,68 @@ describe('team games: money never moves between teammates', () => {
   });
 });
 
+describe('team games: one shared wallet', () => {
+  it('starts with the members’ money added up; every member shows the whole wallet', () => {
+    const solo = G.create([null, null, null, null]).cash('p1');
+    const g = teams([null, null, null, null], [0, 1, 0, 1]);
+    expect(g.cash('p1')).toBe(2 * solo);
+    expect(g.cash('p3')).toBe(2 * solo);
+    expect(g.s.teamCash).toEqual({ 0: 2 * solo, 1: 2 * solo });
+  });
+
+  it('what one member pays or earns changes the wallet for the whole team', () => {
+    const g = teams([null, null, null, null], [0, 1, 0, 1]);
+    const start = g.cash('p1');
+    g.setCurrent('p1').at('p1', D.ownables.P01.position - 3).roll('p1', 1, 2);
+    const price = (g.s.pending as { price: number }).price;
+    g.do({ type: 'buy', player: 'p1' });
+    expect(g.cash('p3')).toBe(start - price);
+    expect(g.cash('p1')).toBe(g.cash('p3'));
+    expect(g.cash('p2')).toBe(start);
+  });
+
+  it('a short member raises cash from the teammates’ tiles too', () => {
+    const g = teams([null, null, null, null], [0, 1, 0, 1]).give('p2', ['P22'], { level: 5 }).give('p3', ['P21']);
+    g.setCash('p1', 0).setCurrent('p1').at('p1', D.ownables.P22.position - 3).roll('p1', 1, 2);
+    expect(g.s.pending).toMatchObject({ type: 'liquidation', player: 'p1' });
+    g.do({ type: 'mortgage', player: 'p1', propertyId: 'P21' });
+    expect(g.s.ownables.P21.mortgaged).toBe(true);
+    expect(g.cash('p3')).toBe(g.cash('p1'));
+  });
+});
+
 describe('team games: winning', () => {
-  it('the game goes on while two teams stand, and ends when one team is left', () => {
-    const g = teams([null, null, null, null], [0, 1, 0, 1]).give('p1', ['P22'], { level: 5 });
+  it('the wallet is shared, so a team goes bankrupt together and the last team standing wins', () => {
+    const g = teams([null, null, null, null], [0, 1, 0, 1]).give('p1', ['P22'], { level: 5 }).give('p4', ['P01']);
     g.setCash('p2', 0).setCurrent('p2').at('p2', D.ownables.P22.position - 3).roll('p2', 1, 2);
     g.do({ type: 'declareBankruptcy', player: 'p2' });
-    expect(g.s.status).toBe('playing');
-    g.setCash('p4', 0).setCurrent('p4').at('p4', D.ownables.P22.position - 3).roll('p4', 1, 2);
-    g.do({ type: 'declareBankruptcy', player: 'p4' });
+    expect(g.p('p2').bankrupt && g.p('p4').bankrupt).toBe(true);
+    // p4's tile goes with the team to the creditor.
+    expect(g.owner('P01')).toBe('p1');
     expect(g.s).toMatchObject({ status: 'over', winnerTeam: 0 });
     expect(['p1', 'p3']).toContain(g.s.winner);
     expect(g.s.ranking!.slice(0, 2).map((r) => r.player).sort()).toEqual(['p1', 'p3']);
   });
 
-  it('time limit: teams ranked by summed net worth, even if a rival holds the richest single seat', () => {
+  it('with three teams the game goes on after one team falls', () => {
+    const g = teams([null, null, null, null, null, null], [0, 1, 2, 0, 1, 2], { board: 'extended' });
+    const big = Object.keys(g.d.ownables).find((id) => g.d.ownables[id].kind === 'property' && g.d.ownables[id].position > 5)!;
+    g.give('p1', [big], { level: 5 });
+    g.setCash('p2', 0).setCurrent('p2').at('p2', g.d.ownables[big].position - 3).roll('p2', 1, 2);
+    g.do({ type: 'declareBankruptcy', player: 'p2' });
+    expect(g.s.players.filter((p) => p.bankrupt).map((p) => p.id)).toEqual(['p2', 'p5']);
+    expect(g.s.status).toBe('playing');
+  });
+
+  it('time limit: teams ranked by net worth with the shared wallet counted once', () => {
     const g = teams([null, null, null, null], [0, 1, 0, 1], { mode: 'quick' });
     for (const id of Object.keys(g.s.ownables)) g.s.ownables[id] = { owner: null, mortgaged: false, level: 0 };
-    g.setCash('p1', 900).setCash('p3', 900).setCash('p2', 1500).setCash('p4', 100);
+    // Team 0: 1200 + a tile. Team 1: 1500 cash only (it would win if each copy of the wallet counted).
+    g.setCash('p1', 1200).setCash('p2', 1500).give('p3', ['P22']);
+    expect(1200 + D.ownables.P22.price).toBeGreaterThan(1500);
     g.do({ type: 'endGame' });
     expect(g.s.winnerTeam).toBe(0);
-    expect(g.s.winner).toBe('p1');
-    expect(g.s.ranking!.map((r) => r.player)).toEqual(['p1', 'p3', 'p2', 'p4']);
+    expect(g.s.ranking!.slice(0, 2).map((r) => r.player).sort()).toEqual(['p1', 'p3']);
   });
 
   it('without teams nothing changes: no winnerTeam', () => {
@@ -122,32 +167,35 @@ describe('team games: winning', () => {
 describe('team games: a colour group held by teammates together counts as full', () => {
   const pooled = () => teams([null, null, null, null], [0, 1, 0, 1]).give('p3', ['P03', 'P04']).give('p1', ['P05']);
 
-  it('each teammate builds on their own tiles, evenly across the whole group', () => {
+  it('any teammate builds on any tile of the team, evenly across the whole group', () => {
     const g = pooled();
     g.setCurrent('p1');
     g.s.turn.phase = 'end';
     g.do({ type: 'build', player: 'p1', propertyId: 'P05' });
     expect(g.s.ownables.P05.level).toBe(1);
     expect(() => g.do({ type: 'build', player: 'p1', propertyId: 'P05' })).toThrow(/evenly/);
-    expect(() => g.do({ type: 'build', player: 'p1', propertyId: 'P03' })).toThrow(/Not your property/);
+    g.do({ type: 'build', player: 'p1', propertyId: 'P03' });
+    g.do({ type: 'build', player: 'p1', propertyId: 'P04' });
+    expect(g.owner('P03')).toBe('p3');
+    g.do({ type: 'sellBuilding', player: 'p1', propertyId: 'P04' });
+    expect(() => g.do({ type: 'build', player: 'p2', propertyId: 'P05' })).toThrow();
     g.setCurrent('p3');
     g.s.turn.phase = 'end';
-    g.do({ type: 'build', player: 'p3', propertyId: 'P03' });
     g.do({ type: 'build', player: 'p3', propertyId: 'P04' });
-    g.setCurrent('p1');
-    g.s.turn.phase = 'end';
-    g.do({ type: 'build', player: 'p1', propertyId: 'P05' });
+    g.do({ type: 'build', player: 'p3', propertyId: 'P05' });
     expect(g.s.ownables.P05.level).toBe(2);
   });
 
   it('the base rent doubles for the whole team; teammates still pay nothing', () => {
     const g = pooled();
+    const before = g.cash('p3');
     g.setCurrent('p2').at('p2', 0).roll('p2', 4, 4); // P04 (p3)
     const base = g.d.ownables.P04.rent!.base;
-    expect(g.cash('p3')).toBe(1500 + base * g.d.economy.monopolyBaseRentMultiplier);
+    expect(g.cash('p3')).toBe(before + base * g.d.economy.monopolyBaseRentMultiplier);
+    expect(g.cash('p1')).toBe(g.cash('p3'));
   });
 
-  it('a teammate’s mortgage blocks building in the group; each unmortgages their own tile', () => {
+  it('a teammate’s mortgage blocks building in the group; any teammate may unmortgage it', () => {
     const g = pooled();
     g.setCurrent('p3');
     g.s.turn.phase = 'end';
@@ -155,12 +203,7 @@ describe('team games: a colour group held by teammates together counts as full',
     g.setCurrent('p1');
     g.s.turn.phase = 'end';
     expect(() => g.do({ type: 'build', player: 'p1', propertyId: 'P05' })).toThrow(/mortgaged/);
-    expect(() => g.do({ type: 'unmortgage', player: 'p1', propertyId: 'P03' })).toThrow(/Not your property/);
-    g.setCurrent('p3');
-    g.s.turn.phase = 'end';
-    g.do({ type: 'unmortgage', player: 'p3', propertyId: 'P03' });
-    g.setCurrent('p1');
-    g.s.turn.phase = 'end';
+    g.do({ type: 'unmortgage', player: 'p1', propertyId: 'P03' });
     g.do({ type: 'build', player: 'p1', propertyId: 'P05' });
     expect(g.s.ownables.P05.level).toBe(1);
   });

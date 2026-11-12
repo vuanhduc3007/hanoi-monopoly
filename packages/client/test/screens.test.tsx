@@ -234,14 +234,16 @@ describe('screens', () => {
     expect(screen.getAllByText(new RegExp(t.board.owes('Người 2', money(owed)))).length).toBeGreaterThan(0);
   });
 
-  it('Bác sĩ lạ: Mở cổng sits next to the roll button; Thầy phong thủy picks from, then to', () => {
+  it('Bác sĩ lạ: Mở cổng picks the opponent to swap with; Thầy phong thủy picks from, then to', () => {
     const { state } = createGame({ players: [{ id: 'u1', character: 'C17' }, { id: 'u2', character: 'C05' }], seed: 3 });
     state.players[1].position = 11;
     store.set({ room: seats(2), conn: 'connected' });
     receiveGame({ state: publicView(state), events: [], clock: null });
     render(<App />);
-    fireEvent.click(screen.getByText(t.act.portal('Mở cổng')));
-    expect(sent).toContainEqual({ type: 'action', payload: { action: { type: 'useSkill' } } });
+    fireEvent.click(screen.getByText(`${t.act.skills}: ${t.act.portal('Mở cổng')}`));
+    expect(screen.getByText(t.act.portalPick)).toBeTruthy();
+    fireEvent.click(screen.getByText(new RegExp(`^Người 2 · `)));
+    expect(sent).toContainEqual({ type: 'action', payload: { action: { type: 'useSkill', target: 'u2' } } });
     cleanup();
     const g = createGame({ players: [{ id: 'u1', character: 'C15' }, { id: 'u2', character: 'C05' }], seed: 3 }).state;
     for (const id of ['P01', 'P02']) g.ownables[id] = { owner: 'u1', mortgaged: false, level: 2 };
@@ -310,6 +312,50 @@ describe('screens', () => {
     fireEvent.click(screen.getByText(t.board.assets));
     const back = money(Math.floor(D.ownables.P01.buildCost! * D.economy.buildingSellRate));
     expect(screen.getAllByText(`${t.assets.sell} (+${back})`).length).toBeGreaterThan(0);
+  });
+
+  it('clicking a player in the list lights up the tile they stand on', () => {
+    playing((st) => {
+      st.players[1].position = 11;
+    });
+    render(<App />);
+    const row = [...document.querySelectorAll('.players .player')].find((x) => x.textContent?.includes('Người 2'))!;
+    fireEvent.click(row);
+    const tile = document.querySelector('.tile[data-pos="11"]')!;
+    expect(tile.classList.contains('tile-spotlight')).toBe(true);
+    expect(tile.textContent).toContain(t.board.here('Người 2'));
+  });
+
+  it('team game: one wallet shown for the team; Tài sản manages a teammate’s tile too', () => {
+    const s = createGame({ players: [0, 1, 0, 1].map((team, i) => ({ id: `u${i + 1}`, team })), seed: 3 }).state;
+    s.ownables.P01.owner = 'u3';
+    s.turn.current = s.players.findIndex((p) => p.id === 'u1');
+    store.set({ room: seats(4), conn: 'connected' });
+    receiveGame({ state: publicView(s), events: [], clock: null });
+    render(<App />);
+    expect(screen.getAllByText(t.teams.wallet(money(s.players[0].cash))).length).toBe(2);
+    fireEvent.click(screen.getByText(t.board.assets));
+    expect(screen.getByText(new RegExp(t.assets.teammateTile('Người 3')))).toBeTruthy();
+    fireEvent.click(screen.getByText(`${t.assets.mortgage} (+${money(D.ownables.P01.mortgage)})`));
+    expect(sent).toContainEqual({ type: 'action', payload: { action: { type: 'mortgage', propertyId: 'P01' } } });
+  });
+
+  it('Đầu hàng asks first, then sends surrender; blocked while a decision of mine waits', () => {
+    playing();
+    render(<App />);
+    fireEvent.click(screen.getByLabelText(t.surrender.button));
+    expect(screen.getByRole('dialog', { name: t.surrender.title })).toBeTruthy();
+    fireEvent.click(screen.getByText(t.surrender.cancel));
+    expect(sent.some((m) => (m.payload as { action?: { type: string } })?.action?.type === 'surrender')).toBe(false);
+    fireEvent.click(screen.getByLabelText(t.surrender.button));
+    fireEvent.click(document.querySelector('.modal button.danger')!);
+    expect(sent).toContainEqual({ type: 'action', payload: { action: { type: 'surrender' } } });
+    cleanup();
+    playing((st) => {
+      st.pending = { type: 'buy', player: 'u1', propertyId: 'P01', price: 60 };
+    });
+    render(<App />);
+    expect((screen.getByLabelText(t.surrender.button) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('S7 trade and S8 assets open from the side panel', () => {

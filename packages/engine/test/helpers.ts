@@ -108,8 +108,13 @@ export class G {
     return this;
   }
 
+  /** Team games: sets the team's shared wallet (every member's copy). */
   setCash(id: string, cash: number): this {
-    this.p(id).cash = cash;
+    const p = this.p(id);
+    if (this.s.teamCash && p.team !== undefined) {
+      for (const q of this.s.players) if (q.team === p.team && !q.bankrupt) q.cash = cash;
+      this.s.teamCash[p.team] = cash;
+    } else p.cash = cash;
     return this;
   }
 

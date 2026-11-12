@@ -3,13 +3,13 @@ import {
   emit,
   fail,
   getPlayer,
-  groupHasBuildings,
   groupProperties,
   hotelLevel,
   housesForHotel,
   isMyTurn,
   ownableDef,
   ownedBy,
+  ownedBySide,
   ownsFullGroup,
   sideHasBuildings,
   type Ctx,
@@ -87,7 +87,7 @@ export function buildBlock(c: Ctx, p: PlayerState, id: string, cost?: number, pa
   const def = ownableDef(c, id);
   const own = c.s.ownables[id];
   if (def.kind !== 'property' || !def.group || !def.buildCost) return 'notBuildable';
-  if (own.owner !== p.id) return 'notOwner';
+  if (!ownedBySide(c, id, p.id)) return 'notOwner';
   const full = ownsFullGroup(c, p.id, def.group);
   if (!full && !(partial && own.level === 0)) return 'needFullGroup';
   const group = groupProperties(c, def.group);
@@ -133,10 +133,10 @@ export function moveHouseBlock(c: Ctx, p: PlayerState, from: string, to: string)
   if (from === to) return 'sameTile';
   const src = c.s.ownables[from];
   const def = ownableDef(c, from);
-  if (src.owner !== p.id) return 'notOwner';
+  if (!ownedBySide(c, from, p.id)) return 'notOwner';
   if (src.level === 0) return 'noHouseToMove';
   if (src.level >= hotelLevel(c)) return 'housesOnly';
-  const mine = groupProperties(c, def.group!).filter((g) => c.s.ownables[g].owner === p.id);
+  const mine = groupProperties(c, def.group!).filter((g) => ownedBySide(c, g, p.id));
   if (src.level !== Math.max(...mine.map((g) => c.s.ownables[g].level))) return 'sellEvenly';
   const dst = c.s.ownables[to];
   if (dst && dst.level + 1 >= hotelLevel(c)) return 'housesOnly';
@@ -187,9 +187,9 @@ export function sellBuilding(c: Ctx, p: PlayerState, id: string): void {
   if (!canManage(c, p, true)) fail('Can only sell during your own turn or to settle a debt');
   const def = ownableDef(c, id);
   const own = c.s.ownables[id];
-  if (own.owner !== p.id) fail('Not your property');
+  if (!ownedBySide(c, id, p.id)) fail('Not your property');
   if (own.level === 0) fail('No buildings to sell');
-  const group = groupProperties(c, def.group!).filter((g) => c.s.ownables[g].owner === p.id);
+  const group = groupProperties(c, def.group!).filter((g) => ownedBySide(c, g, p.id));
   const maxInGroup = Math.max(...group.map((g) => c.s.ownables[g].level));
   if (own.level !== maxInGroup) fail('Must sell evenly');
   sellOneLevel(c, p, id);
@@ -200,9 +200,9 @@ export function sellBuilding(c: Ctx, p: PlayerState, id: string): void {
 export function mortgageProperty(c: Ctx, p: PlayerState, id: string): void {
   const def = ownableDef(c, id);
   const own = c.s.ownables[id];
-  if (own.owner !== p.id) fail('Not your property');
+  if (!ownedBySide(c, id, p.id)) fail('Not your property');
   if (own.mortgaged) fail('Already mortgaged');
-  if (groupHasBuildings(c, def.group, p.id)) fail('Sell all buildings in the group first');
+  if (sideHasBuildings(c, def.group, p.id)) fail('Sell all buildings in the group first');
   own.mortgaged = true;
   p.cash += def.mortgage;
   emit(c, 'mortgaged', { player: p.id, propertyId: id, amount: def.mortgage });
@@ -225,7 +225,7 @@ export function unmortgageCost(c: Ctx, p: PlayerState, id: string): number {
 export function unmortgage(c: Ctx, p: PlayerState, id: string): void {
   if (!canManage(c, p, false)) fail('Can only unmortgage during your own turn');
   const own = c.s.ownables[id];
-  if (own.owner !== p.id) fail('Not your property');
+  if (!ownedBySide(c, id, p.id)) fail('Not your property');
   if (!own.mortgaged) fail('Not mortgaged');
   const cost = unmortgageCost(c, p, id);
   if (p.cash < cost) fail('Not enough cash');

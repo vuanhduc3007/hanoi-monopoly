@@ -9,7 +9,7 @@ import { Token } from './Token';
 import { TeamTag } from './TeamTag';
 import { send } from '../net/connection';
 import type { ClockInfo, RoomView } from '../net/protocol';
-import { useStore } from '../store';
+import { store, useStore } from '../store';
 import { money as fmtMoney } from '../i18n/vi';
 
 export function PlayerList({ state, room }: { state: PublicState; room: RoomView }) {
@@ -29,7 +29,10 @@ export function PlayerList({ state, room }: { state: PublicState; room: RoomView
             .map((team) => {
               const members = state.players.filter((p) => p.team === team);
               const left = members.filter((p) => !p.bankrupt);
-              return { team, left: left.length, size: members.length, total: left.reduce((a, p) => a + worth(p.id), 0) };
+              // Teammates share one wallet: each member's worth includes it, so count it once.
+              const wallet = left[0]?.cash ?? 0;
+              const total = left.reduce((a, p) => a + worth(p.id), 0) - wallet * Math.max(0, left.length - 1);
+              return { team, left: left.length, size: members.length, total, wallet };
             })
             .sort((a, b) => Number(b.left > 0) - Number(a.left > 0) || b.total - a.total)
             .map((x) => (
@@ -38,6 +41,11 @@ export function PlayerList({ state, room }: { state: PublicState; room: RoomView
                   {teamName(x.team)}
                 </span>
                 <span className="muted">{t.teams.alive(x.left, x.size)}</span>
+                {x.left > 0 && (
+                  <span className="team-total-wallet" title={t.teams.walletTitle}>
+                    {t.teams.wallet(money(x.wallet))}
+                  </span>
+                )}
                 <span className="team-total-worth" title={t.board.worthTitle}>
                   {x.left === 0 ? t.board.bankrupt : money(x.total)}
                 </span>
@@ -48,7 +56,15 @@ export function PlayerList({ state, room }: { state: PublicState; room: RoomView
       {state.players.map((p) => {
         const seat = room.seats.find((s) => s.id === p.id);
         return (
-          <div key={p.id} className={`player${p.id === current ? ' player-current' : ''}${p.bankrupt ? ' player-out' : ''}`}>
+          <div
+            key={p.id}
+            className={`player${p.id === current ? ' player-current' : ''}${p.bankrupt ? ' player-out' : ''}`}
+            role={p.bankrupt ? undefined : 'button'}
+            tabIndex={p.bankrupt ? undefined : 0}
+            title={p.bankrupt ? undefined : t.board.showWhere}
+            onClick={() => !p.bankrupt && spotlight(p.id, p.position)}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && !p.bankrupt && spotlight(p.id, p.position)}
+          >
             <Token character={p.character} name={nameOf(room, p.id)} color={colorOf(room, p.id)} size={34} />
             <div className="player-main">
               <div className="player-name">
@@ -94,6 +110,12 @@ export function PlayerList({ state, room }: { state: PublicState; room: RoomView
       })}
     </section>
   );
+}
+
+/** Light up the player's tile and bring it into view (the board may be zoomed or scrolled away). */
+function spotlight(player: string, position: number): void {
+  store.set({ spotlight: { player, at: Date.now() } });
+  document.querySelector(`.tile[data-pos="${position}"]`)?.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
 }
 
 export function Log({ state, room }: { state: PublicState; room: RoomView }) {

@@ -22,8 +22,25 @@ interface Props {
 }
 
 /** S4 — the tiles around the centre panel (40, 48 or 56). */
+const SPOTLIGHT_MS = 3000;
+
+/** The player whose row was just clicked, for SPOTLIGHT_MS. */
+function useSpotlight(): string | null {
+  const spot = useStore((s) => s.spotlight);
+  const [, tick] = useState(0);
+  const live = spot && Date.now() - spot.at < SPOTLIGHT_MS;
+  useEffect(() => {
+    if (!spot) return;
+    const id = setTimeout(() => tick((n) => n + 1), Math.max(0, spot.at + SPOTLIGHT_MS - Date.now()));
+    return () => clearTimeout(id);
+  }, [spot]);
+  return live ? spot.player : null;
+}
+
 export function Board({ state, room, onTile }: Props) {
   const current = currentPlayer(state).id;
+  const spotId = useSpotlight();
+  const spotted = spotId ? state.players.find((p) => p.id === spotId && !p.bankrupt) : undefined;
   const [threeD, setThreeD] = useState(false);
   const onActive = useCallback((on: boolean) => setThreeD(on), []);
   useMoneyChanges(state);
@@ -44,12 +61,15 @@ export function Board({ state, room, onTile }: Props) {
           <button
             key={tile.position}
             data-pos={tile.position}
-            className={`tile tile-${side} tile-${tile.type}${own?.owner ? ' tile-owned' : ''}`}
+            className={`tile tile-${side} tile-${tile.type}${own?.owner ? ' tile-owned' : ''}${
+              spotted?.position === tile.position ? ' tile-spotlight' : ''
+            }`}
             style={
               {
                 gridRow: row + 1,
                 gridColumn: col + 1,
                 ...(own?.owner ? { '--owner': ownerColorOf(room, state, own.owner) } : {}),
+                ...(spotted?.position === tile.position ? { '--spot': colorOf(room, spotted.id) } : {}),
               } as CSSProperties
             }
             onClick={() => onTile(tile.position)}
@@ -62,6 +82,11 @@ export function Board({ state, room, onTile }: Props) {
               </span>
             )}
             <span className="tile-name">{tile.name}</span>
+            {spotted?.position === tile.position && (
+              <span className="tile-spot-label" key={spotted.id}>
+                {t.board.here(nameOf(room, spotted.id))}
+              </span>
+            )}
             {def && !own?.owner && <span className="tile-price">{money(def.price)}</span>}
             {own?.owner && (
               <span

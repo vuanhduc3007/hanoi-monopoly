@@ -300,45 +300,85 @@ describe('C16 Tín dụng đen', () => {
 });
 
 describe('C17 Bác sĩ lạ', () => {
-  it('portal: swaps places with the opponent and handles the new tile; no salary, no tile for the other', () => {
-    const g = G.create(['C17', null]);
-    g.at('p1', 5).at('p2', pos('P06'));
+  it('portal: swaps with the opponent he picks; he handles his new tile first, no salary', () => {
+    const g = G.create(['C17', null, null]);
+    g.at('p1', 5).at('p2', pos('P06')).at('p3', pos('P08'));
     const before = g.cash('p1');
-    const other = g.cash('p2');
-    const ev = g.do({ type: 'useSkill', player: 'p1' });
+    const ev = g.do({ type: 'useSkill', player: 'p1', target: 'p2' });
     expect(g.p('p1').position).toBe(pos('P06'));
     expect(g.p('p2').position).toBe(5);
+    expect(g.p('p3').position).toBe(pos('P08'));
     expect(g.s.pending).toMatchObject({ type: 'buy', player: 'p1', propertyId: 'P06' });
     expect(g.cash('p1')).toBe(before);
-    expect(g.cash('p2')).toBe(other);
     expect(has(ev, 'skillUsed', { skill: 'portal', target: 'p2' })).toBe(true);
     expect(g.s.turn.phase).toBe('end');
     expect(g.p('p1').skillCooldown).toBe(num(CH.C17.skill.cooldownRounds));
   });
 
-  it('portal: lands on rent too', () => {
+  it('portal: a target is required, and must be an opponent he may swap with', () => {
+    const g = G.create(['C17', null]);
+    g.at('p2', 7);
+    expect(() => g.do({ type: 'useSkill', player: 'p1' })).toThrow(/Choose an opponent/);
+    expect(() => g.do({ type: 'useSkill', player: 'p1', target: 'p1' })).toThrow(/Choose an opponent/);
+  });
+
+  it('portal: the opponent lands on his old tile for real and pays him rent', () => {
+    const g = G.create(['C17', null]);
+    g.give('p1', ['P06'], { level: 2 });
+    g.at('p1', pos('P06')).at('p2', pos('P08'));
+    g.s.ownables.P08 = { owner: 'p1', mortgaged: false, level: 0 };
+    const other = g.cash('p2');
+    const ev = g.do({ type: 'useSkill', player: 'p1', target: 'p2' });
+    expect(has(ev, 'landed', { player: 'p2', position: pos('P06') })).toBe(true);
+    expect(other - g.cash('p2')).toBe(D.ownables.P06.rent!.h2);
+  });
+
+  it('portal: the opponent reaching an unowned tile is offered it, in Bác sĩ lạ’s turn', () => {
+    const g = G.create(['C17', null]);
+    g.at('p1', pos('P06')).at('p2', pos('P08'));
+    g.give('p2', ['P08']);
+    g.do({ type: 'useSkill', player: 'p1', target: 'p2' });
+    expect(g.s.pending).toMatchObject({ type: 'buy', player: 'p2', propertyId: 'P06' });
+    g.do({ type: 'buy', player: 'p2' });
+    expect(g.owner('P06')).toBe('p2');
+    expect(g.s.players[g.s.turn.current].id).toBe('p1');
+    expect(g.s.turn.phase).toBe('end');
+  });
+
+  it('portal: he lands on rent too', () => {
     const g = G.create(['C17', null, null]);
     g.give('p3', ['P06']);
     g.at('p1', 1).at('p2', pos('P06')).at('p3', pos('P06'));
     const before = g.cash('p1');
-    g.do({ type: 'useSkill', player: 'p1' });
+    g.do({ type: 'useSkill', player: 'p1', target: 'p2' });
     expect(before - g.cash('p1')).toBe(D.ownables.P06.rent!.base);
   });
 
-  it('portal replaces the roll: not from jail, not after rolling, nobody in jail is a target', () => {
+  it('portal works after rolling too (a second landing), but not from jail or with nobody to swap', () => {
     const g = G.create(['C17', null]);
-    g.at('p2', 7);
+    g.at('p2', pos('P08'));
     g.p('p1').inJail = true;
-    expect(() => g.do({ type: 'useSkill', player: 'p1' })).toThrow(/jail/);
+    expect(() => g.do({ type: 'useSkill', player: 'p1', target: 'p2' })).toThrow(/jail/);
     g.p('p1').inJail = false;
     g.p('p2').inJail = true;
     expect(portalTargetsFor(g.s, 'p1', g.d)).toEqual([]);
-    expect(() => g.do({ type: 'useSkill', player: 'p1' })).toThrow(/Nobody/);
+    expect(() => g.do({ type: 'useSkill', player: 'p1', target: 'p2' })).toThrow(/Choose an opponent/);
     g.p('p2').inJail = false;
-    g.roll('p1', 1, 2);
+    g.rig(1, 2).do({ type: 'roll', player: 'p1' });
     if (g.s.pending?.type === 'buy') g.do({ type: 'declineBuy', player: 'p1' });
     if (g.s.pending?.type === 'auction') g.do({ type: 'closeAuction' });
-    expect(() => g.do({ type: 'useSkill', player: 'p1' })).toThrow(/replaces a roll/);
+    expect(g.s.turn.phase).toBe('end');
+    const at = g.p('p1').position;
+    const ev = g.do({ type: 'useSkill', player: 'p1', target: 'p2' });
+    expect(g.p('p1').position).toBe(pos('P08'));
+    expect(g.p('p2').position).toBe(at);
+    expect(has(ev, 'landed', { player: 'p1', position: pos('P08') })).toBe(true);
+    // He decides on his tile first; then the opponent lands.
+    expect(g.s.pending).toMatchObject({ type: 'buy', player: 'p1' });
+    g.do({ type: 'declineBuy', player: 'p1' });
+    if (g.s.pending?.type === 'auction') g.do({ type: 'closeAuction' });
+    expect(has(g.events, 'landed', { player: 'p2', position: at })).toBe(true);
+    expect(g.s.turn.phase).toBe('end');
   });
 
   it('portal never swaps with a teammate', () => {
@@ -383,11 +423,18 @@ describe('bots use the new skills', () => {
   it('Mở cổng when the swap lands somewhere worth buying, not onto a hotel', () => {
     const good = G.create(['C17', null]);
     good.at('p2', pos('P22'));
-    expect(botAction(good.s, good.d)).toEqual({ type: 'useSkill', player: 'p1' });
+    expect(botAction(good.s, good.d)).toEqual({ type: 'useSkill', player: 'p1', target: 'p2' });
     const bad = G.create(['C17', null, null]);
     bad.give('p3', ['P21', 'P22'], { level: 5 });
     bad.at('p2', pos('P22'));
     expect(botAction(bad.s, bad.d)).toEqual({ type: 'roll', player: 'p1' });
+  });
+
+  it('Mở cổng picks the opponent whose swap pays most: one that will land on his hotel', () => {
+    const g = G.create(['C17', null, null]);
+    g.give('p1', ['P21', 'P22'], { level: 5 }).at('p1', pos('P22'));
+    g.at('p2', 12).at('p3', 14);
+    expect(botAction(g.s, g.d)).toMatchObject({ type: 'useSkill', player: 'p1' });
   });
 });
 

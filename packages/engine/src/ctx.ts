@@ -85,10 +85,41 @@ export function ownedBySide(c: Ctx, id: string, playerId: PlayerId): boolean {
   return !!owner && (owner === playerId || teammates(c, owner, playerId));
 }
 
+/** Tiles the player's side owns: his own, plus his teammates' in team games. */
+export function sideTiles(c: Ctx, playerId: PlayerId): string[] {
+  return Object.keys(c.s.ownables).filter((id) => ownedBySide(c, id, playerId));
+}
+
+/**
+ * Team games share one wallet: every member's `cash` is the team's money. Engine code
+ * changes one member's copy at a time; after each step the changes of all members are
+ * added up into the wallet and every copy is set to it again.
+ */
+export function syncTeamCash(c: Ctx): void {
+  const pools = c.s.teamCash;
+  if (!pools) return;
+  for (const key of Object.keys(pools)) {
+    const alive = c.s.players.filter((p) => p.team === Number(key) && !p.bankrupt);
+    const prev = pools[key];
+    const pool = alive.reduce((sum, p) => sum + p.cash - prev, prev);
+    for (const p of alive) p.cash = pool;
+    pools[key] = alive.length > 0 ? pool : 0;
+  }
+}
+
+/** Start the team wallets: each holds the members' starting money added together. */
+export function openTeamWallets(c: Ctx): void {
+  if (!c.s.players.some((p) => p.team !== undefined)) return;
+  const pools: Record<string, number> = {};
+  for (const p of c.s.players) pools[p.team!] = (pools[p.team!] ?? 0) + p.cash;
+  for (const p of c.s.players) p.cash = pools[p.team!];
+  c.s.teamCash = pools;
+}
+
 /**
  * The player's side holds every tile of the colour group. In team games the
- * teammates' tiles count together: each builds, mortgages and unmortgages
- * their own tiles, the group's rent doubles and building is even across it.
+ * teammates' tiles count together: any member builds, sells, mortgages and
+ * unmortgages any of them, the group's rent doubles and building is even across it.
  */
 export function ownsFullGroup(c: Ctx, playerId: PlayerId, group: string): boolean {
   const props = groupProperties(c, group);

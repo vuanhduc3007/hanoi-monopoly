@@ -43,6 +43,8 @@ export interface AppState {
   /** The 3D board layer is running (it drives arrests and dice). */
   board3d: boolean;
   money: MoneyChange[];
+  /** A player row was clicked: light up the tile they stand on for a moment. */
+  spotlight: { player: string; at: number } | null;
 }
 
 export const initialState: AppState = {
@@ -61,6 +63,7 @@ export const initialState: AppState = {
   arrest: null,
   board3d: false,
   money: [],
+  spotlight: null,
 };
 
 const LOG_MAX = 300;

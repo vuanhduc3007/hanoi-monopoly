@@ -223,7 +223,10 @@ function turnStartSkill(c: Ctx, p: PlayerState): Action | null {
       const pick = bestBuyout(c, p, (id) => buyoutPrice(c, sk, id));
       if (pick) return { type: 'useSkill', player: p.id, propertyId: pick };
     }
-    if (sk.type === 'portal' && portalWorth(c, p) >= rollWorth(c, p) + 60) return { type: 'useSkill', player: p.id };
+    if (sk.type === 'portal') {
+      const pick = bestPortal(c, p);
+      if (pick && pick.value >= rollWorth(c, p) + 60) return { type: 'useSkill', player: p.id, target: pick.target };
+    }
   }
   if (skillAvailable(c, p, 'block_rent')) {
     let best: { id: string; levels: number } | null = null;
@@ -349,14 +352,22 @@ function bestHouseMove(c: Ctx, p: PlayerState, minGain: number): { from: string;
   return best;
 }
 
-/** Bác sĩ lạ: average worth of the tiles a swap could land on (no salary on a swap). */
-function portalWorth(c: Ctx, p: PlayerState): number {
-  const pool = portalTargets(c, p);
-  if (pool.length === 0) return -Infinity;
+/**
+ * Bác sĩ lạ: the best opponent to swap with — the tile he reaches (no salary on a swap)
+ * plus what the opponent pays landing on his old tile (rent to his side).
+ */
+function bestPortal(c: Ctx, p: PlayerState): { target: string; value: number } | null {
   const salary = salaryFor(c, p);
-  // landingValue counts the salary for a tile behind us; a swap never pays it.
-  const values = pool.map((q) => landingValue(c, p, q.position, 7) - (q.position < p.position ? salary : 0));
-  return values.reduce((a, b) => a + b, 0) / values.length;
+  let best: { target: string; value: number } | null = null;
+  for (const q of portalTargets(c, p)) {
+    // landingValue counts the salary for a tile behind us; a swap never pays it.
+    let value = landingValue(c, p, q.position, 7) - (q.position < p.position ? salary : 0);
+    const ref = c.d.board[p.position].ref;
+    const own = c.s.ownables[ref];
+    if (own?.owner && ownedBySide(c, ref, p.id)) value += quoteRent(c, q, ref, {}, 7).amount;
+    if (!best || value > best.value) best = { target: q.id, value };
+  }
+  return best;
 }
 
 /** Average worth of an ordinary roll's landing (two dice, salary included). */
@@ -401,6 +412,11 @@ function rentAtLevel(c: Ctx, id: string): number {
 }
 
 function endOfTurn(c: Ctx, p: PlayerState, o: BotOptions): Action {
+  // Mở cổng after the roll: a free second landing, worth it for a clearly good swap.
+  if (skillAvailable(c, p, 'portal') && !p.inJail) {
+    const pick = bestPortal(c, p);
+    if (pick && pick.value >= 120) return { type: 'useSkill', player: p.id, target: pick.target };
+  }
   // Unmortgage what completes a group first, then the cheapest.
   const mortgaged = ownedBy(c, p.id)
     .filter((id) => c.s.ownables[id].mortgaged)

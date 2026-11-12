@@ -111,7 +111,7 @@
           "passives": [
             {
               "type": "go_salary",
-              "value": 300
+              "value": 340
             },
             {
               "type": "purchase_discount",
@@ -132,6 +132,36 @@
           ],
           "skill": {
             "cooldownRounds": 3
+          }
+        },
+        {
+          "teams": true,
+          "mode": "quick",
+          "passives": [
+            {
+              "type": "go_salary",
+              "value": 300
+            },
+            {
+              "type": "purchase_discount",
+              "properties": [
+                "P10",
+                "P11",
+                "P13",
+                "P14",
+                "P15"
+              ],
+              "rate": 0.25
+            },
+            {
+              "type": "bailout",
+              "maxAmount": 500,
+              "scaleWithBoard": true
+            }
+          ],
+          "skill": {
+            "premium": 1.5,
+            "cooldownRounds": 5
           }
         }
       ]
@@ -350,6 +380,19 @@
             }
           ]
         }
+      ],
+      "byMode": [
+        {
+          "teams": true,
+          "players": [
+            6,
+            7,
+            8
+          ],
+          "skill": {
+            "cooldownRounds": 7
+          }
+        }
       ]
     },
     {
@@ -397,9 +440,12 @@
           "passives": [
             {
               "type": "commission_on_opponent_bank_purchase",
-              "amount": 5
+              "amount": 0
             }
-          ]
+          ],
+          "skill": {
+            "cooldownRounds": 5
+          }
         }
       ]
     },
@@ -601,7 +647,7 @@
           "teams": true,
           "mode": "quick",
           "skill": {
-            "fallbackAmount": 60
+            "fallbackAmount": 90
           }
         }
       ]
@@ -698,6 +744,30 @@
           "skill": {
             "cooldownRounds": 13
           }
+        },
+        {
+          "teams": true,
+          "passives": [
+            {
+              "type": "starting_cash",
+              "value": 1100
+            }
+          ]
+        },
+        {
+          "teams": true,
+          "players": [
+            5,
+            6,
+            7,
+            8
+          ],
+          "passives": [
+            {
+              "type": "starting_cash",
+              "value": 1000
+            }
+          ]
         }
       ]
     },
@@ -779,6 +849,18 @@
             {
               "type": "starting_cash",
               "value": 1650
+            }
+          ]
+        },
+        {
+          "teams": true,
+          "players": [
+            4
+          ],
+          "drawbacks": [
+            {
+              "type": "starting_cash",
+              "value": 1500
             }
           ]
         }
@@ -955,7 +1037,7 @@
           "passives": [
             {
               "type": "dividend",
-              "rate": 0.07
+              "rate": 0.09
             }
           ]
         }
@@ -1098,24 +1180,67 @@
         {
           "teams": true,
           "players": [
-            5,
-            6
-          ],
-          "skill": {
-            "completesGroup": true,
-            "rate": 0.1,
-            "cooldownRounds": 20
-          }
-        },
-        {
-          "teams": true,
-          "players": [
             4
           ],
           "skill": {
             "rate": 0.1,
             "cooldownRounds": 8
           }
+        },
+        {
+          "teams": true,
+          "mode": "quick",
+          "players": [
+            4
+          ],
+          "skill": {
+            "rate": 0.1,
+            "cooldownRounds": 12
+          },
+          "passives": [
+            {
+              "type": "auction_discount",
+              "rate": 0.1
+            }
+          ],
+          "drawbacks": [
+            {
+              "type": "starting_cash",
+              "value": 1250
+            }
+          ]
+        },
+        {
+          "teams": true,
+          "players": [
+            5,
+            6
+          ],
+          "skill": {
+            "rate": 0.3,
+            "cooldownRounds": 4,
+            "completesGroup": false
+          }
+        },
+        {
+          "teams": true,
+          "mode": "quick",
+          "players": [
+            7,
+            8
+          ],
+          "passives": [
+            {
+              "type": "auction_discount",
+              "rate": 0.1
+            }
+          ],
+          "drawbacks": [
+            {
+              "type": "starting_cash",
+              "value": 1200
+            }
+          ]
         }
       ]
     },
@@ -1231,36 +1356,6 @@
       },
       "byMode": [
         {
-          "teams": true,
-          "players": [
-            6,
-            7,
-            8
-          ],
-          "drawbacks": [
-            {
-              "type": "starting_cash",
-              "value": 1500
-            }
-          ],
-          "skill": {
-            "amount": 200,
-            "repayRate": 1.5
-          }
-        },
-        {
-          "teams": true,
-          "players": [
-            4
-          ],
-          "drawbacks": [
-            {
-              "type": "starting_cash",
-              "value": 1500
-            }
-          ]
-        },
-        {
           "mode": "quick",
           "players": [
             2,
@@ -1273,6 +1368,35 @@
               "value": 1500
             }
           ]
+        },
+        {
+          "teams": true,
+          "drawbacks": [
+            {
+              "type": "starting_cash",
+              "value": 1600
+            }
+          ]
+        },
+        {
+          "teams": true,
+          "players": [
+            6,
+            7,
+            8
+          ],
+          "skill": {
+            "amount": 200,
+            "repayRate": 1.5
+          }
+        },
+        {
+          "teams": true,
+          "mode": "quick",
+          "skill": {
+            "amount": 200,
+            "repayRate": 1.5
+          }
         }
       ]
     },
@@ -1291,55 +1415,31 @@
         },
         {
           "type": "starting_cash",
-          "value": 1650
+          "value": 1500
         }
       ],
       "drawbacks": [],
       "skill": {
         "name": "Mở cổng",
         "type": "portal",
-        "cooldownRounds": 4
+        "cooldownRounds": 8
       },
       "byTableSize": [
         {
           "players": [
-            2
-          ],
-          "passives": [
-            {
-              "type": "immune_events",
-              "cards": [
-                "CD11",
-                "CD17",
-                "EV39",
-                "CD23"
-              ]
-            },
-            {
-              "type": "starting_cash",
-              "value": 1950
-            }
-          ]
-        },
-        {
-          "players": [
             3
           ],
-          "passives": [
-            {
-              "type": "immune_events",
-              "cards": [
-                "CD11",
-                "CD17",
-                "EV39",
-                "CD23"
-              ]
-            },
-            {
-              "type": "starting_cash",
-              "value": 1550
-            }
-          ]
+          "skill": {
+            "cooldownRounds": 10
+          }
+        }
+      ],
+      "byMode": [
+        {
+          "teams": true,
+          "skill": {
+            "cooldownRounds": 14
+          }
         }
       ]
     }

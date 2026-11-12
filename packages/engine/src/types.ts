@@ -207,6 +207,11 @@ export interface GameState {
   winner: PlayerId | null;
   /** Team games: the winning team (winner is its best-placed player). */
   winnerTeam?: number | null;
+  /**
+   * Team games: each team's shared wallet, keyed by team number. Every member's `cash`
+   * shows the whole wallet; the engine folds members' changes back in after each step.
+   */
+  teamCash?: Record<string, number>;
   ranking: { player: PlayerId; score: number }[] | null;
   /** Forced dice values (tests / replay). Consumed before the RNG. */
   riggedDice: number[];
@@ -257,6 +262,8 @@ export type Action =
   | { type: 'payRent'; player: PlayerId }
   | { type: 'payDebt'; player: PlayerId }
   | { type: 'declareBankruptcy'; player: PlayerId }
+  /** Leave the game for good (any time, unless a decision of his is waiting). */
+  | { type: 'surrender'; player: PlayerId }
   | { type: 'resolveMortgage'; player: PlayerId; unmortgage: boolean }
   | { type: 'endTurn'; player: PlayerId }
   /** Server: the active timer ran out; engine applies the default. */

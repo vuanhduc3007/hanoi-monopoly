@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { type PublicState, type Trade as TradeT, type TradeBundle } from '@hanoi-monopoly/engine';
 import { money, t, tileName } from '../i18n/vi';
 import { groupColor, groupedOwnables } from '../lib/board';
-import { me, nameOf, ownedBy, unmortgageCost } from '../lib/selectors';
+import { me, nameOf, ownedBy, teammates, unmortgageCost } from '../lib/selectors';
 import { act } from '../net/connection';
 import type { RoomView } from '../net/protocol';
 import { Coach } from './Coach';
@@ -18,11 +18,13 @@ export function Trade({ state, room, onClose }: { state: PublicState; room: Room
   const [unmortgage, setUnmortgage] = useState<string[]>([]);
   if (!self) return null;
   const other = state.players.find((p) => p.id === partner);
+  // Teammates share one wallet: no cash to pass between them.
+  const mate = !!other && teammates(state, self.id, other.id);
   const incoming = state.trades.filter((x) => x.to === self.id);
   const outgoing = state.trades.filter((x) => x.from === self.id);
 
   const send = () => {
-    act({ type: 'proposeTrade', to: partner, offer: give, request: get, unmortgage: unmortgage.filter((id) => get.properties.includes(id)) });
+    act({ type: 'proposeTrade', to: partner, offer: mate ? { ...give, cash: 0 } : give, request: mate ? { ...get, cash: 0 } : get, unmortgage: unmortgage.filter((id) => get.properties.includes(id)) });
     setGive({ cash: 0, properties: [], jailCards: [] });
     setGet({ cash: 0, properties: [], jailCards: [] });
     setUnmortgage([]);
@@ -60,6 +62,7 @@ export function Trade({ state, room, onClose }: { state: PublicState; room: Room
               bundle={give}
               setBundle={setGive}
               maxCash={self.cash}
+              noCash={mate}
               jailCards={self.jailCards}
             />
             {other && (
@@ -70,6 +73,7 @@ export function Trade({ state, room, onClose }: { state: PublicState; room: Room
                 bundle={get}
                 setBundle={setGet}
                 maxCash={other.cash}
+                noCash={mate}
                 jailCards={other.jailCards}
                 unmortgage={unmortgage}
                 setUnmortgage={setUnmortgage}
@@ -93,6 +97,7 @@ function Column(props: {
   bundle: TradeBundle;
   setBundle: (b: TradeBundle) => void;
   maxCash: number;
+  noCash?: boolean;
   jailCards: string[];
   unmortgage?: string[];
   setUnmortgage?: (ids: string[]) => void;
@@ -150,17 +155,19 @@ function Column(props: {
           {t.trade.jailCard}
         </label>
       ))}
-      <label className="row">
-        {t.trade.cash}{' '}
-        <input
-          type="number"
-          min={0}
-          max={props.maxCash}
-          step={10}
-          value={bundle.cash}
-          onChange={(e) => setBundle({ ...bundle, cash: Math.max(0, Math.floor(Number(e.target.value) || 0)) })}
-        />
-      </label>
+      {!props.noCash && (
+        <label className="row">
+          {t.trade.cash}{' '}
+          <input
+            type="number"
+            min={0}
+            max={props.maxCash}
+            step={10}
+            value={bundle.cash}
+            onChange={(e) => setBundle({ ...bundle, cash: Math.max(0, Math.floor(Number(e.target.value) || 0)) })}
+          />
+        </label>
+      )}
     </div>
   );
 }

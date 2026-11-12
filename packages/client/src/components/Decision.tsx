@@ -265,10 +265,8 @@ function TurnActions({
   if (!isMyTurn(room, state)) return null;
   const sk = skillOf(self.character);
   const ready = state.config.characters && !self.skillUsed;
-  // Du lịch and Mở cổng replace the roll.
+  // Du lịch replaces the roll.
   const canTravel = roll && !self.inJail && ready && sk?.type === 'travel';
-  const canPortal = roll && !self.inJail && ready && sk?.type === 'portal';
-  const portalOk = canPortal && portalTargetsFor(state, self.id, D).length > 0;
   if (pick === 'travel' && canTravel) {
     return (
       <>
@@ -314,11 +312,6 @@ function TurnActions({
             ✈ {sk!.name}
           </button>
         )}
-        {canPortal && (
-          <button data-coach="skill" disabled={!portalOk} title={t.act.portalTitle} onClick={() => act({ type: 'useSkill' })}>
-            {t.act.portal(sk!.name)}
-          </button>
-        )}
         {!roll && (
           <button className="primary" data-coach="endTurn" onClick={() => act({ type: 'endTurn' })}>
             {t.act.endTurn}
@@ -350,6 +343,30 @@ function TurnSkill({ state, room, setPick }: { state: PublicState; room: RoomVie
         <button data-coach="skill" disabled={self.cash < amount || !anyone} onClick={() => act({ type: 'useSkill' })}>
           {t.act.skills}: {t.act.forcedLoan(money(amount), money(owed))}
         </button>
+      </div>
+    );
+  }
+  if (skill.type === 'portal') {
+    // Mở cổng: before the roll (instead of it) or after it; he picks who to swap with.
+    const targets = self.inJail ? [] : portalTargetsFor(state, self.id, D);
+    return (
+      <div className="skill">
+        <button data-coach="skill" disabled={targets.length === 0} title={t.act.portalTitle} onClick={() => setOpen(!open)}>
+          {t.act.skills}: {t.act.portal(skill.name)}
+        </button>
+        {open && targets.length > 0 && (
+          <div className="buttons">
+            <span className="muted">{t.act.portalPick}</span>
+            {targets.map((id) => {
+              const q = state.players.find((x) => x.id === id)!;
+              return (
+                <button key={id} onClick={() => (setOpen(false), act({ type: 'useSkill', target: id }))}>
+                  {nameOf(room, id)} · {D.board[q.position].name}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   }

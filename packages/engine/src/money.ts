@@ -1,13 +1,17 @@
 import { mortgageProperty, sellOneLevel } from './assets';
 import { canOwn, cardPayMultiplier, onBankrupt, onRentPaid } from './characters';
 import {
+  activePlayers,
   aliveSides,
   type Ctx,
   emit,
+  fail,
   getPlayer,
   hotelLevel,
   ownedBy,
   pushFront,
+  sideTiles,
+  teammates,
 } from './ctx';
 import { expireEffectsOf } from './effects';
 import { dropLoansOf, loanBalance } from './loans';
@@ -114,7 +118,7 @@ export function settleDebt(c: Ctx): boolean {
 /** Total cash a player could still raise by selling buildings and mortgaging. */
 export function liquidationValue(c: Ctx, p: PlayerState): number {
   let total = p.cash;
-  for (const id of ownedBy(c, p.id)) {
+  for (const id of sideTiles(c, p.id)) {
     const def = c.d.ownables[id];
     const own = c.s.ownables[id];
     if (own.level > 0 && def.buildCost) {
@@ -132,7 +136,7 @@ export function liquidationValue(c: Ctx, p: PlayerState): number {
  */
 export function autoLiquidate(c: Ctx, p: PlayerState, target: number): void {
   const byPrice = () =>
-    ownedBy(c, p.id).sort((a, b) => c.d.ownables[a].price - c.d.ownables[b].price || a.localeCompare(b));
+    sideTiles(c, p.id).sort((a, b) => c.d.ownables[a].price - c.d.ownables[b].price || a.localeCompare(b));
   // 1. Buildings: always take from the highest-level property of the cheapest group (keeps even rule).
   while (p.cash < target) {
     const built = byPrice().filter((id) => c.s.ownables[id].level > 0);
@@ -172,6 +176,16 @@ export function declareBankruptcy(c: Ctx): void {
 export function goBankrupt(c: Ctx, p: PlayerState, task: PayTask): void {
   const target = resolveTarget(c, task.to);
   const followUps: Task[] = [];
+  // Team games: the wallet is shared, so the whole team falls together. The teammates'
+  // tiles and cards go with the debtor's; the money is already in his copy of the wallet.
+  const fallen = activePlayers(c).filter((q) => teammates(c, q.id, p.id));
+  for (const q of fallen) {
+    for (const id of ownedBy(c, q.id)) c.s.ownables[id].owner = p.id;
+    p.jailCards.push(...q.jailCards);
+    q.jailCards = [];
+    q.cash = 0;
+    expireEffectsOf(c, q.id);
+  }
 
   // Buildings back to the bank at the sell rate, cash goes with the rest.
   for (const id of ownedBy(c, p.id)) {
@@ -185,7 +199,8 @@ export function goBankrupt(c: Ctx, p: PlayerState, task: PayTask): void {
   }
   const paid = p.cash;
   expireEffectsOf(c, p.id);
-  c.s.trades = c.s.trades.filter((t) => t.from !== p.id && t.to !== p.id);
+  const out = new Set([p.id, ...fallen.map((q) => q.id)]);
+  c.s.trades = c.s.trades.filter((t) => !out.has(t.from) && !out.has(t.to));
 
   const creditor = target.kind === 'player' ? getPlayer(c, target.id) : null;
   if (creditor && !creditor.bankrupt) {
@@ -217,17 +232,70 @@ export function goBankrupt(c: Ctx, p: PlayerState, task: PayTask): void {
 
   p.cash = 0;
   p.jailCards = [];
+  for (const q of [p, ...fallen]) {
+    q.bankrupt = true;
+    dropLoansOf(c, q.id);
+    q.inJail = false;
+    c.s.bankruptOrder.push(q.id);
+  }
+  c.s.queue = c.s.queue.filter((t) => {
+    if (t.t === 'pay') return !out.has(t.from);
+    if ('player' in t) return !out.has(t.player);
+    return true;
+  });
+  emit(c, 'bankrupt', { player: p.id, creditor: creditor?.id ?? target.kind, paid });
+  for (const q of fallen) emit(c, 'bankrupt', { player: q.id, creditor: creditor?.id ?? target.kind, paid: 0, team: true });
+  if (!checkGameEnd(c)) pushFront(c, ...followUps);
+}
+
+/**
+ * Đầu hàng: the player leaves the game for good, at any time. Owing money (liquidation),
+ * everything goes to the creditor at once, as a bankruptcy without selling first.
+ * Otherwise his money and tiles go to the bank (tiles are auctioned) — or, in team games
+ * with teammates still playing, his tiles and cards stay with the team, the shared
+ * wallet too. Not while another decision of his is waiting.
+ */
+export function surrender(c: Ctx, p: PlayerState): void {
+  if (p.bankrupt) fail('Already out of the game');
+  const pend = c.s.pending;
+  if (pend?.type === 'liquidation' && pend.player === p.id) {
+    c.s.pending = null;
+    emit(c, 'surrendered', { player: p.id });
+    goBankrupt(c, p, pend.task);
+    return;
+  }
+  if (pend && 'player' in pend && pend.player === p.id) fail('Finish your decision first');
+  if (pend?.type === 'sicboBet' && (pend.host === p.id || pend.waiting.includes(p.id))) fail('Finish your decision first');
+  if (pend?.type === 'auction') {
+    pend.eligible = pend.eligible.filter((id) => id !== p.id);
+    if (pend.highBidder === p.id) {
+      pend.highBidder = null;
+      pend.highBid = 0;
+    }
+  }
+  const heir = activePlayers(c).find((q) => teammates(c, q.id, p.id));
+  emit(c, 'surrendered', { player: p.id, ...(heir ? { heir: heir.id } : {}) });
+  if (!heir) {
+    goBankrupt(c, p, payTask(p.id, { kind: 'bank' }, 0, 'fee', 'surrender'));
+    return;
+  }
+  for (const id of ownedBy(c, p.id)) c.s.ownables[id].owner = heir.id;
+  heir.jailCards.push(...p.jailCards);
+  p.jailCards = [];
+  expireEffectsOf(c, p.id);
+  c.s.trades = c.s.trades.filter((t) => t.from !== p.id && t.to !== p.id);
+  // The wallet stays with the team (the sync skips players who are out).
+  p.cash = 0;
   p.bankrupt = true;
-  dropLoansOf(c, p.id);
   p.inJail = false;
+  dropLoansOf(c, p.id);
   c.s.bankruptOrder.push(p.id);
   c.s.queue = c.s.queue.filter((t) => {
     if (t.t === 'pay') return t.from !== p.id;
     if ('player' in t) return t.player !== p.id;
     return true;
   });
-  emit(c, 'bankrupt', { player: p.id, creditor: creditor?.id ?? target.kind, paid });
-  if (!checkGameEnd(c)) pushFront(c, ...followUps);
+  checkGameEnd(c);
 }
 
 // ---------------------------------------------------------------- game end
@@ -265,7 +333,8 @@ export function finishGame(c: Ctx): void {
 }
 
 /**
- * Team games: teams ranked by the summed net worth of their surviving players (a team
+ * Team games: teams ranked by their net worth (the shared wallet once, plus every member's
+ * tiles and loans; a team
  * still standing beats an eliminated one; eliminated teams by how long they lasted);
  * players keep their order inside a team.
  */
@@ -274,7 +343,8 @@ function rankTeams(c: Ctx): void {
   for (const p of c.s.players) {
     const t = totals.get(p.team!) ?? { worth: 0, alive: 0, lastOut: -1 };
     if (!p.bankrupt) {
-      t.worth += score(c, p);
+      // The wallet is shared: count it once for the team.
+      t.worth += score(c, p) - (t.alive > 0 ? p.cash : 0);
       t.alive++;
     } else t.lastOut = Math.max(t.lastOut, c.s.bankruptOrder.indexOf(p.id));
     totals.set(p.team!, t);

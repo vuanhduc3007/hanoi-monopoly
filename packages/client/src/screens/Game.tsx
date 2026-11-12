@@ -7,9 +7,10 @@ import { Decision, type PickMode } from '../components/Decision';
 import { Chat, Clock, Log, PlayerList } from '../components/Side';
 import { TileDetail } from '../components/TileDetail';
 import { Trade } from '../components/Trade';
+import { Modal } from '../components/Modal';
 import { t } from '../i18n/vi';
 import { D } from '../lib/gameData';
-import { whyCantFlashSale } from '@hanoi-monopoly/engine';
+import { whyCantFlashSale, type PublicState } from '@hanoi-monopoly/engine';
 import { isMyTurn, me } from '../lib/selectors';
 import { act, leaveRoom, send } from '../net/connection';
 import type { RoomView } from '../net/protocol';
@@ -38,6 +39,50 @@ function RoomCode({ code }: { code: string }) {
         </>
       )}
     </button>
+  );
+}
+
+/** Đầu hàng: leave the game for good, after a confirmation. */
+function SurrenderButton({ state, selfId }: { state: PublicState; selfId: string }) {
+  const [asking, setAsking] = useState(false);
+  const self = state.players.find((p) => p.id === selfId)!;
+  const pend = state.pending;
+  // Another decision of his is waiting (owing money is fine: the creditor takes everything).
+  const busy =
+    (!!pend && 'player' in pend && pend.player === selfId && pend.type !== 'liquidation') ||
+    (pend?.type === 'sicboBet' && (pend.host === selfId || pend.waiting.includes(selfId)));
+  const mates = state.players.some((p) => p.id !== selfId && !p.bankrupt && p.team !== undefined && p.team === self.team);
+  return (
+    <>
+      <button
+        className="mute surrender"
+        disabled={busy}
+        aria-label={t.surrender.button}
+        title={busy ? t.surrender.busy : t.surrender.button}
+        onClick={() => setAsking(true)}
+      >
+        🏳
+      </button>
+      {asking && (
+        <Modal title={t.surrender.title} onClose={() => setAsking(false)}>
+          <p>{mates ? t.surrender.bodyTeam : t.surrender.body}</p>
+          {busy && <p className="muted">{t.surrender.busy}</p>}
+          <div className="buttons">
+            <button onClick={() => setAsking(false)}>{t.surrender.cancel}</button>
+            <button
+              className="danger"
+              disabled={busy}
+              onClick={() => {
+                setAsking(false);
+                act({ type: 'surrender' });
+              }}
+            >
+              {t.surrender.confirm}
+            </button>
+          </div>
+        </Modal>
+      )}
+    </>
   );
 }
 
@@ -104,6 +149,7 @@ export function Game({ room }: { room: RoomView }) {
             </div>
             <TutorialButton />
             <MuteButton />
+            {playing && state.status === 'playing' && <SurrenderButton state={state} selfId={self!.id} />}
             <button className="link" onClick={() => void leaveRoom()}>
               {t.lobby.leave}
             </button>

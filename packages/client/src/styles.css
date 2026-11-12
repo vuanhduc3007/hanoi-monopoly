@@ -327,6 +327,49 @@ select {
 .tile:hover {
   background: #fff6dd;
 }
+/* A player row was clicked: ring and pulse the tile they stand on. */
+.tile.tile-spotlight {
+  z-index: 4;
+  box-shadow: inset 0 0 0 3px var(--spot, var(--ink));
+  animation: spot-pulse 0.6s ease-in-out 5 alternate;
+}
+/* At the top: the 3D piece stands over the middle and bottom of the tile. */
+.tile-spot-label {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: 2px;
+  z-index: 5;
+  padding: 1px 2px;
+  border-radius: 4px;
+  background: var(--spot, var(--ink));
+  color: #fff;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@keyframes spot-pulse {
+  from {
+    background: var(--paper);
+  }
+  to {
+    background: #ffe08a;
+  }
+}
+.player[role='button'] {
+  cursor: pointer;
+}
+.player[role='button']:hover {
+  background: #fbefd0;
+  border-radius: var(--radius);
+}
+.player-current[role='button']:hover {
+  background: #f6e2b0;
+}
+.team-total-wallet {
+  font-size: 0.85em;
+}
 .tile-corner {
   font-weight: 700;
   justify-content: center;
@@ -492,6 +535,10 @@ select {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+/* The flag alone (title and dialog say what it does), so the clock keeps its room. */
+.surrender {
+  white-space: nowrap;
 }
 /* The clock takes whatever room is left and never pushes the buttons around;
    when space runs out the label shrinks, never the seconds. */

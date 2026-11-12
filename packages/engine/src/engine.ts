@@ -49,12 +49,14 @@ import {
   jailMaxTurns,
   opponentsOf,
   pushFront,
+  openTeamWallets,
+  syncTeamCash,
   teammates,
 } from './ctx';
 import { dataFor, defaultData, type GameData } from './data';
 import { addActiveEffect, singleDieActive } from './effects';
 import { borrow, forcedLoan, loanOffer, type LoanOffer } from './loans';
-import { declareBankruptcy, execPay, finishGame, payTask, settleDebt, score } from './money';
+import { declareBankruptcy, execPay, finishGame, payTask, settleDebt, score, surrender } from './money';
 import {
   bid,
   buy,
@@ -178,7 +180,9 @@ export function createGame(opts: CreateGameOptions, data?: GameData): ActionResu
   const c: Ctx = { s, ev: [], d };
   emit(c, 'gameCreated', { seed: s.seed, config });
   if (config.mode === 'quick') dealQuickProperties(c);
+  openTeamWallets(c);
   startTurn(c);
+  syncTeamCash(c);
   return { state: s, events: c.ev };
 }
 
@@ -253,6 +257,7 @@ export function applyActionInPlace(s: GameState, action: Action, data?: GameData
   const c: Ctx = { s, ev: [], d: data ?? dataFor(s.config.board) };
   if (s.status === 'over') fail('Game is over');
   dispatch(c, action);
+  syncTeamCash(c);
   run(c);
   return { state: s, events: c.ev };
 }
@@ -261,10 +266,12 @@ function run(c: Ctx): void {
   for (;;) {
     while (c.s.status === 'playing' && !c.s.pending && c.s.queue.length > 0) {
       execTask(c, c.s.queue.shift()!);
+      syncTeamCash(c);
     }
     if (c.s.status !== 'playing' || c.s.pending || c.s.queue.length > 0) return;
     if (currentPlayer(c).bankrupt) {
       advanceTurn(c);
+      syncTeamCash(c);
       continue;
     }
     return;
@@ -593,25 +600,33 @@ function useSkill(c: Ctx, p: PlayerState, a: Extract<Action, { type: 'useSkill' 
       return;
     }
     case 'portal': {
-      // Mở cổng: instead of rolling, swap places with a random opponent and handle the tile
-      // reached. The opponent just moves (no tile, no salary). Nobody in jail swaps.
+      // Mở cổng: swap places with an opponent he picks, before rolling (instead of the
+      // roll) or after it. Both handle the tile they arrive on like any landing: he first,
+      // then the opponent (rent, tax, cards, a purchase…). Nobody passes GO; nobody in jail.
       requireTurn(c, p.id);
       requireFree(c);
-      if (c.s.turn.phase !== 'roll' || p.inJail) fail('Portal replaces a roll (not from jail)');
-      const pool = portalTargets(c, p);
-      if (pool.length === 0) fail('Nobody to swap with');
-      const q = pool[randomInt(c.s, pool.length)];
+      if (p.inJail) fail('Not from jail');
+      const q = portalTargets(c, p).find((x) => x.id === a.target);
+      if (!q) fail('Choose an opponent to swap with (not in jail, not on your tile)');
       useUpSkill(c, p);
-      c.s.turn.extraRoll = false;
-      c.s.turn.phase = 'end';
-      c.s.turn.dice = null;
+      const beforeRoll = c.s.turn.phase === 'roll';
+      if (beforeRoll) {
+        c.s.turn.extraRoll = false;
+        c.s.turn.phase = 'end';
+        c.s.turn.dice = null;
+      }
       const mine = p.position;
       p.position = q.position;
       q.position = mine;
       emit(c, 'skillUsed', { player: p.id, skill: sk.type, target: q.id, position: p.position });
       emit(c, 'moved', { player: p.id, from: mine, to: p.position, steps: 0, direct: true, portal: true });
       emit(c, 'moved', { player: q.id, from: p.position, to: mine, steps: 0, direct: true, portal: true });
-      pushFront(c, { t: 'land', player: p.id }, { t: 'afterRoll', player: p.id });
+      pushFront(
+        c,
+        { t: 'land', player: p.id },
+        { t: 'land', player: q.id },
+        ...(beforeRoll ? [{ t: 'afterRoll' as const, player: p.id }] : []),
+      );
       return;
     }
     case 'buyout': {
@@ -718,7 +733,7 @@ export function flashCompletesGroup(c: Ctx, p: PlayerState, id: string): boolean
   return !!g && groupProperties(c, g).every((x) => x === id || ownedBySide(c, x, p.id));
 }
 
-/** Mở cổng: opponents Bác sĩ lạ may swap with (not in jail, not on his tile). */
+/** Mở cổng: opponents Bác sĩ lạ may pick to swap with (not in jail, not on his tile). */
 export function portalTargets(c: Ctx, p: PlayerState): PlayerState[] {
   return opponentsOf(c, p).filter((q) => !q.inJail && q.position !== p.position);
 }
@@ -829,6 +844,8 @@ function dispatch(c: Ctx, a: Action): void {
       if (pend?.type !== 'liquidation' || pend.player !== a.player) fail('No debt pending');
       return declareBankruptcy(c);
     }
+    case 'surrender':
+      return surrender(c, getPlayer(c, a.player));
     case 'resolveMortgage':
       return resolveInheritedMortgage(c, getPlayer(c, a.player), a.unmortgage);
     case 'endTurn': {

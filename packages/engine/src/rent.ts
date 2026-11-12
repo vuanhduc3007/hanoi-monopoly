@@ -1,5 +1,5 @@
-import { emit, hotelLevel, ownsFullGroup, ownedBy, pushFront, teammates, type Ctx } from './ctx';
-import { onPayRent } from './characters';
+import { emit, getPlayer, hotelLevel, ownsFullGroup, ownedBy, pushFront, teammates, type Ctx } from './ctx';
+import { onPayRent, ownerRentFactor } from './characters';
 import { rentBlocked, rentMultipliers } from './effects';
 import { payTask } from './money';
 import { rollDice } from './rng';
@@ -14,7 +14,8 @@ export interface RentQuote {
 }
 
 /**
- * Rent order (GDD 4.4): base → ×2 full group → card multipliers (in order)
+ * Rent order (GDD 4.4): base → ×2 full group → owner's character factor (Chủ trọ)
+ * → card multipliers (in order)
  * → skill discount (applied later, on `raw`) → round up.
  */
 export function quoteRent(c: Ctx, payer: PlayerState, id: string, ctx: LandContext = {}, diceSum?: number): RentQuote {
@@ -38,6 +39,7 @@ export function quoteRent(c: Ctx, payer: PlayerState, id: string, ctx: LandConte
     } else {
       raw = rent[`h${own.level}` as 'h1'];
     }
+    raw *= ownerRentFactor(c, getPlayer(c, owner), id);
   } else if (def.kind === 'transport') {
     const count = ownedBy(c, owner).filter((x) => c.d.ownables[x].kind === 'transport').length;
     raw = c.d.economy.transportRent[count - 1];
@@ -55,7 +57,8 @@ export function quoteRent(c: Ctx, payer: PlayerState, id: string, ctx: LandConte
 /** Landed on someone else's property: compute and queue rent (may ask Ăn vạ). */
 export function execRent(c: Ctx, payer: PlayerState, id: string, ctx: LandContext = {}): void {
   let diceSum: number | undefined;
-  if (ctx.utilityRollMultiplier && c.s.ownables[id].owner && c.s.ownables[id].owner !== payer.id) {
+  const noDice = c.d.ownables[id].kind === 'utility' && !c.s.turn.dice;
+  if ((ctx.utilityRollMultiplier || noDice) && c.s.ownables[id].owner && c.s.ownables[id].owner !== payer.id) {
     const dice = rollDice(c.s, 2);
     diceSum = dice[0] + dice[1];
     emit(c, 'diceRolled', { player: payer.id, dice, purpose: 'utilityRent' });

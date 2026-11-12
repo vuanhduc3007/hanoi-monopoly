@@ -1,4 +1,4 @@
-import { canOwn, onLand, onPassGo, onPurchase, purchasePrice, taxAmount } from './characters';
+import { auctionPrice, canOwn, onLand, onPassGo, onPurchase, purchasePrice, taxAmount } from './characters';
 import { deckOfTile } from './cards';
 import { activePlayers, emit, fail, getPlayer, pushFront, type Ctx } from './ctx';
 import { effectsFor } from './effects';
@@ -9,10 +9,10 @@ import type { LandContext, PlayerState, SicboPick, Task } from './types';
 export function execMove(c: Ctx, p: PlayerState, steps: number): void {
   const n = c.d.board.length;
   const from = p.position;
-  if (steps >= 0 && from + steps >= n) onPassGo(c, p);
+  const due = steps >= 0 && from + steps >= n ? onPassGo(c, p) : [];
   p.position = (((from + steps) % n) + n) % n;
   emit(c, 'moved', { player: p.id, from, to: p.position, steps });
-  pushFront(c, { t: 'land', player: p.id });
+  pushFront(c, ...due, { t: 'land', player: p.id });
 }
 
 /** "Đi đến ô X": always forward, salary when passing or reaching GO. */
@@ -20,10 +20,10 @@ export function execMoveTo(c: Ctx, p: PlayerState, position: number, ctx?: LandC
   const n = c.d.board.length;
   const from = p.position;
   const steps = (position - from + n) % n;
-  if (steps > 0 && from + steps >= n) onPassGo(c, p);
+  const due = steps > 0 && from + steps >= n ? onPassGo(c, p) : [];
   p.position = position;
   emit(c, 'moved', { player: p.id, from, to: position, steps, direct: true });
-  pushFront(c, { t: 'land', player: p.id, ctx });
+  pushFront(c, ...due, { t: 'land', player: p.id, ctx });
 }
 
 export function execGoToJail(c: Ctx, p: PlayerState): void {
@@ -155,9 +155,16 @@ export function closeAuction(c: Ctx): void {
     emit(c, 'auctionEnded', { propertyId: pend.propertyId, winner: null });
     return;
   }
-  winner.cash -= pend.highBid;
+  // Thánh săn sale pays less than the winning bid.
+  const price = auctionPrice(c, winner, pend.highBid);
+  winner.cash -= price;
   c.s.ownables[pend.propertyId].owner = winner.id;
-  emit(c, 'auctionEnded', { propertyId: pend.propertyId, winner: winner.id, price: pend.highBid });
+  emit(c, 'auctionEnded', {
+    propertyId: pend.propertyId,
+    winner: winner.id,
+    price,
+    ...(price !== pend.highBid ? { bid: pend.highBid } : {}),
+  });
   onPurchase(c, winner.id);
 }
 

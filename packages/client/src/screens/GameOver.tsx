@@ -5,6 +5,7 @@ import { leaveRoom, send } from '../net/connection';
 import type { RoomView } from '../net/protocol';
 import { useStore } from '../store';
 import { Token } from '../components/Token';
+import { TEAM_COLORS } from '../lib/board';
 
 /** S9 — ranking, stats (most profitable tile, total rent paid), play again. */
 export function GameOver({ room }: { room: RoomView }) {
@@ -27,6 +28,7 @@ export function GameOver({ room }: { room: RoomView }) {
         ) : (
           winner && <p className="winner">{t.over.winner(nameOf(room, winner))}</p>
         )}
+        {winnerTeam !== null && state && <TeamTotals ranking={ranking} players={state.players} />}
         <table className="ranking">
           <thead>
             <tr>
@@ -94,6 +96,42 @@ function Fireworks() {
     <div className="fireworks" aria-hidden>
       {sparks.map((style, i) => (
         <span key={i} style={style} />
+      ))}
+    </div>
+  );
+}
+
+/** Team games: each team's summed net worth (eliminated teams last), as the result was decided. */
+function TeamTotals({
+  ranking,
+  players,
+}: {
+  ranking: { player: string; score: number }[];
+  players: { id: string; team?: number | null; bankrupt: boolean }[];
+}) {
+  const order: number[] = [];
+  const totals = new Map<number, { worth: number; left: number }>();
+  for (const r of ranking) {
+    const p = players.find((x) => x.id === r.player);
+    if (p?.team === undefined || p.team === null) continue;
+    if (!order.includes(p.team)) order.push(p.team);
+    const x = totals.get(p.team) ?? { worth: 0, left: 0 };
+    if (!p.bankrupt) {
+      x.worth += Math.max(0, r.score);
+      x.left++;
+    }
+    totals.set(p.team, x);
+  }
+  return (
+    <div className="team-totals team-totals-over">
+      {order.map((team, i) => (
+        <div key={team} className={`team-total${totals.get(team)!.left === 0 ? ' player-out' : ''}`} style={{ borderColor: TEAM_COLORS[team % TEAM_COLORS.length] }}>
+          <span className="team-total-name">
+            {i + 1}. {teamName(team)}
+          </span>
+          <span />
+          <span className="team-total-worth">{totals.get(team)!.left === 0 ? t.board.bankrupt : money(totals.get(team)!.worth)}</span>
+        </div>
       ))}
     </div>
   );

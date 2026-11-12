@@ -498,6 +498,76 @@ const AVATARS: Record<string, { bg: string; draw: () => JSX.Element }> = {
       </>
     ),
   },
+  // Thánh săn sale: a shopping bag with a red % tag.
+  C13: {
+    bg: '#C2477A',
+    draw: () => (
+      <>
+        <path d="M13 18 h22 l-2 20 h-18 Z" fill={PAPER} {...s} />
+        <path d="M19 18 v-3 a5 5 0 0 1 10 0 v3" fill="none" {...s} />
+        <path d="M27 24 l9 -2 3 8 -9 3 Z" fill={RED} {...s} strokeWidth={1.4} />
+        <text x={33} y={30} fontSize={5.5} fill={PAPER} fontWeight={700} textAnchor="middle">
+          %
+        </text>
+        <circle cx={20} cy={28} r={2} fill={GOLD} {...s} strokeWidth={1} />
+      </>
+    ),
+  },
+  // Chủ trọ: a row of tiny rented rooms and a big key.
+  C14: {
+    bg: '#6B5B95',
+    draw: () => (
+      <>
+        <rect x={10} y={18} width={22} height={18} fill={PAPER} {...s} />
+        <path d="M9 19 L21 11 L33 19" fill={RED} {...s} />
+        <rect x={13} y={22} width={5} height={5} fill={SKY} {...s} strokeWidth={1} />
+        <rect x={24} y={22} width={5} height={5} fill={SKY} {...s} strokeWidth={1} />
+        <rect x={18} y={29} width={6} height={7} fill={BROWN} {...s} strokeWidth={1} />
+        <circle cx={35} cy={30} r={3.2} fill={GOLD} {...s} strokeWidth={1.4} />
+        <path d="M35 33 v6 h2 M35 36 h2" fill="none" {...s} strokeWidth={1.4} />
+      </>
+    ),
+  },
+  // Thầy phong thủy: a la bàn with the needle pointing to luck.
+  C15: {
+    bg: '#3E7C7B',
+    draw: () => (
+      <>
+        <circle cx={24} cy={24} r={13} fill={GOLD} {...s} />
+        <circle cx={24} cy={24} r={8.5} fill={PAPER} {...s} strokeWidth={1.2} />
+        <path d="M24 11 v4 M24 33 v4 M11 24 h4 M33 24 h4" {...s} strokeWidth={1.2} />
+        <path d="M24 17 l2.5 7 -2.5 7 -2.5 -7 Z" fill={RED} {...s} strokeWidth={1} />
+        <circle cx={24} cy={24} r={1.4} fill={INK} />
+      </>
+    ),
+  },
+  // Tín dụng đen: a fat wad of cash with a red "vay nóng" band.
+  C16: {
+    bg: '#3A3A3A',
+    draw: () => (
+      <>
+        <rect x={9} y={22} width={26} height={13} rx={1.5} fill={GREEN} {...s} transform="rotate(-8 22 28)" />
+        <rect x={12} y={18} width={26} height={13} rx={1.5} fill={GREEN} {...s} />
+        <circle cx={25} cy={24.5} r={3.2} fill={PAPER} {...s} strokeWidth={1} />
+        <rect x={20} y={16.5} width={6} height={16} fill={RED} {...s} strokeWidth={1.2} />
+        <text x={36} y={14} fontSize={8} fill={GOLD} fontWeight={700} textAnchor="middle">
+          %
+        </text>
+      </>
+    ),
+  },
+  // Bác sĩ lạ: a ring of sparks opening a portal.
+  C17: {
+    bg: '#2E2A4F',
+    draw: () => (
+      <>
+        <circle cx={24} cy={24} r={13} fill="none" stroke={GOLD} strokeWidth={3} strokeDasharray="3 2" />
+        <circle cx={24} cy={24} r={9} fill={SKY} {...s} strokeWidth={1.2} />
+        <path d="M24 17 l1.6 4.4 4.6 .2 -3.6 2.9 1.3 4.5 -3.9 -2.6 -3.9 2.6 1.3 -4.5 -3.6 -2.9 4.6 -.2 Z" fill={PAPER} {...s} strokeWidth={0.8} />
+        <path d="M10 38 q14 -6 28 0" fill="none" stroke={RED} strokeWidth={2.4} />
+      </>
+    ),
+  },
 };
 
 export function Avatar({ character, size = 40, label }: { character: string | null; size?: number | string; label?: string }) {

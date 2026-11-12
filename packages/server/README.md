@@ -33,7 +33,7 @@ const again = await client.reconnect(room.reconnectionToken);  // after a droppe
 | `start` | `{}` | lobby, host (≥ 2 players, all ready; with teams every team has a player and sizes differ by ≤ 1) |
 | `rematch` | `{}` | game over, host — back to the lobby with the connected players |
 | `pick` | `{ character: 'C01'… }` or `{ random: true }` | picking, your turn to pick |
-| `action` | `{ action }` — an engine `Action`; `player` is filled in by the server (incl. `revealCard`, `payRent`, `gamble`, `placeBet`, `buy` with `gamble`, `useSkill` with `propertyId`) | playing |
+| `action` | `{ action }` — an engine `Action`; `player` is filled in by the server (incl. `revealCard`, `payRent`, `gamble`, `placeBet`, `buy` with `gamble`, `useSkill` with `propertyId`, with `position` for Du lịch, with `from` + `propertyId` for Dời nhà; `borrow` for Vay nóng while short of cash) | playing |
 | `chat` | `{ text }` | any time (≤ 200 chars, 1 / 0.5 s) |
 | `emote` | `{ emote }` | any time |
 
@@ -44,7 +44,7 @@ const again = await client.reconnect(room.reconnectionToken);  // after a droppe
 | Type | Payload |
 | --- | --- |
 | `joined` | `{ role: 'player' \| 'spectator', code }` |
-| `room` | `{ code, phase, settings, you, seats[], spectators, picking: { order, current, available, clock } \| null }` — each seat has `team` (null when teams are off) |
+| `room` | `{ code, phase, settings, you, seats[], spectators, picking: { order, current, available, clock } \| null, quickEndsAt }` — each seat has `team` (null when teams are off) and `learner`; `quickEndsAt` is when a quick game ends on time (server ms), null otherwise |
 | `turnOrder` | `{ order, rolls, teams }` — with teams the rolled order is re-dealt so teams alternate |
 | `picked` | `{ seat, character, random }` |
 | `clock` | `{ clock }` — the clock changed without a game update (paused / extended) |

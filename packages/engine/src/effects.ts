@@ -7,7 +7,10 @@ export function isImmune(c: Ctx, p: PlayerState, cardId: string | null, effect: 
   if (!c.s.config.characters || !p.character) return false;
   if (Array.isArray(effect.immune) && effect.immune.includes(p.character)) return true;
   if (!cardId) return false;
-  const def = characterFor(c.d, p.character, c.s.players.length);
+  const def = characterFor(c.d, p.character, c.s.players.length, {
+    mode: c.s.config.mode,
+    teams: c.s.players.some((x) => x.team !== undefined),
+  });
   return [...def.passives, ...def.drawbacks].some(
     (t) => t.type === 'immune_events' && Array.isArray(t.cards) && t.cards.includes(cardId),
   );

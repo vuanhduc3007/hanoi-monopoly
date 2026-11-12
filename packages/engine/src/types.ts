@@ -43,6 +43,19 @@ export interface PlayerState {
   doublesCount: number;
   /** Team games only: players sharing a team never pay each other and win together. */
   team?: number;
+  /** Tín dụng đen loans this player owes, repaid automatically at the next pass of the start. */
+  debts?: Debt[];
+  /** Thiếu gia Vin's Bố ơi cứu con already saved this player (once a game). */
+  bailoutUsed?: boolean;
+  /** Chủ trọ's Tăng giá phòng: raises per property (they count while this player owns it). */
+  rentBoosts?: Record<string, number>;
+}
+
+export interface Debt {
+  /** The lender. */
+  to: PlayerId;
+  /** What is owed (interest included). */
+  amount: number;
 }
 
 export interface OwnableState {
@@ -223,7 +236,19 @@ export type Action =
   | { type: 'cancelTrade'; player?: PlayerId; tradeId: string }
   | { type: 'payJailFine'; player: PlayerId }
   | { type: 'useJailCard'; player: PlayerId }
-  | { type: 'useSkill'; player: PlayerId; target?: PlayerId; group?: string; propertyId?: string }
+  | {
+      type: 'useSkill';
+      player: PlayerId;
+      target?: PlayerId;
+      group?: string;
+      propertyId?: string;
+      /** Du lịch: board index to go to. */
+      position?: number;
+      /** Dời nhà: the property a house is taken from (`propertyId` receives it). */
+      from?: string;
+    }
+  /** Short of cash for a debt: borrow the shortfall from Tín dụng đen. */
+  | { type: 'borrow'; player: PlayerId }
   | { type: 'gamble'; player: PlayerId; pick: SicboPick | null }
   | { type: 'placeBet'; player: PlayerId; pick: SicboPick }
   | { type: 'declineSkill'; player: PlayerId }

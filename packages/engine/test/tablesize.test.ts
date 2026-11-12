@@ -15,7 +15,9 @@ describe('character numbers by table size (byTableSize)', () => {
           expect(at.skill).toMatchObject({ ...ch.skill, ...first.skill });
         }
       }
-      expect(characterFor(defaultData, ch.id, 6)).toBe(defaultData.characters[ch.id]);
+      // A table size no override lists plays the base character.
+      const plain = [2, 3, 4, 5, 6, 7, 8].find((n) => !ch.byTableSize!.some((o) => o.players.includes(n)));
+      if (plain !== undefined) expect(characterFor(defaultData, ch.id, plain)).toBe(defaultData.characters[ch.id]);
     }
   });
 
@@ -73,12 +75,55 @@ describe('56-tile board for 7–8 players', () => {
       const m = dataFor(board).economy.startingCashMultiplier!;
       expect(m).toBeGreaterThan(1);
       expect(cash(board, n)).toBe(Math.ceil((1500 * m) / 10) * 10);
-      const c08 = defaultData.characters.C08.passives[0].value as number;
+      const c08 = characterFor(defaultData, 'C08', n).passives[0].value as number;
       expect(cash(board, n, 'C08')).toBe(Math.ceil((c08 * m) / 10) * 10);
     }
   });
 
   it('a salary multiplier makes the longer lap pay more', () => {
     expect(L.economy.goSalaryMultiplier).toBeGreaterThan(1);
+  });
+});
+
+describe('byMode: own numbers for Nhanh and team games', () => {
+  it('matching entries apply after byTableSize, in order; others are ignored', async () => {
+    const { characterFor, defaultData } = await import('../src');
+    const base = defaultData.characters.C02;
+    const d = {
+      ...defaultData,
+      characters: {
+        ...defaultData.characters,
+        C02: {
+          ...base,
+          byTableSize: [{ players: [4], skill: { rate: 0.4 } }],
+          byMode: [
+            { mode: 'quick' as const, skill: { cooldownRounds: 9 } },
+            { teams: true, players: [4], skill: { rate: 0.3 } },
+            { mode: 'classic' as const, teams: false, drawbacks: [] },
+          ],
+        },
+      },
+    };
+    expect(characterFor(d, 'C02', 4).skill).toMatchObject({ rate: 0.4, cooldownRounds: base.skill.cooldownRounds });
+    expect(characterFor(d, 'C02', 4).drawbacks).toEqual([]);
+    expect(characterFor(d, 'C02', 4, { mode: 'quick' }).skill).toMatchObject({ rate: 0.4, cooldownRounds: 9 });
+    expect(characterFor(d, 'C02', 4, { mode: 'quick', teams: true }).skill).toMatchObject({ rate: 0.3, cooldownRounds: 9 });
+    expect(characterFor(d, 'C02', 6, { teams: true }).skill).toMatchObject({ rate: base.skill.rate });
+    expect(characterFor(d, 'C02', 4, { teams: true }).drawbacks).toEqual(base.drawbacks);
+  });
+
+  it('a game applies the overrides of its own mode (starting cash included)', async () => {
+    const { createGame, defaultData } = await import('../src');
+    const base = defaultData.characters.C07;
+    const d = {
+      ...defaultData,
+      characters: {
+        ...defaultData.characters,
+        C07: { ...base, byMode: [{ mode: 'quick' as const, drawbacks: [{ type: 'starting_cash', value: 1234 }] }] },
+      },
+    };
+    const players = [{ id: 'a', character: 'C07' }, { id: 'b', character: null }];
+    expect(createGame({ players, seed: 1, config: { mode: 'quick' } }, d).state.players[0].cash).toBeLessThan(1234);
+    expect(createGame({ players, seed: 1, config: { mode: 'classic' } }, d).state.players[0].cash).toBe(base.drawbacks[0].value);
   });
 });

@@ -10,6 +10,7 @@ import {
   pushFront,
 } from './ctx';
 import { expireEffectsOf } from './effects';
+import { dropLoansOf, loanBalance } from './loans';
 import { gambleRule, gambleWorst } from './sicbo';
 import type { PayKind, PayTarget, PayTask, PlayerState, Task } from './types';
 
@@ -217,6 +218,7 @@ export function goBankrupt(c: Ctx, p: PlayerState, task: PayTask): void {
   p.cash = 0;
   p.jailCards = [];
   p.bankrupt = true;
+  dropLoansOf(c, p.id);
   p.inJail = false;
   c.s.bankruptOrder.push(p.id);
   c.s.queue = c.s.queue.filter((t) => {
@@ -230,9 +232,9 @@ export function goBankrupt(c: Ctx, p: PlayerState, task: PayTask): void {
 
 // ---------------------------------------------------------------- game end
 
-/** Quick-mode net worth: cash + list price (mortgaged 50%) + build cost. */
+/** Quick-mode net worth: cash + list price (mortgaged 50%) + build cost, ± loans owed. */
 export function score(c: Ctx, p: PlayerState): number {
-  let total = p.cash;
+  let total = p.cash + loanBalance(c, p);
   for (const id of ownedBy(c, p.id)) {
     const def = c.d.ownables[id];
     const own = c.s.ownables[id];

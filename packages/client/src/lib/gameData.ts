@@ -1,4 +1,4 @@
-import { characterFor, dataFor, type BoardId, type CharacterDef, type GameData } from '@hanoi-monopoly/engine';
+import { characterFor, dataFor, type BoardId, type CharacterDef, type GameData, type TableKind } from '@hanoi-monopoly/engine';
 
 let current: GameData = dataFor('standard');
 let players = 4;
@@ -10,9 +10,24 @@ export function setTablePlayers(n: number): void {
 
 export const tablePlayers = (): number => players;
 
-/** A character as it plays at the current table size. */
+/** Team games: players per team (the opponents of a player are the other teams). 0 = no teams. */
+let teamSize = 0;
+export function setTeamSize(n: number): void {
+  teamSize = n;
+}
+/** How many opponents a player has at this table. */
+export const tableOpponents = (): number => Math.max(1, players - Math.max(1, teamSize));
+
+/** Game mode and team-ness of the table (characters can have their own numbers for them). */
+let kind: TableKind = {};
+export function setTableKind(k: TableKind): void {
+  kind = k;
+}
+export const tableKind = (): TableKind => kind;
+
+/** A character as it plays at the current table size, mode and teams. */
 export function charOf(id: string, n: number = players): CharacterDef {
-  return characterFor(current, id, n);
+  return characterFor(current, id, n, kind);
 }
 
 /** Switch the board every screen reads (set from the game state as it arrives). */

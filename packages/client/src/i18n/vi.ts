@@ -4,7 +4,7 @@
  * sync with data/*.json.
  */
 import { contributionShares, sicboStake, type Effect, type GameEvent } from '@hanoi-monopoly/engine';
-import { charOf, D, tablePlayers } from '../lib/gameData';
+import { charOf, D, tableKind, tableOpponents, tablePlayers } from '../lib/gameData';
 
 const nf = new Intl.NumberFormat('vi-VN');
 export const money = (n: number) => `${nf.format(n)} ${D.economy.currency}`;
@@ -77,7 +77,7 @@ export const t = {
     allowSpectators: 'Cho phép khán giả',
     teams: 'Chế độ đội',
     teamOptions: (n: number) => (n === 0 ? 'Không (mỗi người một phe)' : `${n} đội`),
-    teamHint: 'Đồng đội không thu tiền thuê của nhau, thẻ và kỹ năng chỉ nhắm vào đội khác. Đội cuối cùng còn trụ (hoặc nhiều tài sản nhất khi hết giờ) thắng. Lượt đi xen kẽ giữa các đội.',
+    teamHint: 'Đồng đội không thu tiền thuê của nhau; đất của cả đội tính chung nhóm màu (cả đội đủ nhóm thì mỗi người xây nhà trên ô của mình) và cắm cờ màu đội. Thẻ và kỹ năng chỉ nhắm vào đội khác. Đội cuối cùng còn trụ (hoặc tổng tài sản cao nhất khi hết giờ) thắng. Lượt đi xen kẽ giữa các đội.',
     joinTeam: 'Vào đội',
     shuffleTeams: 'Xáo đội ngẫu nhiên',
     unevenTeams: 'Các đội phải có người và lệch nhau tối đa 1 người.',
@@ -103,12 +103,14 @@ export const t = {
     taken: (name: string) => `Đã chọn: ${name}`,
     choose: 'Chọn',
     turnOrder: 'Thứ tự lượt',
+    turnOrderTeams: 'các đội đi xen kẽ, đội có người tung cao nhất đi trước',
     random: 'Chọn ngẫu nhiên',
     drawing: (name: string) => `Đang bốc thăm cho ${name}…`,
     drawTitle: 'Bốc thăm nhân vật',
   },
 
   teams: {
+    alive: (left: number, size: number) => `còn ${left}/${size} người`,
     names: ['Đội Rồng', 'Đội Phượng', 'Đội Lân', 'Đội Quy'],
     won: (team: string, names: string) => `${team} thắng! (${names})`,
     teammate: 'Đồng đội',
@@ -128,6 +130,13 @@ export const t = {
   // S4
   board: {
     roomCode: 'Phòng',
+    quickLeft: (time: string) => `Ván Nhanh còn ${time}`,
+    quickEnd: (n: number, teams = false) =>
+      `Hết giờ, hoặc khi ${n} người phá sản: ${teams ? 'đội' : 'ai'} có tổng tài sản cao nhất thắng`,
+    worth: (amount: string) => `tài sản ${amount}`,
+    owes: (lender: string, amount: string) => `nợ ${lender} ${amount}`,
+    owesTitle: 'Tín dụng đen: tự trừ khi qua Hoàng thành lần tới',
+    worthTitle: 'Tổng tài sản: tiền mặt + giá đất (đất thế chấp tính nửa giá) + tiền xây nhà',
     fund: 'Quỹ khuyến học',
     fundOff: 'Quỹ tắt',
     active: 'Đang hiệu lực',
@@ -147,7 +156,7 @@ export const t = {
     botPlaying: 'Bot đang chơi thay',
     assets: 'Tài sản',
     trade: 'Giao dịch',
-    clockPaused: 'Đồng hồ tạm dừng khi giao dịch',
+    clockPaused: 'Tạm dừng (giao dịch)',
     clockExtended: `(+${Math.round((D.config.timers.assetsExtraSec ?? 120) / 60)} phút suy nghĩ)`,
     seconds: (n: number) => (n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}` : `${n}s`),
     until: (name: string) => `đến lượt kế của ${name}`,
@@ -165,6 +174,7 @@ export const t = {
     rent: 'Tiền thuê',
     base: 'Đất trống',
     baseGroup: 'Đất trống (đủ nhóm)',
+    baseGroupTeam: 'Đất trống (đội đủ nhóm)',
     house: (n: number) => `${n} nhà`,
     hotel: 'Khách sạn',
     buildCost: 'Giá xây',
@@ -207,7 +217,8 @@ export const t = {
     useSkill: 'Dùng kỹ năng',
     skip: 'Bỏ qua',
     eventCancel: (card: string) => `Dùng Giải hạn để hủy "${card}" với bạn?`,
-    liquidation: (amount: string, cash: string) => `Bạn cần trả ${amount} nhưng chỉ có ${cash}. Bán nhà, thế chấp hoặc giao dịch.`,
+    liquidation: (amount: string, cash: string) =>
+      `Bạn cần trả ${amount} nhưng chỉ có ${cash}. Bán nhà, thế chấp (nút Tài sản) hoặc giao dịch cho đủ tiền rồi bấm Trả nợ.`,
     payDebt: 'Trả nợ',
     bankrupt: 'Tuyên bố phá sản',
     inherit: (tile: string) => `Bạn nhận ${tile} đang thế chấp`,
@@ -234,6 +245,31 @@ export const t = {
     chooseMortgaged: 'Chọn ô đối thủ đang thế chấp',
     chooseFreeBuild: 'Chọn ô để tự tay xây (miễn phí)',
     noTargets: 'Chưa có ô phù hợp',
+    noTargetsWhy: (why: string) => `Chưa có ô phù hợp: ${why.charAt(0).toLowerCase()}${why.slice(1)}`,
+    noLand: 'Bạn chưa có đất nào',
+    chuiUsed: (tile: string) =>
+      `bạn đã có nhà chui ở ${tile} (mỗi lúc chỉ 1 căn, mỗi căn 1 nhà); ô khác phải đủ nhóm màu mới xây tiếp được`,
+    travelPick: '✈ Bấm vào ô muốn đến trên bàn cờ (qua Hoàng thành vẫn nhận lương).',
+    travelCancel: 'Thôi, tung xúc xắc',
+    // Thánh săn sale / Chủ trọ / Thầy phong thủy / Tín dụng đen / Bác sĩ lạ
+    flashPick: '🏷 Bấm vào một ô chưa có chủ trên bàn cờ để mua giảm giá (không cần đi tới).',
+    flashPickNoComplete: '🏷 Bấm vào một ô chưa có chủ trên bàn cờ để mua giảm giá — trừ ô làm bạn đủ nhóm màu.',
+    flashCancel: 'Thôi',
+    chooseBuyout: 'Chọn ô lẻ của đối thủ để mua đứt (trả cho chủ)',
+    noBuyout: 'Chưa có ô nào mua đứt được: cần một ô đối thủ giữ lẻ trong nhóm (họ không có ô nào khác cùng nhóm), chưa có nhà, không thế chấp, và đủ tiền',
+    scholarship: (name: string, amount: string, fund: boolean) => `${name} (+${amount}${fund ? ' từ Quỹ' : ' từ ngân hàng'})`,
+    chooseRaise: 'Chọn ô để tăng giá phòng',
+    raised: (n: number, max: number) => `đã tăng ${n}/${max}`,
+    noRaise: 'Bạn chưa có ô đất nào để tăng giá',
+    moveFrom: 'Chọn ô lấy 1 nhà đi',
+    moveTo: (tile: string) => `Dời 1 nhà từ ${tile} sang…`,
+    moveAgain: 'Chọn lại',
+    noMoves:
+      'Chưa dời được nhà nào: cần một ô có nhà (không phải khách sạn) và một nhóm màu đủ bộ khác còn xây đều được',
+    forcedLoan: (amount: string, owed: string) => `Giải ngân ${amount} (đối thủ ngẫu nhiên, trả ${owed})`,
+    portal: (name: string) => `🌀 ${name}`,
+    portalTitle: 'Thay cho tung xúc xắc: đổi chỗ với một đối thủ ngẫu nhiên rồi xử lý ô mới',
+    borrow: (lender: string, amount: string, owed: string) => `Vay nóng ${lender} ${amount} (trả ${owed} khi qua Hoàng thành)`,
   },
 
   // S7
@@ -270,12 +306,13 @@ export const t = {
     transport: 'Giao thông',
     utility: 'Tiện ích',
     buildHotel: 'Lên khách sạn',
+    teammateTile: (name: string) => `của đồng đội ${name} — tính chung nhóm`,
     rulesTitle: 'Khi nào được xây nhà?',
     rules: (housesForHotel: number) => [
-      'Phải sở hữu ĐỦ cả nhóm màu (ví dụ cả 2 ô nâu, hoặc cả 3 ô hồng). Mua thêm hoặc đổi đất với người khác để gom đủ nhóm.',
+      'Phải sở hữu ĐỦ cả nhóm màu (ví dụ cả 2 ô nâu, hoặc cả 3 ô hồng). Mua thêm hoặc đổi đất với người khác để gom đủ nhóm. Chế độ đội: đất của đồng đội tính chung — cả đội đủ nhóm thì mỗi người xây trên ô của mình.',
       'Không ô nào trong nhóm đang thế chấp.',
       'Chỉ xây trong lượt của bạn — bất cứ lúc nào trong lượt, không cần đứng trên ô đó. Mở "Tài sản" để xây.',
-      'Xây đều: các ô cùng nhóm chênh nhau tối đa 1 nhà. Muốn xây nhà thứ 2 ở một ô thì các ô khác trong nhóm phải có ít nhất 1 nhà.',
+      'Xây đều: các ô cùng nhóm chênh nhau tối đa 1 nhà (kể cả ô của đồng đội). Muốn xây nhà thứ 2 ở một ô thì các ô khác trong nhóm phải có ít nhất 1 nhà.',
       `Đủ ${housesForHotel} nhà trên mọi ô của nhóm thì được nâng lên khách sạn.`,
       'Mỗi lần xây trả giá xây của ô; bán lại được một nửa.',
     ],
@@ -291,6 +328,10 @@ export const t = {
       noCash: 'Không đủ tiền',
       noHousesLeft: 'Ngân hàng hết nhà',
       noHotelsLeft: 'Ngân hàng hết khách sạn',
+      sameTile: 'Chọn một ô khác',
+      noHouseToMove: 'Ô này chưa có nhà',
+      sellEvenly: 'Phải bớt đều: lấy nhà ở ô nhiều nhà nhất trong nhóm',
+      housesOnly: 'Chỉ dời được nhà, không dời hay dời lên khách sạn',
     } as Record<string, string>,
   },
 
@@ -690,7 +731,7 @@ export function describeTrait(e: Effect): string {
     case 'ignore_go_to_jail_tile':
       return 'Dừng ô CSGT thổi còi không bị vào Bãi giữ xe';
     case 'immune_events':
-      return `Miễn ${(e.cards as string[]).join(', ')}`;
+      return `Miễn thẻ ${(e.cards as string[]).map((id) => `"${cardName(id)}"`).join(', ')}`;
     case 'landing_fee':
       return `Dừng ở ${list(e.properties)} trả thêm ${money(e.amount)} phí phát thải (vào Quỹ)`;
     case 'rent_discount':
@@ -725,6 +766,37 @@ export function describeTrait(e: Effect): string {
       return `Tự động: từ lần qua ${D.board[0].name} thứ ${e.afterGoPasses}, lương ${boardSalary(e.value)}`;
     case 'free_jail_exit':
       return 'Ra Bãi giữ xe miễn phí';
+    case 'travel':
+      return `Thay cho tung xúc xắc: chọn một ô bất kỳ rồi đi thẳng tới đó (qua ${D.board[0].name} vẫn nhận lương); dừng ở ô nào xử lý như bình thường. Không dùng khi đang ở Bãi giữ xe`;
+    case 'buyout':
+      return `Mua đứt 1 ô lẻ của đối thủ (họ không giữ ô nào khác cùng nhóm, nhóm chưa có nhà, ô không thế chấp), trả chủ ${pct(
+        e.premium,
+      )} giá đất`;
+    case 'scholarship':
+      return `Rút tối đa ${money(e.maxAmount)} từ Quỹ khuyến học; Quỹ trống hoặc tắt thì ngân hàng cấp ${money(e.fallbackAmount)}`;
+    // ---- C13–C17
+    case 'auction_discount':
+      return `Thắng đấu giá chỉ phải trả ${pct(1 - (e.rate as number))} giá đã đặt`;
+    case 'flash_sale':
+      return `Mua ngay 1 ô chưa có chủ ở bất kỳ đâu trên bàn, giảm ${pct(e.rate)} giá, không cần đi tới${
+        e.completesGroup === false ? ' (không được mua ô làm bạn đủ nhóm màu)' : ''
+      }`;
+    case 'rent_bonus_groups':
+      return `Tiền thuê ở ${groups(e.groups)} cao hơn ${pct(e.rate)}`;
+    case 'raise_rent':
+      return `Chọn 1 ô đất của mình: tiền thuê ô đó tăng thêm ${pct(e.rate)} mãi mãi (khi bạn còn giữ ô, không tính khi ô đã lên khách sạn), mỗi ô tối đa ${e.maxPerTile} lần`;
+    case 'move_house':
+      return 'Dời 1 nhà từ ô này sang ô khác của mình, miễn phí (ô nhận phải đủ nhóm màu, vẫn xây và bớt đều; không dời khách sạn)';
+    case 'loan_shark':
+      return `Đối thủ thiếu tiền trả nợ được vay nóng của bạn phần còn thiếu (tối đa ${money(e.maxAmount)}), trả lại ${pct(
+        1 + (e.rate as number),
+      )} khi qua ${D.board[0].name}`;
+    case 'forced_loan':
+      return `Ép một đối thủ ngẫu nhiên vay ${money(e.amount)}: họ phải trả ${money(
+        Math.ceil((e.amount as number) * (e.repayRate as number) - 1e-9),
+      )} khi qua ${D.board[0].name}, không trả nổi thì phá sản về tay bạn`;
+    case 'portal':
+      return 'Thay cho tung xúc xắc: đổi chỗ với một đối thủ ngẫu nhiên (trừ người ở Bãi giữ xe), rồi xử lý ô mới như vừa dừng ở đó; không nhận lương. Không dùng khi đang ở Bãi giữ xe';
     // ---- C09–C12
     case 'gamble_payment':
       return `Khi mua đất của ngân hàng hoặc nộp thuế, phạt, tiền thẻ từ ${money(e.minAmount ?? 0)}: được chơi tài xỉu — thắng trả bớt ${pct(e.winRate)}, thua trả thêm ${pct(e.loseRate)}, ra bão ${e.jackpotRate >= 1 ? 'khỏi trả' : `trả bớt ${pct(e.jackpotRate)}`}`;
@@ -769,7 +841,9 @@ export function teamName(team: number): string {
 /** " — bàn 8 người: mỗi đối thủ 80 tỷ" for skills split among the opponents. */
 function perOpponent(each: (opponents: number) => string): string {
   const n = tablePlayers();
-  return n >= 2 ? ` — bàn ${n} người: mỗi đối thủ ${each(n - 1)}` : '';
+  const opp = tableOpponents();
+  if (n < 2) return '';
+  return opp === n - 1 ? ` — bàn ${n} người: mỗi đối thủ ${each(opp)}` : ` — ${opp} đối thủ (đội khác): mỗi người ${each(opp)}`;
 }
 
 /** Salary on the current board (longer boards multiply every salary). */
@@ -801,10 +875,23 @@ const DECK_NAMES: Record<string, string> = { chance: 'Cơ hội', community: 'C�
 export function describeCharacter(id: string, players?: number) {
   const c = charOf(id, players);
   const sizes = (D.characters[id].byTableSize ?? []).flatMap((o) => o.players);
+  const n = players ?? tablePlayers();
+  const kind = tableKind();
+  const modes = (D.characters[id].byMode ?? []).filter(
+    (m) =>
+      (m.mode === undefined || m.mode === (kind.mode ?? 'classic')) &&
+      (m.teams === undefined || m.teams === !!kind.teams) &&
+      (!m.players || m.players.includes(n)),
+  );
+  const modeName = [kind.mode === 'quick' ? 'Nhanh' : null, kind.teams ? 'Đội' : null].filter(Boolean).join(' + ');
+  const notes = [
+    players !== undefined && sizes.includes(players) ? `bàn ${players} người` : null,
+    modes.length && modeName ? `chế độ ${modeName}` : null,
+  ].filter(Boolean);
   return {
     name: c.name,
-    /** Present when this table size uses its own numbers. */
-    tableNote: players !== undefined && sizes.includes(players) ? `Chỉ số riêng cho bàn ${players} người` : null,
+    /** Present when this table size / mode uses its own numbers. */
+    tableNote: notes.length ? `Chỉ số riêng cho ${notes.join(', ')}` : null,
     passives: c.passives.map(describeTrait),
     drawbacks: c.drawbacks.length ? c.drawbacks.map(describeTrait) : ['Không'],
     skill: `${c.skill.name}: ${describeTrait(c.skill)} (${skillRecharge(c.skill)})`,
@@ -814,7 +901,6 @@ export function describeCharacter(id: string, players?: number) {
 /** "dùng lại sau 3 lượt" / "1 lần mỗi ván" from characters.json. */
 export function skillRecharge(skill: Effect): string {
   const rounds = skill.recharge === false ? 0 : ((skill.cooldownRounds as number | undefined) ?? D.characterRules.skillCooldownRounds);
-  if (skill.type === 'auto_salary_upgrade') return 'tự kích hoạt';
   return rounds > 0 ? `dùng lại sau ${rounds} lượt` : '1 lần mỗi ván';
 }
 
@@ -847,6 +933,7 @@ const reasonText = (r: unknown): string => {
   if (s === 'contribution') return ' (họp tổ dân phố)';
   if (s === 'sicbo') return ' (tài xỉu)';
   if (s === 'parkBonus') return ' (thưởng Văn Miếu)';
+  if (s === 'loanRepay') return ' (trả nợ tín dụng đen)';
   if (D.ownables[s]) return ` (thuê ${tileName(s)})`;
   return '';
 };
@@ -887,7 +974,9 @@ export function formatEvent(e: GameEvent, who: Who): string | null {
       return `${p} trả ${money(e.amount as number)}`;
     case 'auctionEnded':
       return e.winner
-        ? `${name(e.winner as string)} thắng đấu giá ${tileName(e.propertyId as string)} giá ${money(e.price as number)}`
+        ? `${name(e.winner as string)} thắng đấu giá ${tileName(e.propertyId as string)} giá ${money(e.price as number)}${
+            e.bid !== undefined ? ` (đặt ${money(e.bid as number)}, săn sale)` : ''
+          }`
         : `Không ai mua ${tileName(e.propertyId as string)}`;
     case 'dealt':
       return `${p} được chia ${tileName(e.propertyId as string)} (${money(e.price as number)})`;
@@ -967,10 +1056,28 @@ export function formatEvent(e: GameEvent, who: Who): string | null {
       return 'Giao dịch đã hủy';
     case 'debt':
       return `${p} thiếu tiền: cần ${money(e.amount as number)}`;
+    case 'loan':
+      return e.forced
+        ? `${name(e.lender as string)} giải ngân cho ${p} ${money(e.amount as number)} — trả ${money(e.owed as number)} khi qua ${D.board[0].name}`
+        : `${p} vay nóng ${name(e.lender as string)} ${money(e.amount as number)} — trả ${money(e.owed as number)} khi qua ${D.board[0].name}`;
+    case 'cardImmune':
+      return `${p} được miễn thẻ "${cardName(e.cardId as string)}"`;
     case 'bankrupt':
       return `${p} phá sản!`;
     case 'skillUsed':
+      if (e.skill === 'travel' && typeof e.position === 'number') return `${p} đi Du lịch tới ${D.board[e.position]?.name ?? ''}`;
+      if (e.skill === 'flash_sale') return `${p} Flash sale: mua ${tileName(e.propertyId as string)} giá ${money(e.amount as number)}`;
+      if (e.skill === 'raise_rent') return `${p} tăng giá phòng ở ${tileName(e.propertyId as string)} (lần ${e.raises})`;
+      if (e.skill === 'move_house') return `${p} dời 1 nhà từ ${tileName(e.from as string)} sang ${tileName(e.propertyId as string)}`;
+      if (e.skill === 'portal') return `${p} mở cổng, đổi chỗ với ${name(e.target as string)}`;
+      if (e.skill === 'forced_loan') return null;
+      if (e.skill === 'buyout')
+        return `${p} mua đứt ${tileName(e.propertyId as string)} của ${name(e.from as string)} giá ${money(e.amount as number)}`;
+      if (e.skill === 'scholarship')
+        return `${p} săn được học bổng ${money(e.amount as number)}${e.fromFund ? ' từ Quỹ khuyến học' : ' từ ngân hàng'}`;
       return `${p} dùng kỹ năng ${D.characters[who.character(e.player as string) ?? '']?.skill.name ?? ''}`.trim();
+    case 'bailout':
+      return `Bố ơi cứu con: ngân hàng trả hộ ${p} ${money(e.amount as number)}`;
     case 'skillTriggered':
       return `${p} tốt nghiệp — lương tăng`;
     case 'skillReady':
@@ -992,6 +1099,6 @@ export const ENGINE_EVENT_TYPES_HANDLED = [
   'paymentSkipped', 'gain', 'rentBonus', 'commission', 'fundCollected', 'fundDeposit', 'cardDrawn', 'cardKept',
   'cardEffect', 'cardDrawing', 'deckEmpty', 'effectStarted', 'effectExpired', 'jailed', 'leftJail', 'stayedInJail',
   'goToJailIgnored', 'built', 'buildingSold', 'mortgaged', 'unmortgaged', 'tradeProposed', 'tradeAccepted',
-  'tradeRejected', 'tradeCancelled', 'debt', 'bankrupt', 'skillUsed', 'skillTriggered', 'skillReady', 'decisionRequired', 'sicbo', 'sicboOpened', 'betPlaced', 'sicboRolled',
+  'tradeRejected', 'tradeCancelled', 'debt', 'loan', 'cardImmune', 'bailout', 'bankrupt', 'skillUsed', 'skillTriggered', 'skillReady', 'decisionRequired', 'sicbo', 'sicboOpened', 'betPlaced', 'sicboRolled',
   'gameCreated', 'gameOver',
 ];

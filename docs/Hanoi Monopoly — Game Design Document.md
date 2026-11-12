@@ -316,7 +316,7 @@ Mỗi người chơi chọn 1 trong 8 nhân vật, gồm nội tại (+), điể
 | C05 | Cò đất | Nhận 10 từ ngân hàng mỗi khi đối thủ mua đất từ ngân hàng (kể cả đấu giá) | Không được lên khách sạn | Tung tin quy hoạch: 1 nhóm màu tùy chọn, thuê x2 trong 1 vòng (mọi chủ đều hưởng) |
 | C06 | Nghện Tarot | Rút thẻ Cơ hội, Cộng đồng: rút 2 chọn 1, lá còn lại về đáy | Không được sở hữu P08, P14, P20 (ô 14, 24, 34) | Giải hạn: hủy hiệu ứng của 1 thẻ Event đối với bản thân |
 | C07 | SVBK | Dừng Văn Miếu nhận thêm 100 (150 khi Quỹ tắt). Mua nhóm Hồng giảm 20% | Bắt đầu 1.400 | Tốt nghiệp (tự động): từ lần qua ô 0 thứ 5, lương 250 |
-| C08 | Nô lệ tư bản | Bắt đầu 1.600 | Không (EV32 trả 50) | Xin nghỉ phép: ra Bãi giữ xe miễn phí |
+| C08 | Nô lệ tư bản | Vốn khởi đầu thấp, giảm theo số người (số liệu ở `characters.json`) | Không (EV32 trả 50) | Du lịch: thay cho tung xúc xắc, chọn một ô bất kỳ rồi đi tới đó (qua Hoàng thành vẫn nhận lương, dừng ô nào xử lý như bình thường); không dùng khi ở Bãi giữ xe; hồi 10 lượt |
 
 **Quy tắc và làm rõ:**
 
@@ -327,6 +327,7 @@ Mỗi người chơi chọn 1 trong 8 nhân vật, gồm nội tại (+), điể
 - Nghện Tarot rút phải thẻ đi đến ô bị cấm: vẫn di chuyển, nếu chưa có chủ thì đấu giá ngay (không được tham gia).
 - Bóc phốt và Tung tin quy hoạch hết hạn khi người dùng bắt đầu lượt kế tiếp, như thẻ ⏳.
 - Các con số là bản nháp; chỉnh theo tỉ lệ thắng từ công cụ mô phỏng (mục 7.4). Mục tiêu: mọi nhân vật có tỉ lệ thắng trong khoảng ±3 điểm phần trăm quanh mức trung bình.
+- Nhân vật thêm sau (C09–C17: Con bạc, Thợ xây, F0 chứng khoán, Tổ trưởng dân phố, Thánh săn sale, Chủ trọ, Thầy phong thủy, Tín dụng đen, Bác sĩ lạ) và các con số hiện hành: `data/characters.json`, lý do thiết kế trong `docs/decisions.md`. Kỹ năng nay hồi lại sau vài lượt thay vì 1 lần/ván.
 - Đã chỉnh sau mô phỏng 10.000 ván (2026-11-09): Tài xế Grab giới hạn 3 lần ±1 mỗi ván (trước: không giới hạn, +11 điểm %); SVBK bắt đầu 1.400 (trước: 1.200, −5 đến −8 điểm %). Chi tiết: `docs/decisions.md`.
 
 ## 7. Online multiplayer & kỹ thuật

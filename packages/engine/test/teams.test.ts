@@ -119,13 +119,70 @@ describe('team games: winning', () => {
   });
 });
 
+describe('team games: a colour group held by teammates together counts as full', () => {
+  const pooled = () => teams([null, null, null, null], [0, 1, 0, 1]).give('p3', ['P03', 'P04']).give('p1', ['P05']);
+
+  it('each teammate builds on their own tiles, evenly across the whole group', () => {
+    const g = pooled();
+    g.setCurrent('p1');
+    g.s.turn.phase = 'end';
+    g.do({ type: 'build', player: 'p1', propertyId: 'P05' });
+    expect(g.s.ownables.P05.level).toBe(1);
+    expect(() => g.do({ type: 'build', player: 'p1', propertyId: 'P05' })).toThrow(/evenly/);
+    expect(() => g.do({ type: 'build', player: 'p1', propertyId: 'P03' })).toThrow(/Not your property/);
+    g.setCurrent('p3');
+    g.s.turn.phase = 'end';
+    g.do({ type: 'build', player: 'p3', propertyId: 'P03' });
+    g.do({ type: 'build', player: 'p3', propertyId: 'P04' });
+    g.setCurrent('p1');
+    g.s.turn.phase = 'end';
+    g.do({ type: 'build', player: 'p1', propertyId: 'P05' });
+    expect(g.s.ownables.P05.level).toBe(2);
+  });
+
+  it('the base rent doubles for the whole team; teammates still pay nothing', () => {
+    const g = pooled();
+    g.setCurrent('p2').at('p2', 0).roll('p2', 4, 4); // P04 (p3)
+    const base = g.d.ownables.P04.rent!.base;
+    expect(g.cash('p3')).toBe(1500 + base * g.d.economy.monopolyBaseRentMultiplier);
+  });
+
+  it('a teammate’s mortgage blocks building in the group; each unmortgages their own tile', () => {
+    const g = pooled();
+    g.setCurrent('p3');
+    g.s.turn.phase = 'end';
+    g.do({ type: 'mortgage', player: 'p3', propertyId: 'P03' });
+    g.setCurrent('p1');
+    g.s.turn.phase = 'end';
+    expect(() => g.do({ type: 'build', player: 'p1', propertyId: 'P05' })).toThrow(/mortgaged/);
+    expect(() => g.do({ type: 'unmortgage', player: 'p1', propertyId: 'P03' })).toThrow(/Not your property/);
+    g.setCurrent('p3');
+    g.s.turn.phase = 'end';
+    g.do({ type: 'unmortgage', player: 'p3', propertyId: 'P03' });
+    g.setCurrent('p1');
+    g.s.turn.phase = 'end';
+    g.do({ type: 'build', player: 'p1', propertyId: 'P05' });
+    expect(g.s.ownables.P05.level).toBe(1);
+  });
+
+  it('a tile of a team group with houses cannot be traded away', () => {
+    const g = pooled();
+    g.s.ownables.P03.level = 1;
+    g.setCurrent('p1');
+    g.s.turn.phase = 'end';
+    expect(() =>
+      g.do({ type: 'proposeTrade', player: 'p1', to: 'p2', offer: { properties: ['P05'] }, request: { cash: 100 } }),
+    ).toThrow(/buildings/);
+  });
+});
+
 describe('team games: bots', () => {
-  it('a bot hands a teammate the last tiles of a group the teammate is closer to finishing', () => {
+  it('a bot builds on its own tile of a colour group its team holds together (no gift needed)', () => {
     const g = teams([null, null, null, null], [0, 1, 0, 1]).give('p3', ['P03', 'P04']).give('p1', ['P05']);
     g.setCurrent('p1');
     g.s.turn.phase = 'end';
     const a = botActionFor(g.s, 'p1', g.d);
-    expect(a).toMatchObject({ type: 'proposeTrade', to: 'p3', offer: { properties: ['P05'] }, request: { properties: [] } });
+    expect(a).toMatchObject({ type: 'build', player: 'p1', propertyId: 'P05' });
   });
 
   it("a bot accepts a teammate's offer that completes a group for either side, never an opponent's gift-grab", () => {

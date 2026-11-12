@@ -351,3 +351,76 @@ Mọi nhân vật ở mọi cỡ bàn đều trong ±2,8 điểm % (trước đ�
   - Bật/tắt ở trang chủ, phòng chờ và nút 🎓 trong ván; lưu trong trình duyệt. **Mặc định bật** với trình duyệt chưa chọn lần nào — người mở link mời lần đầu là người mới. "Xem lại hướng dẫn từ đầu" xóa các mẹo đã xem.
   - Server biết ai bật (`learner`): cả bàn thấy dấu 🎓 cạnh tên, và người đó được thêm `timers.learnerExtraSec` (10 giây) cho mỗi quyết định — vừa đọc mẹo vừa bấm. Đồng hồ lượt 90 giây không đổi.
 - **Hình mua đất**: mô hình 3D lúc mua trước đây có một căn nhà, dễ hiểu nhầm là được tặng nhà. Nay là mảnh đất trống có hàng rào, cột mốc và lá cờ màu người mua (giống cờ cắm trên ô), chữ ghi "mua đất … (đất trống)". Giao thông / tiện ích vẫn ghi "mua …".
+
+## Đội tính chung nhóm màu, Du lịch, Con bạc nhẹ tay hơn, rà soát chế độ Nhanh / Đội
+
+- **Chế độ đội — nhóm màu chung**: `ownsFullGroup` tính cả đất của đồng đội. Cả đội giữ đủ nhóm thì tiền thuê đất trống ×2, và mỗi người xây trên ô của mình. Xây đều tính trên cả nhóm (kể cả ô đồng đội), và một ô đang thế chấp trong nhóm chặn xây cả nhóm. Mỗi người chỉ thế chấp, chuộc, bán nhà trên ô của mình; thế chấp chỉ cần ô của mình trong nhóm không có nhà, để không ai bị kẹt vì nhà của đồng đội. Không được đem bán hay đổi ra ngoài một ô của nhóm đang có nhà (của bất kỳ ai trong đội).
+  - Cờ và nhà trên bàn (2D và 3D) mang **màu đội**; bấm vào ô để xem chủ là ai. Tài sản hiện thêm ô của đồng đội trong cùng nhóm (chỉ xem) và số ô "x/y" tính cả đội.
+  - Bot: bỏ "tặng ô cho đồng đội" (không cần nữa). Đề nghị của đồng đội được nhận trừ khi đòi tiền quá tay; đề nghị của đối thủ chỉ nhận khi giúp *đội* đủ nhóm.
+- **Nô lệ tư bản — Du lịch** (`travel`, hồi 10 lượt): thay cho tung xúc xắc, chọn một ô bất kỳ trên bàn (bấm vào ô). Quân đi tới đó (qua Hoàng thành vẫn nhận lương), ô được xử lý như sau một lần tung. Không dùng ở Bãi giữ xe, không dùng sau khi đã tung. Dừng ở Tiện ích khi lượt này không có xúc xắc thì tung 2 xúc xắc mới để tính tiền. Bot đi Du lịch khi có ô chưa chủ giúp nó gần đủ hoặc đủ nhóm mà vẫn giữ được vốn.
+  - Du lịch rất mạnh: với vốn cũ (1.800) C08 thắng hơn mức công bằng 10–14 điểm %, và càng đông người càng mạnh. Vốn khởi đầu vì thế giảm theo cỡ bàn: 1.700 / 1.550 / 1.350 / 1.300 / 1.200 / 1.150 / 1.100 cho 2–8 người — hợp với tên "Nô lệ tư bản". Kỹ năng cũ Xin nghỉ phép (`free_jail_exit`) vẫn còn trong engine, không nhân vật nào dùng.
+- **Con bạc nhẹ tay hơn**: trong mô phỏng Con bạc không mạnh (bot ít khi liều), nhưng khi người chơi thật thì cảm giác quá lời — nhất là trúng bão được khỏi trả tiền mua đất, và mở sòng ở bàn ít người. Thay đổi: Liều ăn nhiều thắng chỉ bớt **25%** (trước 30%), ra bão chỉ bớt **một nửa** (trước khỏi trả); Mở sòng tổng cược **480** (trước 560), bàn 2 người 200 (trước 240), 3 người 280 (trước 320); vốn 1.450 (trước 1.400) để không quá yếu.
+- **Thợ xây**: ở bàn 2–3 người "nhà chui" bị tắt (`anyTile: false`), nên mua đất chưa đủ nhóm rồi bấm Tự tay xây chỉ thấy "Chưa có ô phù hợp" — người chơi tưởng lỗi. Nay mọi cỡ bàn đều được xây 1 nhà chui (bàn nhỏ vẫn hồi lâu hơn). Khi không có ô nào, giao diện nói lý do (ví dụ "cần sở hữu đủ cả nhóm màu", "có ô trong nhóm đang thế chấp"). Danh sách ô lấy thẳng từ engine (`whyCantFreeBuild`) thay vì tự tính lại ở client.
+- **Cân bằng sau thay đổi** (seed 78, 5.000–12.000 ván mỗi cỡ bàn): mọi nhân vật trong khoảng ±2,9 điểm % ở mọi cỡ bàn 2–8 người; C08 −0,7…+0,9; C09 −1,9…+0,2.
+
+| | 2p | 3p | 4p | 5p | 6p | 7p | 8p |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| C08 trước (vốn 1.800) | +11,6 | +13,6 | +11,2 | +10,1 | +9,5 | +12,9 | +11,8 |
+| C08 sau | +0,2 | +0,9 | −0,2 | −0,5 | +0,5 | −0,7 | +0,4 |
+| C09 sau | +0,2 | −0,7 | −0,2 | −1,9 | −0,3 | −1,6 | −0,4 |
+
+- **Rà soát chế độ Nhanh / Đội / Nhanh + Đội**:
+  - Ván Nhanh trước đây không cho biết khi nào hết giờ. Nay server gửi `quickEndsAt`; giữa bàn có "⏳ Ván Nhanh còn mm:ss" và điều kiện kết thúc (hết giờ, hoặc khi N người phá sản — chế độ đội ghi "đội có tổng tài sản cao nhất").
+  - Bảng người chơi ở chế độ Nhanh / Đội có thêm tổng tài sản của từng người (cách tính điểm khi hết giờ). Chế độ Nhanh còn có thứ hạng #1, #2…; chế độ Đội có dòng tổng tài sản từng đội, đội còn trụ xếp trước.
+  - Màn kết thúc ván ở chế độ đội có bảng tổng của từng đội.
+  - Mô tả kỹ năng "mỗi đối thủ …" tính đúng số đối thủ (người đội khác) thay vì cả bàn.
+  - Màn chọn nhân vật ghi rõ thứ tự lượt xen kẽ theo đội (số tung không xếp giảm dần nữa).
+  - Điện thoại: dòng giải thích dưới đồng hồ Nhanh bị ẩn, để không đè lên lá bài giữa bàn.
+
+## 5 nhân vật mới (C13–C17)
+
+- **C13 Thánh săn sale** — *Săn sale* (`auction_discount`): thắng đấu giá chỉ trả 80% giá đã đặt. *Flash sale* (`flash_sale`, hồi 6 lượt): trong lượt mình, mua ngay một ô chưa có chủ ở bất kỳ đâu trên bàn với giá giảm 20% (bấm vào ô trên bàn cờ), không cần đi tới; vẫn tính là mua của ngân hàng (Cò đất ăn hoa hồng). Điểm yếu: vốn 1.400.
+  - Sức mạnh thật của Flash sale không nằm ở giá giảm mà ở chỗ **mua từ xa đúng ô cuối cùng cho đủ nhóm**. Ở bàn 6–8 người ô đó bị tranh nhau, nên dù giảm giá 0% và chỉ dùng được 1 lần, C13 vẫn +3…+6 điểm %. Vì vậy ở bàn **5–8 người Flash sale không được mua ô làm mình đủ nhóm** (`completesGroup: false`; bàn 7–8 người còn giảm 15%, hồi 7 lượt). Bàn 2–4 người thì được (bàn 2 người giảm 30%, hồi 3 lượt, vốn 1.500; bàn 3 người giảm 25%, hồi 4 lượt) — nếu cấm cả ở bàn ít người thì C13 còn −5…−13 điểm %.
+- **C14 Chủ trọ** — *Phòng trọ giá rẻ* (`rent_bonus_groups`): tiền thuê ở nhóm Nâu và Xanh nhạt cao hơn 50%. *Tăng giá phòng* (`raise_rent`): chọn một ô đất của mình, tiền thuê ô đó tăng thêm 25% mãi mãi (khi còn giữ ô), mỗi ô tối đa 2 lần. Hệ số tính sau bước ×2 đủ nhóm, trước thẻ ⏳ (GDD 4.4). Điểm yếu: nộp thuế cao hơn (250 / 150), trừ bàn 2 người (ở đó Chủ trọ đã −4 điểm %).
+- **C15 Thầy phong thủy** — miễn các thẻ sửa nhà (CH15, CD14, EV03, EV25, EV36), vốn 1.650. *Dời nhà* (`move_house`, hồi 2 lượt): dời 1 nhà từ ô này sang ô khác của mình, miễn phí. Nhà rời đi như bán (bớt đều trên ô của mình, chỉ nhà, không khách sạn), đến nơi như xây (đủ nhóm, xây đều, không thành khách sạn). Kỹ năng chỉ có ích khi đã có nhà, nên với vốn thường Thầy phong thủy −4…−7 điểm %; bù bằng vốn và hồi nhanh.
+  - Trước đây `immune_events` chỉ có tác dụng với vài loại thẻ (một xúc xắc, phạt nguội). Nay áp dụng chung: thẻ chỉ tác động người rút (trả tiền, sửa nhà, đi tới…) thì không có tác dụng với người miễn ("được miễn thẻ …" trong nhật ký); thẻ tác động cả bàn thì người miễn được bỏ qua như Giải hạn.
+- **C16 Tín dụng đen** — cơ chế **vay** mới, khoản nợ nằm trên người vay (`debts`), bảng người chơi hiện "💸 nợ … ".
+  - *Vay nóng* (`loan_shark`, nội tại): ai thiếu tiền trả một khoản (thuê, thuế, thẻ…) thấy nút "Vay nóng" cạnh thế chấp / phá sản: vay đúng phần thiếu (tối đa 300 tỷ, Tín dụng đen phải đủ tiền), trả 130%. Tín dụng đen không phải bấm gì. Không cho vay để trả chính Tín dụng đen (sẽ thành đảo nợ mãi).
+  - *Giải ngân* (`forced_loan`, kỹ năng): ép một **đối thủ ngẫu nhiên** (không chọn được — người chơi góp ý: tránh cảm giác bị nhắm vào) nhận khoản vay 150 tỷ, phải trả lại 140% (210 tỷ); hồi 4 lượt. Trả 150% thì C16 +3…+6 điểm %, trả 130% thì −4…−5. Lúc đầu người dùng muốn chủ nợ chủ động chào vay, nhưng chờ ai đó thiếu tiền thì kỹ năng hiếm khi dùng được, nên kỹ năng là ép vay.
+  - Trả nợ **tự động khi người vay qua Hoàng thành lần tới**, sau khi nhận lương và trước khi xử lý ô dừng. Không đủ tiền thì đó là một khoản nợ thường với Tín dụng đen (bán, thế chấp, hoặc phá sản — tài sản về tay Tín dụng đen). Người vay phá sản với người khác, hoặc Tín dụng đen phá sản, thì khoản vay mất. Tổng tài sản (chế độ Nhanh / Đội) tính khoản cho vay vào người cho vay và trừ vào người vay. Đồng đội không vay của nhau.
+- **C17 Bác sĩ lạ** — miễn thẻ Khám bệnh định kỳ, máy lọc không khí, AQI 300 (CD11, CD17, EV39); vốn 1.650 (bàn 2 người 1.950, bàn 3 người 1.550); không có điểm yếu (bản đầu phải góp 20 tỷ mỗi vòng thì quá yếu). *Mở cổng* (`portal`, hồi 4 lượt): thay cho tung xúc xắc, đổi chỗ với một **đối thủ ngẫu nhiên** (không phải đồng đội, không ai đang ở Bãi giữ xe, không ai đứng cùng ô), rồi xử lý ô mới như vừa dừng ở đó. Không nhận lương; người bị đổi chỗ chỉ dời quân, không xử lý ô. Nút nằm cạnh "Tung xúc xắc" và mờ đi khi không có ai để đổi.
+  - Bot chỉ mở cổng khi giá trị trung bình các ô có thể tới hơn hẳn giá trị trung bình một lần tung (một lần tung còn đưa quân đi quanh bàn để nhận lương) — dùng bừa thì Bác sĩ lạ thua −18 điểm % ở bàn 2 người.
+- Thẻ mới: **EV41** Công an triệt phá đường dây tín dụng đen (Tín dụng đen nộp 150 vào Quỹ; không có thì người rút nhận 30), **EV42** Mùa nhập học, phòng trọ cháy hàng (Chủ trọ nhận 120; không có thì mỗi người nhận 20).
+- **Cân bằng 17 nhân vật** (seed 79, 7.500–16.000 ván mỗi cỡ bàn, khoảng tin cậy ±1,1…±2,3): mọi nhân vật trong ±3,2 điểm %; 5 nhân vật mới trong ±2,4.
+
+| | 2p | 3p | 4p | 5p | 6p | 7p | 8p |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| C13 Thánh săn sale | −1,6 | −1,3 | +0,7 | −2,2 | +1,2 | +0,5 | +1,2 |
+| C14 Chủ trọ | −2,1 | −1,1 | −0,1 | +0,8 | +1,5 | +1,2 | +0,6 |
+| C15 Thầy phong thủy | +0,2 | +0,4 | −1,5 | +0,3 | −0,9 | −0,6 | −1,9 |
+| C16 Tín dụng đen | −2,4 | −1,2 | −0,6 | +0,6 | +1,8 | +0,4 | +1,3 |
+| C17 Bác sĩ lạ | +1,7 | −1,7 | −0,2 | +0,6 | −1,2 | −0,1 | +0,5 |
+| xa nhất trong C01–C12 | C05 +3,1 | C12 −2,9 | C06 −3,2 / C02 +3,1 | C12 +1,6 | C11 −2,5 | C09 −1,8 | C06 +1,4 |
+
+## Kỹ năng chủ động cho mọi nhân vật, cân bằng riêng cho chế độ Nhanh / Đội, thêm 14 thẻ
+
+- **Nhân vật không có kỹ năng chủ động**: Thiếu gia Vin (Bố ơi cứu con tự bật khi sắp phá sản) và SVBK (Tốt nghiệp tự bật) — người chơi không bao giờ phải quyết gì. Ninja Lead, Tài xế Grab, Nghiện Tarot có kỹ năng "phản ứng" (bật khi trả thuê / sau khi tung / khi rút Event) — vẫn là một quyết định của người chơi nên giữ nguyên.
+  - **C01 Thiếu gia Vin — Mua đứt** (`buyout`): trong lượt mình, mua một ô **lẻ** của đối thủ (họ không giữ ô nào khác cùng nhóm, nhóm chưa có nhà, ô không thế chấp), trả chủ 150% giá đất; **không được mua ô làm mình đủ nhóm** (`completesGroup: false`). Bố ơi cứu con thành nội tại, mỗi ván cứu 1 lần (`bailoutUsed`).
+    - Bản đầu cho mua cả ô làm đủ nhóm: +17…+31 điểm % ở bàn 4–8 người và chế độ Nhanh (chia đất đầu ván để lại rất nhiều ô lẻ). Chủ ô luôn được trả hậu, và chỉ ô lẻ mới bị mua, để không ai thấy mình bị "nhắm" mất nhóm đang gom.
+  - **C07 SVBK — Săn học bổng** (`scholarship`): rút tối đa 60 tỷ từ Quỹ khuyến học; Quỹ trống hoặc tắt (chế độ Nhanh) thì ngân hàng cấp 30 (Nhanh 40). Bỏ nội tại Tốt nghiệp: giữ cả hai thì SVBK +3…+4; bản đầu (100 tỷ, hồi 4 lượt) +8…+20 vì Quỹ ở chế độ Truyền thống hầu như lúc nào cũng đầy.
+- **Mô phỏng chế độ đội** (`sim --teams N`): ghế xen kẽ theo đội, thắng cùng đội, mức công bằng là 1/N. Lần chạy đầu làm lộ một lỗi: bot F0 dùng Bắt đáy theo luật cũ (chỉ xét nhà của chủ ô), engine theo luật đội (cả nhà của đồng đội) nên từ chối — bot đứng hình. Đã sửa bot theo đúng luật đội.
+- **Số riêng theo chế độ** (`characters.json` → `byMode`): giống `byTableSize`, mỗi mục có `mode` (`quick` / `classic`), `teams` (true / false), `players` (tùy chọn); mọi mục khớp được áp lần lượt sau `byTableSize`. Màn chọn nhân vật và nút Nhân vật ghi "Chỉ số riêng cho chế độ Nhanh / Đội". Đo trước khi chỉnh (8.000 ván mỗi cấu hình):
+  - Thợ xây +6…+11 ở chế độ Nhanh (đất chia sẵn ⇒ giảm giá xây và nhà chui rất lời) và +7…+10 ở đội 4 người (nhóm màu chung đầy đủ sớm).
+  - Tài xế Grab, Cò đất, Ninja Lead +3…+6 ở đội 6–8 người; Tín dụng đen, Nghiện Tarot, F0, Con bạc −3…−7 ở chế độ Đội; F0 −4…−6 ở chế độ Nhanh.
+  - Chỉnh: Thợ xây (Nhanh: giảm giá 5–15%, không nhà chui ở bàn 2–4; Đội 4 người: không giảm giá, hồi 8 lượt; Đội 6 người: giảm 10%), Thiếu gia Vin (Nhanh: lương 250, mua đứt 250%, hồi 8; Đội Truyền thống: hồi 4, bàn 6–8 lương 300 và hồi 3), SVBK (Đội: tối đa 100, hồi 4; Đội + Nhanh: ngân hàng cấp 60), F0 (cổ tức 5% ở Nhanh, 7% ở Đội), Nghiện Tarot (Nhanh / Đội: bỏ điểm yếu, rút 2 chọn 1 cả Cộng đồng; Đội còn vốn 1.700), Con bạc (vốn 1.550 Nhanh, 1.650 Đội), Tài xế Grab (Đội 6–8: chỉnh bước 1 lần/ván, hồi 9; Nhanh 4 người: lương 175), Cò đất (Đội 6–8: hoa hồng 5), Ninja Lead (Nhanh: hồi 3; Nhanh 8 người: bỏ phí phát thải, hồi 2), Nô lệ tư bản (Đội 4 người: hồi 13; bàn 3 người vốn 1.450), Thánh săn sale (bàn 3 người giảm 30%, hồi 3; Nhanh 5–8: giảm 15%; Đội 5–6: được mua ô đủ nhóm nhưng giảm 10%, hồi 20), Chủ trọ (bàn 2–3 người và Nhanh, Đội 4 người: không thuế cao; Nhanh và Đội 4 người hồi 3), Tín dụng đen (Đội: vốn 1.500, bàn 6–8 giải ngân 200 trả 150%; Nhanh 2–4: vốn 1.500).
+- **Không có vay nóng giữa đồng đội**: đã thử cho đồng đội của Tín dụng đen vay không lãi, nhưng bỏ — người cùng đội vẫn chuyển tiền cho nhau bằng Giao dịch, luật này thừa.
+- **Chủ trọ — khách sạn**: tiền Tăng giá phòng không tính khi ô đã lên khách sạn. Bot chỉ xây tối đa 3 nhà nên mô phỏng không thấy, nhưng người chơi thật dồn +50% vào khách sạn Hồ Gươm thì một lần dừng là 3.300 tỷ.
+- **14 thẻ mới** (97 lá): Cơ hội CH22–CH26 (pháo hoa Hồ Tây, Metro mới, chợ đêm Long Biên, lỡ xe buýt lùi 2 ô, voucher ngày sale đôi), Cộng đồng CD21–CD24 (thưởng Tết dương lịch, phí quản lý chung cư, nhổ răng khôn — Bác sĩ lạ được miễn, định danh điện tử), Event EV43–EV47 (ngày hội 12.12 — Thánh săn sale nhận 120; mùa cúm — cả bàn trả Bác sĩ lạ 20; xem ngày động thổ — Thầy phong thủy nhận 100; Vành đai 4 thông xe — thuê nhóm Cam, Đỏ ×1,5 trong 1 vòng ⏳; treo cờ mừng đại lễ — mỗi người nhận 30).
+- **Bot và Mua đứt**: bot chỉ mua đứt khi ô đó gần đủ bộ (ví dụ giao thông thứ 4). Một bản bot mua mọi ô lẻ với giá 150–250% làm Thiếu gia Vin tụt −6…−13 điểm % ở Nhanh / Đội — mua đắt chỉ đáng khi gần đủ nhóm.
+- **Kết quả cuối** (seed 81 cho Truyền thống, 7.500–16.000 ván mỗi cỡ bàn; seed 505 cho các chế độ, 6.000–8.000 ván mỗi cấu hình; khoảng tin cậy ±1,2…±2,3): Truyền thống mọi nhân vật trong ±3,5 trừ Thiếu gia Vin bàn 3 người +4,2; Nhanh / Đội / Đội + Nhanh trong ±3,7 trừ Thiếu gia Vin Đội + Nhanh 6 người −4,4.
+
+| | Q4 | Q6 | Q8 | Đội 4 (2×2) | Đội 6 (2×3) | Đội 6 (3×2) | Đội 8 (4×2) | Đội+Nhanh 4 | Đội+Nhanh 6 | Đội+Nhanh 8 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| lệch xa nhất | C07 +3,5 | C10 −3,6 | C13 +3,5 | C10 +2,8 | C13 +3,5 | C05 +2,5 | C01 −2,3 | C01 −2,9 | C01 −4,4 | C05 +3,6 |
+| Thợ xây trước → sau | +10,7 → +0,3 | +9,9 → −3,6 | +11,3 → −3,2 | +8,8 → +2,8 | +5,9 → +2,5 | +1,8 → +0,3 | +0,5 → +1,1 | +11,2 → −0,1 | +4,7 → +0,2 | +3,3 → +1,8 |
+| Tín dụng đen trước → sau | +0,0 → +1,3 | +1,2 → +0,6 | −1,5 → −0,2 | −1,9 → −0,4 | −4,1 → +2,9 | −6,5 → +0,9 | −5,1 → −1,1 | −3,1 → +0,2 | −5,5 → −0,3 | −5,6 → −1,5 |

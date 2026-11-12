@@ -5,6 +5,7 @@ import { D, G, has, withCharacter } from './helpers';
 // Character numbers come from characters.json so balancing never breaks the tests.
 const CH = D.characters;
 const num = (v: unknown) => v as number;
+const bail = () => CH.C01.passives.find((t) => t.type === 'bailout')!;
 
 describe('character data', () => {
   it('every passive/drawback/skill type in characters.json is covered by this suite', () => {
@@ -14,10 +15,15 @@ describe('character data', () => {
       'adjust_roll', 'reroll', 'rent_bonus_from_bank', 'card_payment_multiplier', 'block_rent',
       'commission_on_opponent_bank_purchase', 'no_hotels', 'rent_multiplier',
       'draw_two_choose_one', 'forbidden_properties', 'cancel_event_for_self', 'park_bonus',
-      'starting_cash', 'auto_salary_upgrade', 'free_jail_exit',
+      'starting_cash', 'auto_salary_upgrade', 'free_jail_exit', 'travel',
       // C09–C12: test/newcharacters.test.ts
       'gamble_payment', 'host_sicbo', 'build_discount', 'free_build', 'dividend', 'buy_mortgaged',
       'go_donation', 'collect_contribution',
+      // Active skills for C01 / C07: test/characters3.test.ts
+      'buyout', 'scholarship',
+      // C13–C17: test/characters3.test.ts
+      'auction_discount', 'flash_sale', 'rent_bonus_groups', 'raise_rent', 'move_house',
+      'loan_shark', 'forced_loan', 'portal',
     ]);
     for (const ch of Object.values(D.characters)) {
       for (const t of [...ch.passives, ...ch.drawbacks, ch.skill]) expect(covered).toContain(t.type);
@@ -64,24 +70,24 @@ describe('C01 Thiếu gia Vin', () => {
   it('bailout (onBankrupt): bank covers a shortfall up to maxAmount', () => {
     const g = G.create(['C01', null]).give('p2', ['P01']).give('p2', ['P02'], { level: 5 }).setCash('p1', 100);
     const hotel = D.ownables.P02.rent!.hotel;
-    expect(hotel - 100).toBeLessThanOrEqual(num(CH.C01.skill.maxAmount));
+    expect(hotel - 100).toBeLessThanOrEqual(num(bail().maxAmount));
     g.setCurrent('p1').at('p1', 0).roll('p1', 1, 2); // → P02 hotel
     expect(g.s.pending).toMatchObject({ type: 'liquidation', player: 'p1' });
     g.do({ type: 'declareBankruptcy', player: 'p1' });
-    expect(g.p('p1')).toMatchObject({ bankrupt: false, skillUsed: true, cash: 0 });
+    expect(g.p('p1')).toMatchObject({ bankrupt: false, bailoutUsed: true, skillUsed: false, cash: 0 });
     expect(g.cash('p2')).toBe(1500 + hotel);
   });
 
   it('bailout does not save a shortfall above maxAmount', () => {
     const g = G.create(['C01', null, null]).give('p2', ['P21']).give('p2', ['P22'], { level: 5 }).setCash('p1', 0);
-    expect(D.ownables.P22.rent!.hotel).toBeGreaterThan(num(CH.C01.skill.maxAmount));
+    expect(D.ownables.P22.rent!.hotel).toBeGreaterThan(num(bail().maxAmount));
     g.setCurrent('p1').at('p1', 36).roll('p1', 1, 2); // → Hồ Gươm hotel
     g.do({ type: 'declareBankruptcy', player: 'p1' });
     expect(g.p('p1').bankrupt).toBe(true);
   });
 
   it('scaleWithBoard: the bailout grows like starting cash on bigger boards', () => {
-    const sk = CH.C01.skill;
+    const sk = bail();
     expect(sk.scaleWithBoard).toBe(true);
     expect(bailoutMax(D, sk)).toBe(num(sk.maxAmount));
     for (const board of ['extended', 'large'] as const) {
@@ -100,7 +106,7 @@ describe('C01 Thiếu gia Vin', () => {
     } as never;
     g.do({ type: 'declareBankruptcy', player: 'p1' });
     expect(p.bankrupt || g.p('p1').bankrupt).toBe(false);
-    expect(g.p('p1').skillUsed).toBe(true);
+    expect(g.p('p1').bailoutUsed).toBe(true);
   });
 });
 
@@ -409,16 +415,17 @@ describe('C07 SVBK', () => {
     expect(g.s.pending).toMatchObject({ type: 'buy', propertyId: 'P06', price: 112 });
   });
 
-  it('auto_salary_upgrade (Tốt nghiệp): the Nth GO pass already pays the upgrade', () => {
-    const g = G.create(['C07', null]);
-    g.p('p1').goPasses = num(CH.C07.skill.afterGoPasses) - 2;
+  it('auto_salary_upgrade (Tốt nghiệp, no longer shipped): the Nth GO pass already pays the upgrade', () => {
+    const grad = { type: 'auto_salary_upgrade', afterGoPasses: 4, value: 260 };
+    const g = G.createWith(withCharacter('C07', { passives: [...CH.C07.passives, grad] }), ['C07', null]);
+    g.p('p1').goPasses = num(grad.afterGoPasses) - 2;
     g.setCurrent('p1').at('p1', 38).roll('p1', 1, 2);
     expect(g.cash('p1')).toBe(1600);
     g.s.pending = null;
     g.s.turn.phase = 'roll';
     g.at('p1', 38).roll('p1', 1, 2);
-    expect(g.cash('p1')).toBe(1600 + num(CH.C07.skill.value));
-    expect(g.p('p1').skillUsed).toBe(true);
+    expect(g.cash('p1')).toBe(1600 + num(grad.value));
+    expect(g.p('p1').skillUsed).toBe(false); // a passive now: Săn học bổng stays ready
   });
 });
 
@@ -427,8 +434,44 @@ describe('C08 Nô lệ tư bản', () => {
     expect(G.create(['C08', null]).cash('p1')).toBe(num(CH.C08.passives[0].value));
   });
 
-  it('free_jail_exit (Xin nghỉ phép)', () => {
+  it('travel (Du lịch): instead of rolling, walk to any tile; salary when passing the start; land as usual', () => {
     const g = G.create(['C08', null]);
+    g.setCurrent('p1').at('p1', 30);
+    const ev = g.do({ type: 'useSkill', player: 'p1', position: 6 }); // P03, past the start
+    expect(has(ev, 'skillUsed', { skill: 'travel', position: 6 })).toBe(true);
+    expect(g.p('p1').position).toBe(6);
+    expect(g.cash('p1')).toBe(num(CH.C08.passives[0].value) + D.economy.goSalary);
+    expect(g.s.pending).toMatchObject({ type: 'buy', player: 'p1', propertyId: 'P03' });
+    g.do({ type: 'declineBuy', player: 'p1' });
+    expect(g.p('p1')).toMatchObject({ skillUsed: true, skillCooldown: num(CH.C08.skill.cooldownRounds) });
+    expect(num(CH.C08.skill.cooldownRounds)).toBe(10);
+  });
+
+  it('travel replaces the roll: not after rolling, not from jail, not to the same tile', () => {
+    const g = G.create(['C08', null]);
+    g.setCurrent('p1').at('p1', 0);
+    expect(() => g.do({ type: 'useSkill', player: 'p1', position: 0 })).toThrow(/another tile/);
+    expect(() => g.do({ type: 'useSkill', player: 'p1' })).toThrow(/another tile/);
+    g.roll('p1', 1, 3);
+    expect(() => g.do({ type: 'useSkill', player: 'p1', position: 20 })).toThrow(/replaces a roll/);
+    const j = G.create(['C08', null]);
+    j.p('p1').inJail = true;
+    j.setCurrent('p1').at('p1', 10);
+    expect(() => j.do({ type: 'useSkill', player: 'p1', position: 20 })).toThrow(/replaces a roll/);
+  });
+
+  it('travel onto an owned utility: rent uses fresh dice (no roll this turn)', () => {
+    const g = G.create(['C08', null]).give('p2', ['U01']);
+    g.setCurrent('p1').at('p1', 0);
+    g.rig(3, 4);
+    const ev = g.do({ type: 'useSkill', player: 'p1', position: 12 });
+    expect(has(ev, 'diceRolled', { purpose: 'utilityRent' })).toBe(true);
+    expect(g.cash('p2')).toBe(1500 + 7 * D.economy.utilityMultiplier['1']);
+  });
+
+  it('free_jail_exit (Xin nghỉ phép, no longer on a character)', () => {
+    const d = withCharacter('C08', { skill: { name: 'Xin nghỉ phép', type: 'free_jail_exit' } });
+    const g = G.createWith(d, ['C08', null]);
     g.p('p1').inJail = true;
     g.p('p1').position = 10;
     g.setCurrent('p1').do({ type: 'useSkill', player: 'p1' });
@@ -452,9 +495,7 @@ describe('skill recharge (skillCooldownRounds)', () => {
 
   it('a used skill comes back after its cooldown of own turns, with a skillReady event', () => {
     const g = G.create(['C08', null]);
-    g.p('p1').inJail = true;
-    g.p('p1').position = 10;
-    g.setCurrent('p1').do({ type: 'useSkill', player: 'p1' });
+    g.setCurrent('p1').at('p1', 0).do({ type: 'useSkill', player: 'p1', position: 4 });
     const rounds = num(CH.C08.skill.cooldownRounds ?? D.characterRules.skillCooldownRounds);
     expect(rounds).toBeGreaterThan(0);
     expect(g.p('p1')).toMatchObject({ skillUsed: true, skillCooldown: rounds });
@@ -476,11 +517,10 @@ describe('skill recharge (skillCooldownRounds)', () => {
     expect(CH.C03.skill.cooldownRounds).toBeGreaterThan(D.characterRules.skillCooldownRounds);
   });
 
-  it('recharge: false skills (SVBK Tốt nghiệp) stay used', () => {
-    expect(CH.C07.skill.recharge).toBe(false);
-    const g = G.create(['C07', null]);
-    g.p('p1').goPasses = num(CH.C07.skill.afterGoPasses) - 1;
-    g.setCurrent('p1').at('p1', 38).roll('p1', 1, 2);
+  it('recharge: false skills stay used', () => {
+    const d = withCharacter('C07', { skill: { ...CH.C07.skill, recharge: false } });
+    const g = G.createWith(d, ['C07', null]);
+    g.do({ type: 'useSkill', player: 'p1' });
     expect(g.p('p1').skillUsed).toBe(true);
     expect(g.p('p1').skillCooldown).toBeUndefined();
   });

@@ -5,8 +5,9 @@
  * onDrawCard, onPurchase, onBankrupt.
  */
 import { activePlayers, emit, fail, hotelLevel, housesForHotel, ownedBy, type Ctx } from './ctx';
-import { characterFor, type GameData, type TileDef } from './data';
+import { characterFor, type GameData, type TableKind, type TileDef } from './data';
 import { expireEffectsOf, isImmune } from './effects';
+import { repayTasks } from './loans';
 import type { DeckName, Effect, PayTask, PlayerState, Task } from './types';
 
 // ---------------------------------------------------------------- queries
@@ -14,7 +15,7 @@ import type { DeckName, Effect, PayTask, PlayerState, Task } from './types';
 /** Passives + drawbacks of the player's character (empty if characters are off). */
 export function traits(c: Ctx, p: PlayerState): Effect[] {
   if (!c.s.config.characters || !p.character) return [];
-  const def = characterFor(c.d, p.character, c.s.players.length);
+  const def = characterFor(c.d, p.character, c.s.players.length, tableKind(c));
   return [...def.passives, ...def.drawbacks];
 }
 
@@ -28,7 +29,7 @@ export function traitsOf(c: Ctx, p: PlayerState, type: string): Effect[] {
 
 export function skillOf(c: Ctx, p: PlayerState): (Effect & { name: string }) | undefined {
   if (!c.s.config.characters || !p.character) return undefined;
-  return characterFor(c.d, p.character, c.s.players.length).skill;
+  return characterFor(c.d, p.character, c.s.players.length, tableKind(c)).skill;
 }
 
 /** The one-shot skill of this type is still available. */
@@ -37,10 +38,21 @@ export function skillAvailable(c: Ctx, p: PlayerState, type: string): boolean {
   return !!sk && sk.type === type && !p.skillUsed && !p.bankrupt;
 }
 
-export function startingCash(d: GameData, characterId: string | null, charactersOn: boolean, players: number): number {
+/** Mode and team-ness of the game (characters can have their own numbers for them). */
+export function tableKind(c: Ctx): TableKind {
+  return { mode: c.s.config.mode, teams: c.s.players.some((p) => p.team !== undefined) };
+}
+
+export function startingCash(
+  d: GameData,
+  characterId: string | null,
+  charactersOn: boolean,
+  players: number,
+  table: TableKind = {},
+): number {
   let cash = d.economy.startingCash;
   if (charactersOn && characterId) {
-    const def = characterFor(d, characterId, players);
+    const def = characterFor(d, characterId, players, table);
     const t = [...def.passives, ...def.drawbacks].find((x) => x.type === 'starting_cash');
     if (t) cash = t.value as number;
   }
@@ -52,10 +64,9 @@ export function salaryFor(c: Ctx, p: PlayerState): number {
   let salary = c.d.economy.goSalary;
   const override = trait(c, p, 'go_salary');
   if (override) salary = override.value as number;
-  const sk = skillOf(c, p);
-  if (sk?.type === 'auto_salary_upgrade' && p.goPasses >= (sk.afterGoPasses as number)) {
-    salary = sk.value as number;
-  }
+  // SVBK's Tốt nghiệp: a passive (it used to be the skill slot).
+  const grad = trait(c, p, 'auto_salary_upgrade');
+  if (grad && p.goPasses >= (grad.afterGoPasses as number)) salary = grad.value as number;
   const mult = c.d.economy.goSalaryMultiplier ?? 1;
   return Math.ceil(salary * mult - 1e-9) + (c.d.economy.goSalaryBonus ?? 0);
 }
@@ -72,6 +83,35 @@ export function purchasePrice(c: Ctx, p: PlayerState, propertyId: string): numbe
     }
   }
   return Math.ceil(price - 1e-9);
+}
+
+/** Thánh săn sale: what the auction winner actually pays. */
+export function auctionPrice(c: Ctx, p: PlayerState, bid: number): number {
+  const t = trait(c, p, 'auction_discount');
+  return t ? Math.ceil(bid * (1 - (t.rate as number)) - 1e-9) : bid;
+}
+
+/** Thánh săn sale's Flash sale price for an unowned tile. */
+export function flashSalePrice(c: Ctx, sk: Effect, propertyId: string): number {
+  return Math.ceil(c.d.ownables[propertyId].price * (1 - (sk.rate as number)) - 1e-9);
+}
+
+/**
+ * Chủ trọ: rent factor on the owner's tile from `rent_bonus_groups` and Tăng giá phòng
+ * raises (`rentBoosts`), applied after the full-group doubling.
+ */
+export function ownerRentFactor(c: Ctx, owner: PlayerState, propertyId: string): number {
+  let f = 1;
+  const group = c.d.ownables[propertyId].group;
+  for (const t of traitsOf(c, owner, 'rent_bonus_groups')) {
+    if (group && (t.groups as string[]).includes(group)) f *= 1 + (t.rate as number);
+  }
+  // Tăng giá phòng is for rooms: a hotel's rent is not raised (it would end the game alone).
+  const hotel = c.s.ownables[propertyId].level >= hotelLevel(c);
+  const raises = hotel ? 0 : (owner.rentBoosts?.[propertyId] ?? 0);
+  const sk = skillOf(c, owner);
+  if (raises > 0 && sk?.type === 'raise_rent') f *= 1 + raises * (sk.rate as number);
+  return f;
 }
 
 /** Thợ xây: building cost after `build_discount`. */
@@ -167,14 +207,12 @@ export function onTurnStart(c: Ctx, p: PlayerState): void {
   p.doublesCount = 0;
 }
 
-export function onPassGo(c: Ctx, p: PlayerState): void {
+/** Salary and lap passives. Returns payments due right away (loan repayments), before the tile is handled. */
+export function onPassGo(c: Ctx, p: PlayerState): Task[] {
   p.goPasses += 1;
   p.lapAdjustUsed = false;
-  const sk = skillOf(c, p);
-  if (sk?.type === 'auto_salary_upgrade' && p.goPasses === sk.afterGoPasses) {
-    useUpSkill(c, p);
-    emit(c, 'skillTriggered', { player: p.id, skill: sk.type });
-  }
+  const grad = trait(c, p, 'auto_salary_upgrade');
+  if (grad && p.goPasses === grad.afterGoPasses) emit(c, 'skillTriggered', { player: p.id, skill: grad.type });
   const salary = salaryFor(c, p);
   p.cash += salary;
   emit(c, 'salary', { player: p.id, amount: salary, passes: p.goPasses });
@@ -199,6 +237,7 @@ export function onPassGo(c: Ctx, p: PlayerState): void {
     if (toFund) c.s.fund += amount;
     emit(c, 'payment', { from: p.id, to: { kind: toFund ? 'fund' : 'bank' }, amount, kind: 'fee', reason: 'goDonation' });
   }
+  return repayTasks(c, p);
 }
 
 /** Extra tasks / overrides when a player stops on a tile. */
@@ -230,11 +269,14 @@ export function onLand(c: Ctx, p: PlayerState, tile: TileDef): { tasks: Task[]; 
 
 /**
  * Before rent is paid: the payer confirms with "Trả tiền" (and Ninja Lead may
- * use Ăn vạ instead). Returns true if a decision is pending.
+ * use Ăn vạ instead). Short of cash without Ăn vạ, the payment goes straight to the
+ * raise-cash decision. Returns true if a decision is pending.
  */
 export function onPayRent(c: Ctx, payer: PlayerState, task: PayTask, raw: number, propertyId: string): boolean {
   if (task.amount <= 0) return false;
   const discount = skillAvailable(c, payer, 'rent_discount');
+  // Short of cash and nothing to decide: straight to raising cash (one menu, not two steps).
+  if (!discount && payer.cash < task.amount) return false;
   c.s.pending = { type: 'payRent', player: payer.id, task, raw, propertyId, discount };
   emit(c, 'decisionRequired', { decision: 'payRent', player: payer.id, amount: task.amount, propertyId, discount });
   return true;
@@ -280,14 +322,14 @@ export function bailoutMax(d: GameData, sk: Effect): number {
   return m === 1 ? base : Math.ceil((base * m) / 10 - 1e-9) * 10;
 }
 
-/** Thiếu gia Vin: bank covers the shortfall (≤ max) once. Returns true if saved. */
+/** Thiếu gia Vin: the bank covers the shortfall (≤ max), once a game (a passive). Returns true if saved. */
 export function onBankrupt(c: Ctx, p: PlayerState, shortfall: number): boolean {
-  const sk = skillOf(c, p);
-  if (!sk || sk.type !== 'bailout' || p.skillUsed) return false;
-  if (shortfall > bailoutMax(c.d, sk)) return false;
-  useUpSkill(c, p);
+  const t = trait(c, p, 'bailout');
+  if (!t || p.bailoutUsed) return false;
+  if (shortfall > bailoutMax(c.d, t)) return false;
+  p.bailoutUsed = true;
   p.cash += shortfall;
-  emit(c, 'skillUsed', { player: p.id, skill: sk.type, amount: shortfall });
+  emit(c, 'bailout', { player: p.id, amount: shortfall });
   return true;
 }
 

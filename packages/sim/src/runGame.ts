@@ -23,6 +23,8 @@ export interface SimGameOptions {
   lineup?: string[];
   /** Only deal these characters (default: all). */
   pool?: string[];
+  /** Team games: this many teams, seats alternate (seat i plays for team i % teams). 0 = no teams. */
+  teams?: number;
 }
 
 export type EndReason = 'lastStanding' | 'quickBankrupt' | 'roundLimit';
@@ -33,6 +35,7 @@ export interface PlayerRecord {
   rank: number;
   score: number;
   bankruptAtTurn: number | null;
+  team?: number;
 }
 
 export interface GameRecord {
@@ -43,6 +46,9 @@ export interface GameRecord {
   turns: number;
   rounds: number;
   winnerSeat: number | null;
+  /** Team games: number of teams and the winning team. */
+  teams?: number;
+  winnerTeam?: number | null;
   result: PlayerRecord[];
   landings: number[];
   rent: Record<string, number>;
@@ -76,7 +82,12 @@ export function runGame(o: SimGameOptions, d: GameData = defaultData): GameRecor
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
   const lineup = o.characters ? (o.lineup ?? pool.slice(0, o.players)) : [];
-  const players = Array.from({ length: o.players }, (_, i) => ({ id: `s${i}`, character: lineup[i] ?? null }));
+  const teams = o.teams ?? 0;
+  const players = Array.from({ length: o.players }, (_, i) => ({
+    id: `s${i}`,
+    character: lineup[i] ?? null,
+    ...(teams > 1 ? { team: i % teams } : {}),
+  }));
 
   const created = createGame(
     { players, seed: o.seed, config: { mode: o.mode, characters: o.characters, board: d.id } },
@@ -153,7 +164,12 @@ export function runGame(o: SimGameOptions, d: GameData = defaultData): GameRecor
     rank: ranking.findIndex((r) => r.player === p.id) + 1,
     score: ranking.find((r) => r.player === p.id)?.score ?? 0,
     bankruptAtTurn: bankruptAt.get(p.id) ?? null,
+    ...(p.team !== undefined ? { team: p.team } : {}),
   }));
+  if (teams > 1) {
+    rec.teams = teams;
+    rec.winnerTeam = s.winnerTeam ?? null;
+  }
   rec.winnerSeat = s.winner ? s.players.findIndex((p) => p.id === s.winner) : null;
   return rec;
 }

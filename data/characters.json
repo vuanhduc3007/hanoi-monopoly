@@ -26,6 +26,11 @@
             "P15"
           ],
           "rate": 0.25
+        },
+        {
+          "type": "bailout",
+          "maxAmount": 500,
+          "scaleWithBoard": true
         }
       ],
       "drawbacks": [
@@ -41,13 +46,95 @@
         }
       ],
       "skill": {
-        "name": "Bố ơi cứu con",
-        "type": "bailout",
-        "maxAmount": 500,
-        "trigger": "on_bankruptcy",
-        "cooldownRounds": 4,
-        "scaleWithBoard": true
-      }
+        "name": "Mua đứt",
+        "type": "buyout",
+        "premium": 1.5,
+        "cooldownRounds": 6,
+        "completesGroup": false
+      },
+      "byTableSize": [
+        {
+          "players": [
+            3
+          ],
+          "skill": {
+            "premium": 2.0,
+            "cooldownRounds": 10
+          }
+        }
+      ],
+      "byMode": [
+        {
+          "mode": "quick",
+          "passives": [
+            {
+              "type": "go_salary",
+              "value": 250
+            },
+            {
+              "type": "purchase_discount",
+              "properties": [
+                "P10",
+                "P11",
+                "P13",
+                "P14",
+                "P15"
+              ],
+              "rate": 0.25
+            },
+            {
+              "type": "bailout",
+              "maxAmount": 500,
+              "scaleWithBoard": true
+            }
+          ],
+          "skill": {
+            "premium": 2.5,
+            "cooldownRounds": 8
+          }
+        },
+        {
+          "teams": true,
+          "mode": "classic",
+          "skill": {
+            "cooldownRounds": 4
+          }
+        },
+        {
+          "teams": true,
+          "mode": "classic",
+          "players": [
+            6,
+            7,
+            8
+          ],
+          "passives": [
+            {
+              "type": "go_salary",
+              "value": 300
+            },
+            {
+              "type": "purchase_discount",
+              "properties": [
+                "P10",
+                "P11",
+                "P13",
+                "P14",
+                "P15"
+              ],
+              "rate": 0.25
+            },
+            {
+              "type": "bailout",
+              "maxAmount": 500,
+              "scaleWithBoard": true
+            }
+          ],
+          "skill": {
+            "cooldownRounds": 3
+          }
+        }
+      ]
     },
     {
       "id": "C02",
@@ -89,6 +176,24 @@
           ],
           "skill": {
             "cooldownRounds": 5
+          }
+        }
+      ],
+      "byMode": [
+        {
+          "mode": "quick",
+          "skill": {
+            "cooldownRounds": 3
+          }
+        },
+        {
+          "mode": "quick",
+          "players": [
+            8
+          ],
+          "drawbacks": [],
+          "skill": {
+            "cooldownRounds": 2
           }
         }
       ]
@@ -158,6 +263,46 @@
                 "EV05",
                 "EV18"
               ]
+            }
+          ]
+        }
+      ],
+      "byMode": [
+        {
+          "teams": true,
+          "players": [
+            6,
+            7,
+            8
+          ],
+          "passives": [
+            {
+              "type": "adjust_roll",
+              "delta": 1,
+              "perLap": 1,
+              "maxUses": 1
+            },
+            {
+              "type": "immune_events",
+              "cards": [
+                "EV05",
+                "EV18"
+              ]
+            }
+          ],
+          "skill": {
+            "cooldownRounds": 9
+          }
+        },
+        {
+          "mode": "quick",
+          "players": [
+            4
+          ],
+          "drawbacks": [
+            {
+              "type": "go_salary",
+              "value": 175
             }
           ]
         }
@@ -240,6 +385,22 @@
             }
           ]
         }
+      ],
+      "byMode": [
+        {
+          "teams": true,
+          "players": [
+            6,
+            7,
+            8
+          ],
+          "passives": [
+            {
+              "type": "commission_on_opponent_bank_purchase",
+              "amount": 5
+            }
+          ]
+        }
       ]
     },
     {
@@ -306,6 +467,49 @@
           "skill": {
             "cooldownRounds": 2
           }
+        },
+        {
+          "players": [
+            4
+          ],
+          "drawbacks": [
+            {
+              "type": "card_payment_multiplier",
+              "value": 1.1
+            }
+          ]
+        }
+      ],
+      "byMode": [
+        {
+          "mode": "quick",
+          "drawbacks": [],
+          "passives": [
+            {
+              "type": "draw_two_choose_one",
+              "decks": [
+                "chance",
+                "community"
+              ]
+            }
+          ]
+        },
+        {
+          "teams": true,
+          "drawbacks": [],
+          "passives": [
+            {
+              "type": "draw_two_choose_one",
+              "decks": [
+                "chance",
+                "community"
+              ]
+            },
+            {
+              "type": "starting_cash",
+              "value": 1700
+            }
+          ]
         }
       ]
     },
@@ -333,29 +537,71 @@
         }
       ],
       "skill": {
-        "name": "Tốt nghiệp",
-        "type": "auto_salary_upgrade",
-        "afterGoPasses": 4,
-        "recharge": false,
-        "value": 260
+        "name": "Săn học bổng",
+        "type": "scholarship",
+        "maxAmount": 60,
+        "fallbackAmount": 30,
+        "cooldownRounds": 5
       },
       "byTableSize": [
         {
           "players": [
             2
           ],
-          "skill": {
-            "afterGoPasses": 3,
-            "value": 280
-          }
+          "passives": [
+            {
+              "type": "park_bonus",
+              "amount": 100,
+              "amountWhenFundOff": 150
+            },
+            {
+              "type": "purchase_discount",
+              "groups": [
+                "pink"
+              ],
+              "rate": 0.2
+            }
+          ]
         },
         {
           "players": [
             3
           ],
+          "passives": [
+            {
+              "type": "park_bonus",
+              "amount": 100,
+              "amountWhenFundOff": 150
+            },
+            {
+              "type": "purchase_discount",
+              "groups": [
+                "pink"
+              ],
+              "rate": 0.2
+            }
+          ]
+        }
+      ],
+      "byMode": [
+        {
+          "mode": "quick",
           "skill": {
-            "afterGoPasses": 3,
-            "value": 280
+            "fallbackAmount": 40
+          }
+        },
+        {
+          "teams": true,
+          "skill": {
+            "maxAmount": 100,
+            "cooldownRounds": 4
+          }
+        },
+        {
+          "teams": true,
+          "mode": "quick",
+          "skill": {
+            "fallbackAmount": 60
           }
         }
       ]
@@ -366,13 +612,14 @@
       "passives": [
         {
           "type": "starting_cash",
-          "value": 1800
+          "value": 1350
         }
       ],
       "drawbacks": [],
       "skill": {
-        "name": "Xin nghỉ phép",
-        "type": "free_jail_exit"
+        "name": "Du lịch",
+        "type": "travel",
+        "cooldownRounds": 10
       },
       "byTableSize": [
         {
@@ -382,7 +629,51 @@
           "passives": [
             {
               "type": "starting_cash",
-              "value": 2000
+              "value": 1700
+            }
+          ]
+        },
+        {
+          "players": [
+            5
+          ],
+          "passives": [
+            {
+              "type": "starting_cash",
+              "value": 1300
+            }
+          ]
+        },
+        {
+          "players": [
+            6
+          ],
+          "passives": [
+            {
+              "type": "starting_cash",
+              "value": 1200
+            }
+          ]
+        },
+        {
+          "players": [
+            7
+          ],
+          "passives": [
+            {
+              "type": "starting_cash",
+              "value": 1150
+            }
+          ]
+        },
+        {
+          "players": [
+            8
+          ],
+          "passives": [
+            {
+              "type": "starting_cash",
+              "value": 1100
             }
           ]
         },
@@ -393,9 +684,20 @@
           "passives": [
             {
               "type": "starting_cash",
-              "value": 1900
+              "value": 1450
             }
           ]
+        }
+      ],
+      "byMode": [
+        {
+          "teams": true,
+          "players": [
+            4
+          ],
+          "skill": {
+            "cooldownRounds": 13
+          }
         }
       ]
     },
@@ -412,21 +714,21 @@
             "card"
           ],
           "minAmount": 50,
-          "winRate": 0.3,
+          "winRate": 0.25,
           "loseRate": 0.4,
-          "jackpotRate": 1
+          "jackpotRate": 0.5
         }
       ],
       "drawbacks": [
         {
           "type": "starting_cash",
-          "value": 1400
+          "value": 1450
         }
       ],
       "skill": {
         "name": "Mở sòng",
         "type": "host_sicbo",
-        "pot": 560,
+        "pot": 480,
         "roundTo": 10,
         "commission": 0.1,
         "cooldownRounds": 4
@@ -437,7 +739,7 @@
             2
           ],
           "skill": {
-            "pot": 240,
+            "pot": 200,
             "commission": 0.2,
             "cooldownRounds": 3
           }
@@ -447,7 +749,7 @@
             3
           ],
           "skill": {
-            "pot": 320,
+            "pot": 280,
             "commission": 0.2,
             "cooldownRounds": 3
           }
@@ -459,6 +761,26 @@
           "skill": {
             "commission": 0.15
           }
+        }
+      ],
+      "byMode": [
+        {
+          "mode": "quick",
+          "drawbacks": [
+            {
+              "type": "starting_cash",
+              "value": 1550
+            }
+          ]
+        },
+        {
+          "teams": true,
+          "drawbacks": [
+            {
+              "type": "starting_cash",
+              "value": 1650
+            }
+          ]
         }
       ]
     },
@@ -501,7 +823,6 @@
             }
           ],
           "skill": {
-            "anyTile": false,
             "cooldownRounds": 8
           }
         },
@@ -522,9 +843,66 @@
             }
           ],
           "skill": {
+            "cooldownRounds": 6
+          }
+        }
+      ],
+      "byMode": [
+        {
+          "mode": "quick",
+          "passives": [
+            {
+              "type": "build_discount",
+              "rate": 0.05
+            }
+          ],
+          "skill": {
             "anyTile": false,
             "cooldownRounds": 6
           }
+        },
+        {
+          "mode": "quick",
+          "players": [
+            5,
+            6,
+            7,
+            8
+          ],
+          "passives": [
+            {
+              "type": "build_discount",
+              "rate": 0.15
+            }
+          ]
+        },
+        {
+          "teams": true,
+          "players": [
+            4
+          ],
+          "passives": [
+            {
+              "type": "build_discount",
+              "rate": 0
+            }
+          ],
+          "skill": {
+            "cooldownRounds": 8
+          }
+        },
+        {
+          "teams": true,
+          "mode": "classic",
+          "players": [
+            6
+          ],
+          "passives": [
+            {
+              "type": "build_discount",
+              "rate": 0.1
+            }
+          ]
         }
       ]
     },
@@ -558,6 +936,26 @@
             {
               "type": "dividend",
               "rate": 0.04
+            }
+          ]
+        }
+      ],
+      "byMode": [
+        {
+          "mode": "quick",
+          "passives": [
+            {
+              "type": "dividend",
+              "rate": 0.05
+            }
+          ]
+        },
+        {
+          "teams": true,
+          "passives": [
+            {
+              "type": "dividend",
+              "rate": 0.07
             }
           ]
         }
@@ -613,6 +1011,335 @@
             "totalToSelf": 40,
             "totalToFund": 20
           }
+        }
+      ]
+    },
+    {
+      "id": "C13",
+      "name": "Thánh săn sale",
+      "passives": [
+        {
+          "type": "auction_discount",
+          "rate": 0.2
+        }
+      ],
+      "drawbacks": [
+        {
+          "type": "starting_cash",
+          "value": 1400
+        }
+      ],
+      "skill": {
+        "name": "Flash sale",
+        "type": "flash_sale",
+        "rate": 0.2,
+        "completesGroup": false,
+        "cooldownRounds": 6
+      },
+      "byTableSize": [
+        {
+          "players": [
+            2
+          ],
+          "drawbacks": [
+            {
+              "type": "starting_cash",
+              "value": 1500
+            }
+          ],
+          "skill": {
+            "rate": 0.3,
+            "cooldownRounds": 3,
+            "completesGroup": true
+          }
+        },
+        {
+          "players": [
+            4
+          ],
+          "skill": {
+            "completesGroup": true
+          }
+        },
+        {
+          "players": [
+            7,
+            8
+          ],
+          "skill": {
+            "rate": 0.15,
+            "cooldownRounds": 7
+          }
+        },
+        {
+          "players": [
+            3
+          ],
+          "skill": {
+            "rate": 0.3,
+            "cooldownRounds": 3,
+            "completesGroup": true
+          }
+        }
+      ],
+      "byMode": [
+        {
+          "mode": "quick",
+          "players": [
+            5,
+            6,
+            7,
+            8
+          ],
+          "skill": {
+            "rate": 0.15
+          }
+        },
+        {
+          "teams": true,
+          "players": [
+            5,
+            6
+          ],
+          "skill": {
+            "completesGroup": true,
+            "rate": 0.1,
+            "cooldownRounds": 20
+          }
+        },
+        {
+          "teams": true,
+          "players": [
+            4
+          ],
+          "skill": {
+            "rate": 0.1,
+            "cooldownRounds": 8
+          }
+        }
+      ]
+    },
+    {
+      "id": "C14",
+      "name": "Chủ trọ",
+      "passives": [
+        {
+          "type": "rent_bonus_groups",
+          "groups": [
+            "brown",
+            "lightblue"
+          ],
+          "rate": 0.5
+        }
+      ],
+      "drawbacks": [
+        {
+          "type": "tax_override",
+          "tax": "TAX1",
+          "amount": 250
+        },
+        {
+          "type": "tax_override",
+          "tax": "TAX2",
+          "amount": 150
+        }
+      ],
+      "skill": {
+        "name": "Tăng giá phòng",
+        "type": "raise_rent",
+        "rate": 0.25,
+        "maxPerTile": 2,
+        "cooldownRounds": 4
+      },
+      "byTableSize": [
+        {
+          "players": [
+            2,
+            3
+          ],
+          "drawbacks": []
+        }
+      ],
+      "byMode": [
+        {
+          "mode": "quick",
+          "drawbacks": [],
+          "skill": {
+            "cooldownRounds": 3
+          }
+        },
+        {
+          "teams": true,
+          "players": [
+            4
+          ],
+          "drawbacks": [],
+          "skill": {
+            "cooldownRounds": 3
+          }
+        }
+      ]
+    },
+    {
+      "id": "C15",
+      "name": "Thầy phong thủy",
+      "passives": [
+        {
+          "type": "immune_events",
+          "cards": [
+            "CH15",
+            "CD14",
+            "EV03",
+            "EV25",
+            "EV36"
+          ]
+        },
+        {
+          "type": "starting_cash",
+          "value": 1650
+        }
+      ],
+      "drawbacks": [],
+      "skill": {
+        "name": "Dời nhà",
+        "type": "move_house",
+        "cooldownRounds": 2
+      }
+    },
+    {
+      "id": "C16",
+      "name": "Tín dụng đen",
+      "passives": [
+        {
+          "type": "loan_shark",
+          "rate": 0.3,
+          "maxAmount": 300
+        }
+      ],
+      "drawbacks": [
+        {
+          "type": "starting_cash",
+          "value": 1400
+        }
+      ],
+      "skill": {
+        "name": "Giải ngân",
+        "type": "forced_loan",
+        "amount": 150,
+        "repayRate": 1.4,
+        "cooldownRounds": 4
+      },
+      "byMode": [
+        {
+          "teams": true,
+          "players": [
+            6,
+            7,
+            8
+          ],
+          "drawbacks": [
+            {
+              "type": "starting_cash",
+              "value": 1500
+            }
+          ],
+          "skill": {
+            "amount": 200,
+            "repayRate": 1.5
+          }
+        },
+        {
+          "teams": true,
+          "players": [
+            4
+          ],
+          "drawbacks": [
+            {
+              "type": "starting_cash",
+              "value": 1500
+            }
+          ]
+        },
+        {
+          "mode": "quick",
+          "players": [
+            2,
+            3,
+            4
+          ],
+          "drawbacks": [
+            {
+              "type": "starting_cash",
+              "value": 1500
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "C17",
+      "name": "Bác sĩ lạ",
+      "passives": [
+        {
+          "type": "immune_events",
+          "cards": [
+            "CD11",
+            "CD17",
+            "EV39",
+            "CD23"
+          ]
+        },
+        {
+          "type": "starting_cash",
+          "value": 1650
+        }
+      ],
+      "drawbacks": [],
+      "skill": {
+        "name": "Mở cổng",
+        "type": "portal",
+        "cooldownRounds": 4
+      },
+      "byTableSize": [
+        {
+          "players": [
+            2
+          ],
+          "passives": [
+            {
+              "type": "immune_events",
+              "cards": [
+                "CD11",
+                "CD17",
+                "EV39",
+                "CD23"
+              ]
+            },
+            {
+              "type": "starting_cash",
+              "value": 1950
+            }
+          ]
+        },
+        {
+          "players": [
+            3
+          ],
+          "passives": [
+            {
+              "type": "immune_events",
+              "cards": [
+                "CD11",
+                "CD17",
+                "EV39",
+                "CD23"
+              ]
+            },
+            {
+              "type": "starting_cash",
+              "value": 1550
+            }
+          ]
         }
       ]
     }

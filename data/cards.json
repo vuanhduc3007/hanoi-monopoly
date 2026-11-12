@@ -178,6 +178,46 @@
         "type": "move_to",
         "tile": "P07"
       }
+    },
+    {
+      "id": "CH22",
+      "name": "Đi xem pháo hoa Hồ Tây đêm giao thừa",
+      "effect": {
+        "type": "move_to",
+        "tile": "P20"
+      }
+    },
+    {
+      "id": "CH23",
+      "name": "Đi thử tuyến Metro mới",
+      "effect": {
+        "type": "move_to",
+        "tile": "T02"
+      }
+    },
+    {
+      "id": "CH24",
+      "name": "Đi chợ đêm Long Biên",
+      "effect": {
+        "type": "move_to",
+        "tile": "P09"
+      }
+    },
+    {
+      "id": "CH25",
+      "name": "Lỡ chuyến xe buýt, đi bộ lùi 2 ô",
+      "effect": {
+        "type": "move_relative",
+        "steps": -2
+      }
+    },
+    {
+      "id": "CH26",
+      "name": "Trúng voucher ngày sale đôi",
+      "effect": {
+        "type": "gain",
+        "amount": 60
+      }
     }
   ],
   "community": [
@@ -340,6 +380,38 @@
       "effect": {
         "type": "gain",
         "amount": 50
+      }
+    },
+    {
+      "id": "CD21",
+      "name": "Thưởng Tết dương lịch",
+      "effect": {
+        "type": "gain",
+        "amount": 80
+      }
+    },
+    {
+      "id": "CD22",
+      "name": "Đóng phí quản lý chung cư",
+      "effect": {
+        "type": "pay_bank",
+        "amount": 40
+      }
+    },
+    {
+      "id": "CD23",
+      "name": "Đi nhổ răng khôn",
+      "effect": {
+        "type": "pay_bank",
+        "amount": 50
+      }
+    },
+    {
+      "id": "CD24",
+      "name": "Làm định danh điện tử sớm, phường tặng quà",
+      "effect": {
+        "type": "gain",
+        "amount": 20
       }
     }
   ],
@@ -860,6 +932,100 @@
           "type": "bank_pays_all",
           "amount": 20
         }
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV41",
+      "name": "Công an triệt phá đường dây tín dụng đen",
+      "effect": {
+        "type": "character_pays",
+        "character": "C16",
+        "amount": 150,
+        "to": "fund",
+        "fallback": {
+          "type": "drawer_gain",
+          "amount": 30
+        }
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV42",
+      "name": "Mùa nhập học, phòng trọ cháy hàng",
+      "effect": {
+        "type": "character_gain",
+        "character": "C14",
+        "amount": 120,
+        "fallback": {
+          "type": "bank_pays_all",
+          "amount": 20
+        }
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV43",
+      "name": "Ngày hội săn sale 12.12",
+      "effect": {
+        "type": "character_gain",
+        "character": "C13",
+        "amount": 120,
+        "fallback": {
+          "type": "bank_pays_all",
+          "amount": 20
+        }
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV44",
+      "name": "Mùa cúm, phòng khám đông nghịt",
+      "effect": {
+        "type": "all_pay_character",
+        "character": "C17",
+        "amount": 20,
+        "fallback": {
+          "type": "all_pay",
+          "amount": 20,
+          "to": "fund"
+        }
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV45",
+      "name": "Xem ngày động thổ đầu năm",
+      "effect": {
+        "type": "character_gain",
+        "character": "C15",
+        "amount": 100,
+        "fallback": {
+          "type": "bank_pays_all",
+          "amount": 20
+        }
+      },
+      "kind": "instant"
+    },
+    {
+      "id": "EV46",
+      "name": "Vành đai 4 thông xe, đất phía Tây lên giá",
+      "effect": {
+        "type": "rent_multiplier",
+        "groups": [
+          "orange",
+          "red"
+        ],
+        "multiplier": 1.5
+      },
+      "kind": "duration"
+    },
+    {
+      "id": "EV47",
+      "name": "Phố phường treo cờ mừng đại lễ",
+      "effect": {
+        "type": "bank_pays_all",
+        "amount": 30
       },
       "kind": "instant"
     }

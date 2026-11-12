@@ -4,6 +4,7 @@
  */
 import { cardPayMultiplier, eventCancelCandidate, eventPercent, onDrawCard, useUpSkill } from './characters';
 import {
+  activePlayers,
   countBuildings,
   type Ctx,
   emit,
@@ -364,6 +365,18 @@ export function execEffect(c: Ctx, drawerId: PlayerId, cardId: string, effect: E
   const h = handlers[effect.type];
   if (!h) fail(`Unknown effect type ${effect.type}`);
   const drawer = getPlayer(c, drawerId);
+  // Characters immune to this card (immune_events): a card that only touches the drawer does
+  // nothing, otherwise they are left out like a Giải hạn.
+  const immune = activePlayers(c)
+    .filter((p) => !exempt.includes(p.id) && isImmune(c, p, cardId, effect))
+    .map((p) => p.id);
+  if (immune.includes(drawerId) && DRAWER_ONLY.has(effect.type)) {
+    emit(c, 'cardImmune', { player: drawerId, cardId });
+    return;
+  }
   emit(c, 'cardEffect', { player: drawerId, cardId, effect: effect.type });
-  h({ c, drawer, cardId, effect, exempt });
+  h({ c, drawer, cardId, effect, exempt: [...exempt, ...immune] });
 }
+
+/** Card effects that only touch the player who drew them. */
+const DRAWER_ONLY = new Set(['pay_bank', 'repairs', 'go_to_jail', 'move_to', 'move_to_nearest', 'move_relative']);

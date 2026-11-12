@@ -1,8 +1,10 @@
 import {
   build,
   buildBlock,
+  moveHouseBlock,
   partialFreeBuild,
   type BuildBlock,
+  type MoveHouseBlock,
   cancelTrade,
   mortgage,
   proposeTrade,
@@ -23,6 +25,8 @@ import {
 import {
   adjustRule,
   canOwn,
+  flashSalePrice,
+  onPurchase,
   onTurnStart,
   useUpSkill,
   postRollOptions,
@@ -38,8 +42,10 @@ import {
   fail,
   getPlayer,
   groupHasBuildings,
+  sideHasBuildings,
   groupProperties,
   isMyTurn,
+  ownedBySide,
   jailMaxTurns,
   opponentsOf,
   pushFront,
@@ -47,7 +53,8 @@ import {
 } from './ctx';
 import { dataFor, defaultData, type GameData } from './data';
 import { addActiveEffect, singleDieActive } from './effects';
-import { declareBankruptcy, execPay, finishGame, payTask, settleDebt } from './money';
+import { borrow, forcedLoan, loanOffer, type LoanOffer } from './loans';
+import { declareBankruptcy, execPay, finishGame, payTask, settleDebt, score } from './money';
 import {
   bid,
   buy,
@@ -132,7 +139,10 @@ export function createGame(opts: CreateGameOptions, data?: GameData): ActionResu
       id: p.id,
       name: p.name ?? p.id,
       character: config.characters ? p.character ?? null : null,
-      cash: startingCash(d, p.character ?? null, config.characters, opts.players.length),
+      cash: startingCash(d, p.character ?? null, config.characters, opts.players.length, {
+        mode: config.mode,
+        teams: opts.players.some((x) => x.team !== undefined),
+      }),
       position: 0,
       inJail: false,
       jailTurns: 0,
@@ -487,7 +497,7 @@ function useSkill(c: Ctx, p: PlayerState, a: Extract<Action, { type: 'useSkill' 
       if (!id || !own || !own.owner || own.owner === p.id || !own.mortgaged) fail("Choose an opponent's mortgaged property");
       const def = c.d.ownables[id];
       if (!canOwn(c, p, id)) fail('This character may not own that property');
-      if (groupHasBuildings(c, def.group, own.owner)) fail('Its group has buildings');
+      if (sideHasBuildings(c, def.group, own.owner)) fail('Its group has buildings');
       const cost = Math.ceil(def.mortgage * (1 + (sk.premium as number)) - 1e-9);
       if (p.cash < cost) fail('Not enough cash');
       const seller = getPlayer(c, own.owner);
@@ -511,6 +521,128 @@ function useSkill(c: Ctx, p: PlayerState, a: Extract<Action, { type: 'useSkill' 
         tasks.push(payTask(q.id, { kind: 'fund' }, toFund, 'other', 'contribution'));
       }
       pushFront(c, ...tasks);
+      return;
+    }
+    case 'travel': {
+      // Du lịch: instead of rolling, go to any tile. Walks there (salary when passing
+      // the start), then the tile is handled as after a roll.
+      requireTurn(c, p.id);
+      requireFree(c);
+      if (c.s.turn.phase !== 'roll' || p.inJail) fail('Travel replaces a roll (not from jail)');
+      const n = c.d.board.length;
+      const to = a.position;
+      if (to === undefined || !Number.isInteger(to) || to < 0 || to >= n || to === p.position) fail('Choose another tile');
+      useUpSkill(c, p);
+      c.s.turn.extraRoll = false;
+      c.s.turn.phase = 'end';
+      c.s.turn.dice = null;
+      emit(c, 'skillUsed', { player: p.id, skill: sk.type, position: to });
+      pushFront(c, { t: 'move', player: p.id, steps: (to - p.position + n) % n }, { t: 'afterRoll', player: p.id });
+      return;
+    }
+    case 'flash_sale': {
+      // Flash sale: buy any unowned tile on the board at a discount, without going there.
+      requireTurn(c, p.id);
+      requireFree(c);
+      const id = a.propertyId;
+      if (!id || !c.s.ownables[id] || c.s.ownables[id].owner) fail('Choose an unowned tile');
+      if (!canOwn(c, p, id)) fail('This character may not own that property');
+      if (sk.completesGroup === false && flashCompletesGroup(c, p, id)) fail('Flash sale cannot complete a colour group');
+      const price = flashSalePrice(c, sk, id);
+      if (p.cash < price) fail('Not enough cash');
+      useUpSkill(c, p);
+      p.cash -= price;
+      c.s.ownables[id].owner = p.id;
+      emit(c, 'skillUsed', { player: p.id, skill: sk.type, propertyId: id, amount: price });
+      emit(c, 'purchased', { player: p.id, propertyId: id, price });
+      onPurchase(c, p.id);
+      return;
+    }
+    case 'raise_rent': {
+      // Tăng giá phòng: one of his properties earns more rent for good (while he owns it).
+      requireTurn(c, p.id);
+      requireFree(c);
+      const id = a.propertyId;
+      if (!id || c.s.ownables[id]?.owner !== p.id || c.d.ownables[id].kind !== 'property') fail('Choose one of your properties');
+      const raises = p.rentBoosts?.[id] ?? 0;
+      if (raises >= (sk.maxPerTile as number)) fail('This tile cannot be raised further');
+      useUpSkill(c, p);
+      (p.rentBoosts ??= {})[id] = raises + 1;
+      emit(c, 'skillUsed', { player: p.id, skill: sk.type, propertyId: id, raises: raises + 1 });
+      return;
+    }
+    case 'move_house': {
+      // Dời nhà: a house goes from one of his tiles to another, still building evenly.
+      const from = a.from;
+      const to = a.propertyId;
+      if (!from || !to || !c.s.ownables[from] || !c.s.ownables[to]) fail('Choose where the house goes from and to');
+      const why = moveHouseBlock(c, p, from, to);
+      if (why) fail(`Cannot move the house: ${why}`);
+      useUpSkill(c, p);
+      c.s.ownables[from].level -= 1;
+      c.s.ownables[to].level += 1;
+      emit(c, 'skillUsed', { player: p.id, skill: sk.type, from, propertyId: to });
+      return;
+    }
+    case 'forced_loan': {
+      requireTurn(c, p.id);
+      requireFree(c);
+      useUpSkill(c, p);
+      const q = forcedLoan(c, p, sk);
+      emit(c, 'skillUsed', { player: p.id, skill: sk.type, target: q.id, amount: sk.amount });
+      return;
+    }
+    case 'portal': {
+      // Mở cổng: instead of rolling, swap places with a random opponent and handle the tile
+      // reached. The opponent just moves (no tile, no salary). Nobody in jail swaps.
+      requireTurn(c, p.id);
+      requireFree(c);
+      if (c.s.turn.phase !== 'roll' || p.inJail) fail('Portal replaces a roll (not from jail)');
+      const pool = portalTargets(c, p);
+      if (pool.length === 0) fail('Nobody to swap with');
+      const q = pool[randomInt(c.s, pool.length)];
+      useUpSkill(c, p);
+      c.s.turn.extraRoll = false;
+      c.s.turn.phase = 'end';
+      c.s.turn.dice = null;
+      const mine = p.position;
+      p.position = q.position;
+      q.position = mine;
+      emit(c, 'skillUsed', { player: p.id, skill: sk.type, target: q.id, position: p.position });
+      emit(c, 'moved', { player: p.id, from: mine, to: p.position, steps: 0, direct: true, portal: true });
+      emit(c, 'moved', { player: q.id, from: p.position, to: mine, steps: 0, direct: true, portal: true });
+      pushFront(c, { t: 'land', player: p.id }, { t: 'afterRoll', player: p.id });
+      return;
+    }
+    case 'buyout': {
+      // Mua đứt: buy an opponent's lone tile of a group (they hold nothing else in it, no
+      // buildings), paying them `premium` × the list price.
+      requireTurn(c, p.id);
+      requireFree(c);
+      const id = a.propertyId;
+      const why = id ? buyoutBlock(c, p, id) : 'notOwned';
+      if (why) fail(`Cannot buy out: ${why}`);
+      const own = c.s.ownables[id!];
+      const seller = getPlayer(c, own.owner!);
+      const cost = buyoutPrice(c, sk, id!);
+      useUpSkill(c, p);
+      p.cash -= cost;
+      seller.cash += cost;
+      own.owner = p.id;
+      emit(c, 'skillUsed', { player: p.id, skill: sk.type, propertyId: id, from: seller.id, amount: cost });
+      return;
+    }
+    case 'scholarship': {
+      // Săn học bổng: take up to `maxAmount` from the Quỹ khuyến học; with the Quỹ off or
+      // empty the bank gives `fallbackAmount`.
+      requireTurn(c, p.id);
+      requireFree(c);
+      useUpSkill(c, p);
+      const fromFund = c.s.config.scholarshipFund ? Math.min(c.s.fund, sk.maxAmount as number) : 0;
+      const amount = fromFund > 0 ? fromFund : (sk.fallbackAmount as number);
+      if (fromFund > 0) c.s.fund -= fromFund;
+      p.cash += amount;
+      emit(c, 'skillUsed', { player: p.id, skill: sk.type, amount, fromFund: fromFund > 0 });
       return;
     }
     case 'free_jail_exit': {
@@ -550,6 +682,45 @@ export function contributionShares(sk: Effect, opponents: number): { toSelf: num
   const share = (total: unknown, each: unknown) =>
     each !== undefined ? (each as number) : Math.ceil((total as number) / Math.max(1, opponents) - 1e-9);
   return { toSelf: share(sk.totalToSelf, sk.toSelf), toFund: share(sk.totalToFund, sk.toFund) };
+}
+
+/** Mua đứt price for `id`. */
+export function buyoutPrice(c: Ctx, sk: Effect, id: string): number {
+  return Math.ceil(c.d.ownables[id].price * (sk.premium as number) - 1e-9);
+}
+
+/**
+ * Why Thiếu gia Vin may not buy out `id`: it must be an opponent's (not a teammate's),
+ * unmortgaged, the only tile of its group on the owner's side, with no buildings in the
+ * group, and affordable. Transport / utilities count as a lone tile when the owner has one.
+ */
+export function buyoutBlock(c: Ctx, p: PlayerState, id: string): string | null {
+  const own = c.s.ownables[id];
+  if (!own || !own.owner || own.owner === p.id || teammates(c, p.id, own.owner)) return 'notOpponent';
+  if (own.mortgaged) return 'mortgaged';
+  if (!canOwn(c, p, id)) return 'forbidden';
+  const def = c.d.ownables[id];
+  const owner = own.owner;
+  const same = def.group
+    ? groupProperties(c, def.group).filter((x) => ownedBySide(c, x, owner))
+    : Object.keys(c.s.ownables).filter((x) => c.d.ownables[x].kind === def.kind && ownedBySide(c, x, owner));
+  if (same.length > 1) return 'notLone';
+  if (def.group && groupProperties(c, def.group).some((x) => c.s.ownables[x].level > 0)) return 'buildings';
+  const sk = skillOf(c, p);
+  if (sk?.completesGroup === false && flashCompletesGroup(c, p, id)) return 'completesGroup';
+  if (!sk || p.cash < buyoutPrice(c, sk, id)) return 'noCash';
+  return null;
+}
+
+/** Would buying `id` give `p`'s side the whole colour group? */
+export function flashCompletesGroup(c: Ctx, p: PlayerState, id: string): boolean {
+  const g = c.d.ownables[id].group;
+  return !!g && groupProperties(c, g).every((x) => x === id || ownedBySide(c, x, p.id));
+}
+
+/** Mở cổng: opponents Bác sĩ lạ may swap with (not in jail, not on his tile). */
+export function portalTargets(c: Ctx, p: PlayerState): PlayerState[] {
+  return opponentsOf(c, p).filter((q) => !q.inJail && q.position !== p.position);
 }
 
 // ---------------------------------------------------------------- dispatch
@@ -627,6 +798,13 @@ function dispatch(c: Ctx, a: Action): void {
     }
     case 'useSkill':
       return useSkill(c, getPlayer(c, a.player), a);
+    case 'borrow': {
+      const pend = c.s.pending;
+      if (pend?.type !== 'liquidation' || pend.player !== a.player) fail('No debt to borrow for');
+      borrow(c, getPlayer(c, a.player));
+      settleDebt(c);
+      return;
+    }
     case 'declineSkill':
       return declineSkill(c, getPlayer(c, a.player));
     case 'chooseCard':
@@ -719,4 +897,69 @@ export function whyCantBuild(
   return buildBlock(c, getPlayer(c, playerId), propertyId);
 }
 
-export type { BuildBlock };
+/** Net worth as the quick mode scores it (cash + land at list price, mortgaged at half + buildings). */
+export function netWorth(state: GameState | PublicLike, playerId: PlayerId, data?: GameData): number {
+  const c = { s: state as GameState, ev: [], d: data ?? dataFor(state.config.board) };
+  return score(c, getPlayer(c, playerId));
+}
+type PublicLike = Pick<GameState, 'players' | 'ownables' | 'config'>;
+
+/** Thợ xây's Tự tay xây on this tile: why not, or null if allowed (a "nhà chui" counts). */
+export function whyCantFreeBuild(
+  state: Pick<GameState, 'players' | 'turn' | 'pending' | 'ownables' | 'config' | 'activeEffects'>,
+  playerId: PlayerId,
+  propertyId: string,
+  data?: GameData,
+): BuildBlock | null {
+  const c = { s: state as GameState, ev: [], d: data ?? dataFor(state.config.board) };
+  const p = getPlayer(c, playerId);
+  return buildBlock(c, p, propertyId, 0, partialFreeBuild(c, p));
+}
+
+type StateLike = Pick<GameState, 'players' | 'turn' | 'pending' | 'ownables' | 'config' | 'activeEffects'>;
+
+/** Dời nhà from `from` to `to`: why not, or null if allowed. */
+export function whyCantMoveHouse(state: StateLike, playerId: PlayerId, from: string, to: string, data?: GameData): MoveHouseBlock | null {
+  const c = { s: state as GameState, ev: [], d: data ?? dataFor(state.config.board) };
+  if (!c.s.ownables[from] || !c.s.ownables[to]) return 'notBuildable';
+  return moveHouseBlock(c, getPlayer(c, playerId), from, to);
+}
+
+/** Vay nóng the debtor could take now (lender, amount, owed), or null. */
+export function loanOfferFor(state: StateLike, debtorId: PlayerId, data?: GameData): LoanOffer | null {
+  const c = { s: state as GameState, ev: [], d: data ?? dataFor(state.config.board) };
+  return loanOffer(c, debtorId);
+}
+
+/** Flash sale on `propertyId`: why not ('owned', 'forbidden', 'completesGroup', 'noCash'), or null. */
+export function whyCantFlashSale(state: StateLike, playerId: PlayerId, propertyId: string, data?: GameData): string | null {
+  const c = { s: state as GameState, ev: [], d: data ?? dataFor(state.config.board) };
+  const p = getPlayer(c, playerId);
+  const sk = skillOf(c, p);
+  if (!c.s.ownables[propertyId] || c.s.ownables[propertyId].owner) return 'owned';
+  if (!canOwn(c, p, propertyId)) return 'forbidden';
+  if (sk?.completesGroup === false && flashCompletesGroup(c, p, propertyId)) return 'completesGroup';
+  if (sk && p.cash < flashSalePrice(c, sk, propertyId)) return 'noCash';
+  return null;
+}
+
+/** Mua đứt on `propertyId`: why not, or null (then `price` is what it costs). */
+export function whyCantBuyout(state: StateLike, playerId: PlayerId, propertyId: string, data?: GameData): string | null {
+  const c = { s: state as GameState, ev: [], d: data ?? dataFor(state.config.board) };
+  return buyoutBlock(c, getPlayer(c, playerId), propertyId);
+}
+
+/** Mua đứt price of `propertyId` for this player's skill. */
+export function buyoutPriceFor(state: StateLike, playerId: PlayerId, propertyId: string, data?: GameData): number {
+  const c = { s: state as GameState, ev: [], d: data ?? dataFor(state.config.board) };
+  const sk = skillOf(c, getPlayer(c, playerId));
+  return sk ? buyoutPrice(c, sk, propertyId) : 0;
+}
+
+/** Mở cổng: ids of the opponents Bác sĩ lạ could land a swap with. */
+export function portalTargetsFor(state: StateLike, playerId: PlayerId, data?: GameData): PlayerId[] {
+  const c = { s: state as GameState, ev: [], d: data ?? dataFor(state.config.board) };
+  return portalTargets(c, getPlayer(c, playerId)).map((q) => q.id);
+}
+
+export type { BuildBlock, MoveHouseBlock, LoanOffer };

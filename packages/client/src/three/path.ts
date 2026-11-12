@@ -83,7 +83,8 @@ export function planFromEvents(
         const from = (e.from as number) ?? pos[id];
         const to = e.to as number;
         const back = (e.steps as number) < 0;
-        const { tiles, direct } = back ? walkPath(from, to) : walkPath(from, to, false);
+        // Mở cổng is a jump, never a walk.
+        const { tiles, direct } = back ? walkPath(from, to) : walkPath(from, to, e.portal === true);
         if (direct) push(id, { tile: to, mode: 'hop' });
         else push(id, ...tiles.map((tile) => ({ tile, mode: 'walk' as const })));
         pos[id] = to;

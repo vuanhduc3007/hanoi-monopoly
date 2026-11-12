@@ -46,11 +46,12 @@ export function addRecord(t: Totals, r: GameRecord): void {
   t.turns.push(r.turns);
   t.rounds.push(r.rounds);
   for (const p of r.result) {
-    const won = p.seat === r.winnerSeat ? 1 : 0;
+    // Team games: a player wins with their team; the fair share is one team in `teams`.
+    const won = r.teams ? (p.team === r.winnerTeam ? 1 : 0) : p.seat === r.winnerSeat ? 1 : 0;
     for (const b of [bucket(t.characters, p.character ?? 'none'), bucket(t.seats, String(p.seat))]) {
       b.games++;
       b.wins += won;
-      b.expected += 1 / r.players;
+      b.expected += r.teams ? 1 / r.teams : 1 / r.players;
       b.rankSum += p.rank;
     }
   }

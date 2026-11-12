@@ -16,29 +16,34 @@ Tạo phòng, gửi mã 6 ký tự hoặc link mời cho bạn bè, chọn nhân
   | Mở rộng 48 ô | 5–6 | tiền khởi đầu ×1,15, lương ×1,2; thêm nhóm Xanh ngọc (Linh Đàm, Văn Quán, Nghĩa Đô), nhóm Tím (Ciputra, Tây Hồ Tây, Làng đào Nhật Tân), Metro Nhổn – Ga Hà Nội |
   | Đại 56 ô | 7–8 | tiền khởi đầu ×1,3, lương ×1,2; thêm nhóm Bạc (Tràng Tiền, Nhà hát Lớn, Phan Đình Phùng), nhóm Mận (Hàng Ngang, Hàng Đào), Bến xe Giáp Bát |
 
-- **12 nhân vật**, mỗi người có nội tại, điểm yếu và một kỹ năng **hồi lại sau vài lượt** (thường là 3):
+- **17 nhân vật**, mỗi người có nội tại, điểm yếu và một kỹ năng **hồi lại sau vài lượt** (thường là 3):
 
   | Nhân vật | Nét chính |
   | --- | --- |
-  | Thiếu gia Vin | lương cao, mua Vinhomes/Vincom rẻ hơn, bố trả nợ hộ khi sắp phá sản |
+  | Thiếu gia Vin | lương cao, mua Vinhomes/Vincom rẻ hơn, bố trả nợ hộ một lần khi sắp phá sản, **mua đứt** một ô lẻ của đối thủ (trả hậu cho chủ) |
   | Ninja Lead | không sợ CSGT thổi còi, "ăn vạ" giảm nửa tiền thuê |
   | Tài xế Grab | chỉnh ±1 bước, chạy cuốc đêm (tung lại) |
   | Idol TikTok | được ngân hàng thưởng thêm khi thu tiền thuê, "bóc phốt" chặn thu thuê của đối thủ |
   | Cò đất | ăn hoa hồng khi đối thủ mua đất, "tung tin quy hoạch" nhân đôi tiền thuê một nhóm |
   | Nghiện Tarot | rút 2 thẻ Cơ hội chọn 1, "giải hạn" thẻ Event |
-  | SVBK | thưởng ở Văn Miếu, tốt nghiệp thì lương tăng |
-  | Nô lệ tư bản | nhiều vốn khởi đầu, xin nghỉ phép ra khỏi Bãi giữ xe |
-  | Con bạc | chơi **tài xỉu** khi mua đất hay nộp phạt (thắng trả bớt, thua trả thêm), **mở sòng** cho cả bàn đặt cược với mình làm nhà cái |
+  | SVBK | thưởng ở Văn Miếu, tốt nghiệp thì lương tăng, **săn học bổng** từ Quỹ khuyến học |
+  | Nô lệ tư bản | vốn ít (càng đông người càng ít), **du lịch**: thay cho tung xúc xắc, chọn một ô bất kỳ để đến (hồi 10 lượt) |
+  | Con bạc | chơi **tài xỉu** khi mua đất hay nộp phạt (thắng trả bớt, thua trả thêm), **mở sòng** cho cả bàn cùng đặt cược với mình làm nhà cái |
   | Thợ xây | xây nhà rẻ hơn, tự tay xây nhà miễn phí (kể cả một "nhà chui") |
   | F0 chứng khoán | nhận cổ tức theo giá đất đang giữ, "bắt đáy" đất đang thế chấp của đối thủ |
   | Tổ trưởng dân phố | miễn phí gửi xe Phố cổ, "họp tổ" thu tiền góp của cả xóm |
+  | Thánh săn sale | thắng đấu giá trả ít hơn, **flash sale**: mua ngay một ô chưa có chủ ở bất kỳ đâu với giá giảm |
+  | Chủ trọ | thu thuê cao hơn ở các nhóm đất rẻ, **tăng giá phòng** vĩnh viễn cho một ô; nộp thuế nhiều hơn |
+  | Thầy phong thủy | miễn các thẻ sửa nhà, **dời nhà** miễn phí từ ô này sang ô khác |
+  | Tín dụng đen | ai thiếu tiền cũng được **vay nóng** (trả lãi khi qua Hoàng thành), **giải ngân** ép một đối thủ ngẫu nhiên vay |
+  | Bác sĩ lạ | miễn viện phí, máy lọc không khí; **mở cổng**: thay cho tung xúc xắc, đổi chỗ với một đối thủ ngẫu nhiên |
 
   Trong ván, nút **Nhân vật** cho xem lại nội tại, điểm yếu, kỹ năng của mọi người (đúng con số của bàn và số người đang chơi) và kỹ năng của ai đang hồi.
 
-  Tỉ lệ thắng được cân bằng bằng mô phỏng hàng trăm nghìn ván bot cho mọi cỡ bàn 2–8 người: mỗi nhân vật lệch không quá khoảng ±3 điểm % so với mức công bằng (chi tiết trong [`docs/decisions.md`](docs/decisions.md)). Bàn 2–3 người dùng chỉ số riêng cho vài nhân vật.
-- **81 lá thẻ**: Cơ hội, Cộng đồng và bộ Hanoi Event, có thẻ tác động cả bàn, thẻ ⏳ kéo dài một vòng, thẻ theo xu hướng (Nghị định 168, AQI, pickleball, concert Mỹ Đình…) và thẻ gắn với từng nhân vật (công an phường triệt phá sòng tài xỉu, VN-Index lập đỉnh, mùa sửa nhà…).
-- **Hai chế độ**: Truyền thống (người cuối cùng không phá sản thắng) và Nhanh (chia đất đầu ván, tài sản cao nhất khi hết 60 phút thắng). Bàn đông người nên chơi chế độ Nhanh.
-- **Chơi theo đội** (2–4 đội: Rồng, Phượng, Lân, Quy): đồng đội không thu tiền thuê của nhau, thẻ và kỹ năng chỉ nhắm vào đội khác, lượt đi xen kẽ giữa các đội, đội cuối cùng còn trụ thắng.
+  Tỉ lệ thắng được cân bằng bằng mô phỏng hàng trăm nghìn ván bot cho mọi cỡ bàn 2–8 người: mỗi nhân vật lệch không quá khoảng ±3 điểm % so với mức công bằng (chi tiết trong [`docs/decisions.md`](docs/decisions.md)). Bàn 2–3 người dùng chỉ số riêng cho vài nhân vật; chế độ Nhanh và chế độ Đội cũng được cân bằng riêng (mô phỏng có cả ván theo đội), màn chọn nhân vật ghi "Chỉ số riêng cho chế độ …".
+- **97 lá thẻ**: Cơ hội, Cộng đồng và bộ Hanoi Event, có thẻ tác động cả bàn, thẻ ⏳ kéo dài một vòng, thẻ theo xu hướng (Nghị định 168, AQI, pickleball, concert Mỹ Đình, Vành đai 4, ngày sale 12.12…) và thẻ gắn với từng nhân vật (công an phường triệt phá sòng tài xỉu, đường dây tín dụng đen bị triệt phá, mùa nhập học phòng trọ cháy hàng, VN-Index lập đỉnh…).
+- **Hai chế độ**: Truyền thống (người cuối cùng không phá sản thắng) và Nhanh (chia đất đầu ván, tài sản cao nhất khi hết 60 phút thắng; giữa bàn có đồng hồ đếm ngược, bảng người chơi xếp hạng theo tổng tài sản). Bàn đông người nên chơi chế độ Nhanh.
+- **Chơi theo đội** (2–4 đội: Rồng, Phượng, Lân, Quy): đồng đội không thu tiền thuê của nhau; đất của cả đội tính chung nhóm màu (cả đội đủ nhóm thì mỗi người xây nhà, thế chấp, chuộc trên ô của mình) và cắm cờ màu đội; thẻ và kỹ năng chỉ nhắm vào đội khác, lượt đi xen kẽ giữa các đội, đội cuối cùng còn trụ thắng. Bảng người chơi có tổng tài sản từng đội.
 - **Bốc thăm nhân vật**: chủ phòng có thể để máy bốc ngẫu nhiên nhân vật cho cả bàn. Khi chọn lần lượt, người đến lượt cũng có nút chọn ngẫu nhiên.
 - **Giá đất và tiền thuê được tính lại theo tần suất dừng chân** bằng mô phỏng bot cho từng bàn, để không nhóm màu nào là "đất chết". Nhóm 2 ô cuối bàn là đất vàng: thu thuê cao nhất nhưng xây nhà đắt. Đất đã có chủ được cắm cờ màu người chủ.
 - **Hướng dẫn người mới (bật/tắt được)**: 28 mẹo hiện dần đúng lúc trong ván — lần đầu mua đất, trả tiền thuê, rút thẻ, vào Bãi giữ xe, đủ nhóm màu thì chỉ nút Tài sản để xây nhà, thiếu 1 ô thì gợi ý Giao dịch, sắp hết tiền thì giải thích thế chấp… Nút được nhắc tới sẽ nhấp nháy. Người bật hướng dẫn có dấu 🎓 cạnh tên và thêm vài giây cho mỗi quyết định.

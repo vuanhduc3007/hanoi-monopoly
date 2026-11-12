@@ -117,6 +117,18 @@ describe('playing', () => {
     expect(h.ctl.log!.actions).toHaveLength(1);
   });
 
+  it('quick mode: the room tells everyone when the game ends on time, and it does end then', () => {
+    const h = lobby(2, false);
+    h.ctl.message('s1', 'setConfig', { mode: 'quick' });
+    h.ctl.message('s2', 'ready', { ready: true });
+    h.ctl.message('s1', 'start', {});
+    const ms = D.config.quickMode.timeLimitMin * 60_000;
+    expect(h.out.last('room', 's2').quickEndsAt).toBe(h.clock.now() + ms);
+    h.clock.advance(ms + 10);
+    expect(h.ctl.state!.status).toBe('over');
+    expect(h.out.last('room', 's2').quickEndsAt).toBeNull();
+  });
+
   it('a learner (tutorial on) is marked for the table and gets learnerExtraSec more on decisions', () => {
     const h = lobby(2, false);
     h.ctl.message('s1', 'learner', { on: true });

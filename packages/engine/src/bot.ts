@@ -7,11 +7,12 @@
  * - Bids in auctions up to the list price (never more than its cash).
  * - Rejects trades unless they complete one of its colour groups.
  */
-import { buildBlock, buildError, partialFreeBuild, unmortgageCost } from './assets';
+import { buildBlock, buildError, moveHouseBlock, partialFreeBuild, unmortgageCost } from './assets';
 import {
   adjustRule,
   buildCostFor,
   canOwn,
+  flashSalePrice,
   postRollOptions,
   purchasePrice,
   salaryFor,
@@ -24,17 +25,19 @@ import {
   activePlayers,
   type Ctx,
   getPlayer,
-  groupHasBuildings,
+  sideHasBuildings,
   groupProperties,
   hotelLevel,
   jailMaxTurns,
   opponentsOf,
   ownedBy,
+  ownedBySide,
   ownsFullGroup,
   teammates,
 } from './ctx';
 import { dataFor, type GameData } from './data';
-import { applyActionInPlace } from './engine';
+import { applyActionInPlace, buyoutBlock, buyoutPrice, portalTargets } from './engine';
+import { loanOffer } from './loans';
 import { quoteRent } from './rent';
 import { gambleRule, gambleWorst, sicboStake } from './sicbo';
 import type { Action, GameState, PlayerState, Trade } from './types';
@@ -151,6 +154,8 @@ export function botActionFor(
       case 'eventCancel':
         return eventCancelAction(c, playerId, pend.cardId, o);
       case 'liquidation':
+        // Vay nóng beats selling houses and mortgaging (it is paid back from the next salary).
+        if (loanOffer(c, playerId)) return { type: 'borrow', player: playerId };
         return { type: 'declareBankruptcy', player: playerId };
       case 'inheritMortgage': {
         const cost = unmortgageCost(c, me, pend.propertyId);
@@ -197,6 +202,28 @@ function turnStartSkill(c: Ctx, p: PlayerState): Action | null {
       const pick = bestMortgagedBuy(c, p, sk.premium as number);
       if (pick) return { type: 'useSkill', player: p.id, propertyId: pick };
     }
+    if (sk.type === 'travel') {
+      const to = bestTravel(c, p);
+      if (to !== null) return { type: 'useSkill', player: p.id, position: to };
+    }
+    if (sk.type === 'flash_sale') {
+      const pick = bestUnowned(c, p, (id) => flashSalePrice(c, sk, id), undefined, sk.completesGroup === false);
+      if (pick) return { type: 'useSkill', player: p.id, propertyId: c.d.board[pick.pos].ref };
+    }
+    if (sk.type === 'raise_rent') {
+      const pick = bestRaise(c, p, sk.maxPerTile as number);
+      if (pick) return { type: 'useSkill', player: p.id, propertyId: pick };
+    }
+    if (sk.type === 'forced_loan' && opponents.length > 0 && p.cash - (sk.amount as number) >= 300) {
+      return { type: 'useSkill', player: p.id };
+    }
+    // Mở cổng gives up the roll (and its trip round the board): only for a clearly better tile.
+    if (sk.type === 'scholarship') return { type: 'useSkill', player: p.id };
+    if (sk.type === 'buyout') {
+      const pick = bestBuyout(c, p, (id) => buyoutPrice(c, sk, id));
+      if (pick) return { type: 'useSkill', player: p.id, propertyId: pick };
+    }
+    if (sk.type === 'portal' && portalWorth(c, p) >= rollWorth(c, p) + 60) return { type: 'useSkill', player: p.id };
   }
   if (skillAvailable(c, p, 'block_rent')) {
     let best: { id: string; levels: number } | null = null;
@@ -220,13 +247,136 @@ function turnStartSkill(c: Ctx, p: PlayerState): Action | null {
   return null;
 }
 
+/**
+ * Du lịch: go and buy the unowned tile that does the most for the bot's colour groups
+ * (completing one first), when it can pay and keep its reserve. Otherwise just roll.
+ */
+function bestTravel(c: Ctx, p: PlayerState): number | null {
+  return bestUnowned(c, p, (id) => c.d.ownables[id].price, p.position)?.pos ?? null;
+}
+
+/**
+ * The unowned tile (by board index) that does the most for the bot's colour groups at
+ * `priceOf`, when it keeps its reserve; null below a useful score.
+ */
+function bestUnowned(
+  c: Ctx,
+  p: PlayerState,
+  priceOf: (id: string) => number,
+  skipPos?: number,
+  noCompleting = false,
+): { pos: number; score: number } | null {
+  let best: { pos: number; score: number } | null = null;
+  c.d.board.forEach((tile, pos) => {
+    const id = tile.ref;
+    if (!id || pos === skipPos || !c.s.ownables[id] || c.s.ownables[id].owner || !canOwn(c, p, id)) return;
+    const def = c.d.ownables[id];
+    if (p.cash - priceOf(id) < BOT_DEFAULTS.buyReserve) return;
+    let score = 0;
+    if (def.group) {
+      const group = groupProperties(c, def.group);
+      const held = group.filter((g) => ownedBySide(c, g, p.id)).length;
+      if (held === 0 || (noCompleting && held === group.length - 1)) return;
+      score = held === group.length - 1 ? 1000 + def.price : held * 100 + def.price / 10;
+    } else {
+      const kind = def.kind;
+      const held = ownedBy(c, p.id).filter((x) => c.d.ownables[x].kind === kind).length;
+      if (held === 0) return;
+      score = held * 80;
+    }
+    if (!best || score > best.score) best = { pos, score };
+  });
+  const pick = best as { pos: number; score: number } | null;
+  // Flash sale that may not complete a group: any tile joining a group already started.
+  return pick && pick.score >= (noCompleting ? 100 : 200) ? pick : null;
+}
+
+/** Thiếu gia Vin: the lone opponent tile that does the most for his groups (completion first). */
+function bestBuyout(c: Ctx, p: PlayerState, priceOf: (id: string) => number): string | null {
+  let best: { id: string; score: number } | null = null;
+  for (const id of Object.keys(c.s.ownables)) {
+    if (buyoutBlock(c, p, id) !== null || p.cash - priceOf(id) < 300) continue;
+    const def = c.d.ownables[id];
+    let score: number;
+    if (def.group) {
+      const group = groupProperties(c, def.group);
+      const held = group.filter((g) => ownedBySide(c, g, p.id)).length;
+      if (held === 0) continue;
+      score = held === group.length - 1 ? 1000 + def.price : held * 100;
+    } else {
+      const held = ownedBy(c, p.id).filter((x) => c.d.ownables[x].kind === def.kind).length;
+      if (held === 0) continue;
+      score = held * 80;
+    }
+    if (!best || score > best.score) best = { id, score };
+  }
+  // Paying 150%+ for a tile only pays off when it nearly completes a set (or completes one,
+  // where allowed): a bot that bought every lone tile lost 6–13 points in Nhanh / Đội games.
+  return best && best.score >= 200 ? best.id : null;
+}
+
+/** Chủ trọ: raise the tile that already earns the most. */
+function bestRaise(c: Ctx, p: PlayerState, maxPerTile: number): string | null {
+  let best: { id: string; rent: number } | null = null;
+  for (const id of ownedBy(c, p.id)) {
+    const def = c.d.ownables[id];
+    if (def.kind !== 'property' || c.s.ownables[id].mortgaged || (p.rentBoosts?.[id] ?? 0) >= maxPerTile) continue;
+    const full = def.group ? ownsFullGroup(c, p.id, def.group) : false;
+    const rent = rentAtLevel(c, id) * (full && c.s.ownables[id].level === 0 ? 2 : 1);
+    if (!best || rent > best.rent) best = { id, rent };
+  }
+  return best && best.rent >= 20 ? best.id : null;
+}
+
+/** Thầy phong thủy: the house move that raises rent the most (at least `minGain`). */
+function bestHouseMove(c: Ctx, p: PlayerState, minGain: number): { from: string; to: string } | null {
+  const mine = ownedBy(c, p.id).filter((id) => c.d.ownables[id].kind === 'property');
+  let best: { from: string; to: string; gain: number } | null = null;
+  for (const from of mine) {
+    if (c.s.ownables[from].level === 0) continue;
+    for (const to of mine) {
+      if (moveHouseBlock(c, p, from, to) !== null) continue;
+      const before = rentAtLevel(c, from) + rentAtLevel(c, to);
+      c.s.ownables[from].level -= 1;
+      c.s.ownables[to].level += 1;
+      const after = rentAtLevel(c, from) + rentAtLevel(c, to);
+      c.s.ownables[from].level += 1;
+      c.s.ownables[to].level -= 1;
+      const gain = after - before;
+      if (gain >= minGain && (!best || gain > best.gain)) best = { from, to, gain };
+    }
+  }
+  return best;
+}
+
+/** Bác sĩ lạ: average worth of the tiles a swap could land on (no salary on a swap). */
+function portalWorth(c: Ctx, p: PlayerState): number {
+  const pool = portalTargets(c, p);
+  if (pool.length === 0) return -Infinity;
+  const salary = salaryFor(c, p);
+  // landingValue counts the salary for a tile behind us; a swap never pays it.
+  const values = pool.map((q) => landingValue(c, p, q.position, 7) - (q.position < p.position ? salary : 0));
+  return values.reduce((a, b) => a + b, 0) / values.length;
+}
+
+/** Average worth of an ordinary roll's landing (two dice, salary included). */
+function rollWorth(c: Ctx, p: PlayerState): number {
+  const n = c.d.board.length;
+  let total = 0;
+  for (let a = 1; a <= 6; a++) {
+    for (let b = 1; b <= 6; b++) total += landingValue(c, p, (p.position + a + b) % n, a + b);
+  }
+  return total / 36;
+}
+
 /** F0 chứng khoán: the opponent's mortgaged tile most worth buying (group completion first). */
 function bestMortgagedBuy(c: Ctx, p: PlayerState, premium: number): string | null {
   let best: { id: string; score: number } | null = null;
   for (const [id, own] of Object.entries(c.s.ownables)) {
     if (!own.owner || own.owner === p.id || !own.mortgaged || !canOwn(c, p, id)) continue;
     const def = c.d.ownables[id];
-    if (groupHasBuildings(c, def.group, own.owner)) continue;
+    // Same rule as the engine: no buildings on the owner's side of the group (teammates' too).
+    if (sideHasBuildings(c, def.group, own.owner)) continue;
     const cost = Math.ceil(def.mortgage * (1 + premium) - 1e-9);
     // Needs the unmortgage money later too.
     if (p.cash - cost - def.mortgage < 300) continue;
@@ -272,6 +422,11 @@ function endOfTurn(c: Ctx, p: PlayerState, o: BotOptions): Action {
   const candidates = ownedBy(c, p.id)
     .filter((id) => c.d.ownables[id].kind === 'property')
     .sort((a, b) => c.d.ownables[b].price - c.d.ownables[a].price);
+  // Thầy phong thủy: move a house where it earns more.
+  if (skillAvailable(c, p, 'move_house')) {
+    const mv = bestHouseMove(c, p, 30);
+    if (mv) return { type: 'useSkill', player: p.id, from: mv.from, propertyId: mv.to };
+  }
   // Thợ xây: the free house goes on the priciest tile that may take one.
   if (skillAvailable(c, p, 'free_build')) {
     for (const id of candidates) {
@@ -410,9 +565,9 @@ function eventCancelAction(c: Ctx, playerId: string, cardId: string, o: BotOptio
 
 // ---------------------------------------------------------------- trades
 
-/** Tiles of `group` not owned by `playerId`. */
+/** Tiles of `group` not held by `playerId`'s side (teammates' tiles count as held). */
 function missing(c: Ctx, playerId: string, group: string): string[] {
-  return groupProperties(c, group).filter((id) => c.s.ownables[id].owner !== playerId);
+  return groupProperties(c, group).filter((id) => !ownedBySide(c, id, playerId));
 }
 
 function tradable(c: Ctx, group: string): boolean {
@@ -425,8 +580,6 @@ function tradable(c: Ctx, group: string): boolean {
  */
 function findSwap(c: Ctx, p: PlayerState): Action | null {
   const groups = Object.keys(c.d.groups);
-  const gift = teamGift(c, p);
-  if (gift) return gift;
   for (const g of groups) {
     const need = missing(c, p.id, g);
     if (need.length === 0 || need.length === groupProperties(c, g).length || !tradable(c, g)) continue;
@@ -447,45 +600,19 @@ function findSwap(c: Ctx, p: PlayerState): Action | null {
 }
 
 /**
- * Team games: hand a teammate the last tiles of a colour group it is closer to completing
- * (it holds more of the group than this bot, and this bot holds all it is missing).
- */
-function teamGift(c: Ctx, p: PlayerState): Action | null {
-  for (const q of activePlayers(c)) {
-    if (!teammates(c, p.id, q.id)) continue;
-    for (const g of Object.keys(c.d.groups)) {
-      if (!tradable(c, g)) continue;
-      const need = missing(c, q.id, g);
-      const held = groupProperties(c, g).length - need.length;
-      if (need.length === 0 || held === 0 || need.length >= held) continue;
-      if (!need.every((id) => c.s.ownables[id].owner === p.id && !c.s.ownables[id].mortgaged && canOwn(c, q, id))) continue;
-      return { type: 'proposeTrade', player: p.id, to: q.id, offer: { properties: need }, request: { properties: [] } };
-    }
-  }
-  return null;
-}
-
-/**
- * GDD 7.4: accept only if the trade completes one of the bot's colour groups. In team games
- * a teammate's offer is also fine when it completes a group for the teammate and breaks none of ours.
+ * GDD 7.4: accept only if the trade completes one of the bot's colour groups (in team
+ * games: its team's — teammates' tiles count together). Between teammates tiles stay
+ * in the team, so an offer is fine unless it asks for much more cash than it gives.
  */
 export function botAcceptsTrade(s: GameState, playerId: string, trade: Trade, data?: GameData): boolean {
   const d = data ?? dataFor(s.config.board);
   if (trade.to !== playerId) return false;
   const c: Ctx = { s, ev: [], d };
   if (teammates(c, playerId, trade.from)) {
-    const mine = new Set([...ownedBy(c, playerId).filter((id) => !trade.request.properties.includes(id)), ...trade.offer.properties]);
-    const theirs = new Set([...ownedBy(c, trade.from).filter((id) => !trade.offer.properties.includes(id)), ...trade.request.properties]);
-    const breaks = Object.keys(d.groups).some((g) => ownsFullGroup(c, playerId, g) && !groupProperties(c, g).every((id) => mine.has(id)));
-    const completes = Object.entries(d.groups).some(
-      ([g, def]) =>
-        (!ownsFullGroup(c, playerId, g) && def.properties.every((id) => mine.has(id))) ||
-        (!ownsFullGroup(c, trade.from, g) && def.properties.every((id) => theirs.has(id))),
-    );
-    const cashOk = (trade.request.cash ?? 0) <= (trade.offer.cash ?? 0) + getPlayer(c, playerId).cash / 4;
-    if (!breaks && completes && cashOk) return true;
+    return (trade.request.cash ?? 0) <= (trade.offer.cash ?? 0) + getPlayer(c, playerId).cash / 4;
   }
-  const after = new Set([...ownedBy(c, playerId).filter((id) => !trade.request.properties.includes(id)), ...trade.offer.properties]);
+  const side = Object.keys(c.s.ownables).filter((id) => ownedBySide(c, id, playerId));
+  const after = new Set([...side.filter((id) => !trade.request.properties.includes(id)), ...trade.offer.properties]);
   return Object.entries(d.groups).some(
     ([g, def]) => !ownsFullGroup(c, playerId, g) && def.properties.every((id) => after.has(id)),
   );

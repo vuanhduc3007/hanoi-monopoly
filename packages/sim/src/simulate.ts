@@ -14,6 +14,8 @@ export interface BatchOptions {
   characters: boolean;
   /** Only deal these characters (default: all). */
   pool?: string[];
+  /** Team games: number of teams (seats alternate); 0 = none. */
+  teams?: number;
   maxRounds: number;
   quickRounds: number;
   bot?: Partial<BotOptions>;
@@ -64,6 +66,7 @@ export function simulateRange(o: BatchOptions, from: number, to: number): Totals
         mode: o.mode,
         characters: o.characters,
         pool: o.pool,
+        teams: o.teams,
         maxRounds: o.maxRounds,
         quickRounds: o.quickRounds,
         bot: o.bot,

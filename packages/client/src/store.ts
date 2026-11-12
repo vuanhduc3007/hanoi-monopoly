@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import type { GameEvent } from '@hanoi-monopoly/engine';
-import { setBoard, setTablePlayers } from './lib/gameData';
+import { setBoard, setTableKind, setTablePlayers, setTeamSize } from './lib/gameData';
 import type { ChatMsg, ClockInfo, GameMsg, GameOverMsg, RoomView } from './net/protocol';
 
 export interface LogLine {
@@ -91,6 +91,11 @@ export const store = {
 export function receiveGame(msg: GameMsg, now = Date.now()): void {
   setBoard(msg.state.config.board);
   setTablePlayers(msg.state.players.length);
+  // Teams are dealt evenly: the largest team's size is what a player's skills split against.
+  const teams = new Map<number, number>();
+  for (const p of msg.state.players) if (p.team !== undefined && p.team !== null) teams.set(p.team, (teams.get(p.team) ?? 0) + 1);
+  setTeamSize(teams.size ? Math.max(...teams.values()) : 0);
+  setTableKind({ mode: msg.state.config.mode, teams: teams.size > 0 });
   store.set((s) => {
     const lines = msg.events.map((event) => ({ id: seq++, event }));
     const card = [...msg.events].reverse().find((e) => e.type === 'cardDrawn');

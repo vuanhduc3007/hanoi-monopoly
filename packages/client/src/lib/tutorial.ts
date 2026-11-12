@@ -6,7 +6,7 @@
  */
 import type { GameEvent, PlayerState, PublicState } from '@hanoi-monopoly/engine';
 import { D } from './gameData';
-import { hotelLevel, ownedBy, unmortgageCost } from './selectors';
+import { hotelLevel, ownedBy, ownedBySide, unmortgageCost } from './selectors';
 
 /** Where a tip is shown: the side panel during play, or inside an open panel. */
 export type TipScope = 'game' | 'assets' | 'trade';
@@ -43,11 +43,13 @@ function freeTurn(c: TipCtx): boolean {
   return c.myTurn && !c.state.pending;
 }
 
+/** Per colour group: its tiles, the ones my side holds (teammates count), and whether I hold any myself. */
 function groupsOf(c: TipCtx) {
   return Object.entries(D.groups).map(([g, def]) => ({
     g,
     ids: def.properties,
-    mine: def.properties.filter((id) => c.state.ownables[id]?.owner === c.self.id),
+    mine: def.properties.filter((id) => ownedBySide(c.state, id, c.self.id)),
+    own: def.properties.some((id) => c.state.ownables[id]?.owner === c.self.id),
   }));
 }
 
@@ -158,8 +160,8 @@ export const TIPS: Tip[] = [
     when: (c) => {
       if (!freeTurn(c)) return null;
       const full = groupsOf(c).find(
-        ({ ids, mine }) =>
-          mine.length === ids.length && ids.every((id) => c.state.ownables[id].level === 0 && !c.state.ownables[id].mortgaged),
+        ({ ids, mine, own }) =>
+          own && mine.length === ids.length && ids.every((id) => c.state.ownables[id].level === 0 && !c.state.ownables[id].mortgaged),
       );
       if (!full) return null;
       const cost = D.ownables[full.ids[0]].buildCost ?? 0;

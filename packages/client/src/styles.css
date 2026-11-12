@@ -1485,6 +1485,10 @@ button.pay {
 
 .clock-paused {
   color: var(--indigo);
+  /* Never wider than the room the status row leaves it. */
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .clock-extra {
   font-weight: 500;
@@ -1824,4 +1828,76 @@ button.small {
 .tag-learner {
   background: var(--gold);
   color: var(--ink);
+}
+
+/* Du lịch: choosing a tile on the board */
+.board-wrap.picking .tile {
+  cursor: crosshair;
+}
+.board-wrap.picking .tile:hover {
+  outline: 3px solid var(--gold);
+  outline-offset: -3px;
+  z-index: 2;
+}
+.travel-hint {
+  font-weight: 700;
+}
+
+.asset-mate {
+  opacity: 0.75;
+  font-style: italic;
+}
+
+/* Chế độ Nhanh / Đội */
+.quick-countdown {
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.quick-countdown .muted {
+  font-weight: 400;
+  font-size: 11px;
+}
+.quick-low {
+  color: var(--red);
+}
+.player-worth {
+  font-size: 11px;
+  font-weight: 400;
+}
+.team-totals {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.team-total {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: baseline;
+  border-left: 4px solid;
+  padding: 2px 8px;
+  font-size: 13px;
+}
+.team-total-name {
+  font-weight: 700;
+}
+.team-total-worth {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 600px) {
+  .quick-countdown {
+    font-size: 12px;
+  }
+  .quick-countdown .muted {
+    display: none;
+  }
+}
+
+/* Tín dụng đen: what a player owes. */
+.player-debt {
+  font-size: 0.8em;
+  color: var(--red, #b8312f);
 }

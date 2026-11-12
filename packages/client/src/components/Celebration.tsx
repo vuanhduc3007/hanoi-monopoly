@@ -3,7 +3,7 @@ import { type GameEvent, type PublicState } from '@hanoi-monopoly/engine';
 import { D } from '../lib/gameData';
 import { Flag, Hotel, House } from '../art/icons';
 import { money, t, tileName } from '../i18n/vi';
-import { colorOf, nameOf } from '../lib/selectors';
+import { nameOf, ownerColorOf } from '../lib/selectors';
 import type { RoomView } from '../net/protocol';
 import { store, useAnimSettled } from '../store';
 import { makeDeed, makeHotel, makeHouse } from '../three/models';
@@ -36,7 +36,7 @@ export function momentsFrom(events: GameEvent[], startKey = 0): Moment[] {
 const SHOW_MS = 2400;
 
 /** Pop-up in the middle of the board with a turning 3D model when land is bought or built on. */
-export function Celebration({ room }: { state: PublicState; room: RoomView }) {
+export function Celebration({ state, room }: { state: PublicState; room: RoomView }) {
   const [queue, setQueue] = useState<Moment[]>([]);
   const seen = useRef(Number.POSITIVE_INFINITY);
   const keys = useRef(0);
@@ -68,7 +68,7 @@ export function Celebration({ room }: { state: PublicState; room: RoomView }) {
   if (!current) return null;
   const who = nameOf(room, current.player);
   const tile = tileName(current.propertyId);
-  const color = colorOf(room, current.player);
+  const color = ownerColorOf(room, state, current.player);
   const text =
     current.kind === 'buy'
       ? t.celebrate.bought(who, tile, D.ownables[current.propertyId]?.kind === 'property')

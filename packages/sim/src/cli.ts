@@ -17,6 +17,7 @@ const HELP = `Hanoi Monopoly — mô phỏng bot vs bot
   --quick-rounds R   Nhanh: số vòng thay cho 60 phút (mặc định 40)
   --no-characters    tắt nhân vật (Cổ điển)
   --pool C01,C02,…   chỉ chia các nhân vật này
+  --teams N          chơi theo N đội (ghế xen kẽ; số người chia hết cho N)
   --tolerance P      ngưỡng lệch tỉ lệ thắng, điểm % (mặc định 3)
   --workers K        số luồng (mặc định số CPU - 1)
   --json FILE        ghi kết quả dạng JSON
@@ -79,6 +80,7 @@ function parseArgs(argv: string[]): CliOptions {
       case '--max-rounds': o.maxRounds = int(); break;
       case '--quick-rounds': o.quickRounds = int(); break;
       case '--no-characters': o.characters = false; break;
+      case '--teams': o.teams = int(); break;
       case '--pool': o.pool = v().split(',').map((x) => x.trim()).filter(Boolean); break;
       case '--tolerance': o.tolerance = Number(v()); break;
       case '--workers': o.workers = Math.max(1, int()); break;
@@ -94,6 +96,7 @@ function parseArgs(argv: string[]): CliOptions {
   }
   const counts = typeof o.players === 'number' ? [o.players] : o.players;
   if (counts.some((n) => n < 2 || n > 8)) throw new Error('--players must be within 2-8');
+  if (o.teams && counts.some((n) => n % o.teams! !== 0 || n / o.teams! < 2)) throw new Error('--teams must split every table into teams of 2+');
   return o;
 }
 
@@ -122,7 +125,7 @@ async function main(): Promise<void> {
   }
   const seconds = (Date.now() - started) / 1000;
   const players = typeof o.players === 'number' ? `${o.players}` : o.players.join('-');
-  const title = `Hanoi Monopoly — ${o.mode === 'quick' ? 'Nhanh' : 'Truyền thống'}, ${players} người, ${dataFor(o.board).board.length} ô, ${o.characters ? 'có' : 'không'} nhân vật, seed ${o.seed}`;
+  const title = `Hanoi Monopoly — ${o.mode === 'quick' ? 'Nhanh' : 'Truyền thống'}, ${players} người, ${dataFor(o.board).board.length} ô, ${o.characters ? 'có' : 'không'} nhân vật${o.teams ? `, ${o.teams} đội` : ''}, seed ${o.seed}`;
   const sum = summarize(totals, { tolerancePP: o.tolerance }, dataFor(o.board));
   process.stdout.write(formatReport(sum, { tolerancePP: o.tolerance, seconds, title }) + '\n');
   if (o.json) {

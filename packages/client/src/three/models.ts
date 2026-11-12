@@ -129,6 +129,35 @@ const ACCESSORIES: Record<string, Accessory> = {
       at(inked(new THREE.CylinderGeometry(0.2, 0.22, 0.06, 14), COLORS.red), 0, h.y - 0.42, 0),
     ];
   },
+  // Thánh săn sale: a shopping bag in hand.
+  C13: (h) => [
+    at(inked(new THREE.BoxGeometry(0.16, 0.16, 0.08), COLORS.paper), h.x + 0.26, h.y - 0.3, h.z + 0.06),
+    at(inked(new THREE.BoxGeometry(0.07, 0.05, 0.02), COLORS.red), h.x + 0.26, h.y - 0.27, h.z + 0.11),
+  ],
+  // Chủ trọ: a big gold key.
+  C14: (h) => [
+    at(inked(new THREE.TorusGeometry(0.05, 0.018, 6, 12), COLORS.gold), h.x + 0.26, h.y - 0.12, h.z + 0.08),
+    at(inked(new THREE.BoxGeometry(0.03, 0.16, 0.02), COLORS.gold), h.x + 0.26, h.y - 0.25, h.z + 0.08),
+  ],
+  // Thầy phong thủy: a round la bàn held in front.
+  C15: (h) => {
+    const plate = inked(new THREE.CylinderGeometry(0.11, 0.11, 0.025, 16), COLORS.gold);
+    plate.rotation.x = Math.PI / 2;
+    return [
+      at(plate, h.x, h.y - 0.22, h.z + 0.2),
+      at(inked(new THREE.ConeGeometry(0.02, 0.1, 4), COLORS.red), h.x, h.y - 0.2, h.z + 0.23),
+    ];
+  },
+  // Tín dụng đen: dark glasses and a wad of cash.
+  C16: (h) => [
+    at(inked(new THREE.BoxGeometry(0.26, 0.05, 0.04), COLORS.ink), h.x, h.y + 0.02, h.z + 0.16),
+    at(inked(new THREE.BoxGeometry(0.16, 0.06, 0.09), COLORS.green), h.x + 0.25, h.y - 0.3, h.z + 0.08),
+  ],
+  // Bác sĩ lạ: a ring of sparks behind and a red cape collar.
+  C17: (h) => [
+    at(inked(new THREE.TorusGeometry(0.17, 0.02, 6, 20), COLORS.gold), h.x, h.y - 0.1, h.z - 0.18),
+    at(inked(new THREE.CylinderGeometry(0.2, 0.16, 0.08, 14), COLORS.red), 0, h.y - 0.17, 0),
+  ],
 };
 
 const BODY_COLORS: Record<string, number> = {
@@ -144,6 +173,11 @@ const BODY_COLORS: Record<string, number> = {
   C10: 0xd9822b,
   C11: 0xdfe6ee,
   C12: 0x9c8a5a,
+  C13: 0xc2477a,
+  C14: 0x6b5b95,
+  C15: 0x3e7c7b,
+  C16: 0x3a3a3a,
+  C17: 0x2e2a4f,
 };
 
 export const CHARACTER_MODEL_IDS = Object.keys(ACCESSORIES);

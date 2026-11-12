@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { applyAction, createGame, defaultData, publicView, type GameState } from '@hanoi-monopoly/engine';
 import { App } from '../src/App';
-import { t } from '../src/i18n/vi';
+import { money, t } from '../src/i18n/vi';
+import { D } from '../src/lib/gameData';
 import type { RoomView } from '../src/net/protocol';
 import { receiveGame, store } from '../src/store';
 
@@ -126,7 +127,8 @@ describe('screens', () => {
     render(<App />);
     fireEvent.click(screen.getByTitle('Hồ Gươm'));
     expect(screen.getByRole('dialog', { name: 'Hồ Gươm' })).toBeTruthy();
-    expect(screen.getAllByText(/2\.000 tỷ/).length).toBeGreaterThan(0);
+    // The hotel rent row of the tile itself (from the board data).
+    expect(screen.getAllByText(money(D.ownables.P22.rent!.hotel)).length).toBeGreaterThan(0);
   });
 
   it('S6 buy decision', () => {
@@ -182,6 +184,132 @@ describe('screens', () => {
     render(<App />);
     fireEvent.click(screen.getByText(t.act.reclaim));
     expect(sent).toContainEqual({ type: 'reclaim', payload: undefined });
+  });
+
+  it('Thợ xây: a lone tile is offered for the "nhà chui"; once one stands, the reason names it', () => {
+    const { state } = createGame({ players: [{ id: 'u1', character: 'C10' }, { id: 'u2', character: 'C05' }], seed: 3 });
+    state.ownables.P01.owner = 'u1';
+    state.ownables.P03.owner = 'u1';
+    store.set({ room: seats(2), conn: 'connected' });
+    receiveGame({ state: publicView(state), events: [], clock: null });
+    render(<App />);
+    const skill = new RegExp(`${t.act.skills}: Tự tay xây`);
+    fireEvent.click(screen.getByText(skill));
+    const offered = [...document.querySelectorAll('.skill .buttons button')].map((b) => b.textContent);
+    expect(offered).toEqual(['Đông Anh', 'Hoàng Mai']);
+    cleanup();
+    state.ownables.P01.level = 1;
+    receiveGame({ state: publicView(state), events: [], clock: null });
+    render(<App />);
+    fireEvent.click(screen.getByText(skill));
+    expect(screen.getByText(t.act.noTargetsWhy(t.act.chuiUsed('Đông Anh')))).toBeTruthy();
+  });
+
+  it('Tín dụng đen: a short debtor sees Vay nóng; the player list shows what is owed', () => {
+    const { state } = createGame({ players: [{ id: 'u1', character: null }, { id: 'u2', character: 'C16' }, { id: 'u3', character: null }], seed: 3 });
+    state.ownables.P03 = { owner: 'u3', mortgaged: false, level: 2 };
+    state.ownables.P04 = { owner: 'u3', mortgaged: false, level: 2 };
+    state.ownables.P05 = { owner: 'u3', mortgaged: false, level: 2 };
+    state.players[0].cash = 10;
+    state.riggedDice = [2, 4];
+    const r = applyAction(state, { type: 'roll', player: 'u1' });
+    // Short of cash: straight to the raise-cash menu, no separate "Trả tiền" step.
+    const r2 = r;
+    expect(r2.state.pending?.type).toBe('liquidation');
+    store.set({ room: seats(3), conn: 'connected' });
+    receiveGame({ state: publicView(r2.state), events: [], clock: null });
+    render(<App />);
+    const rent = D.ownables.P03.rent!.h2;
+    expect(screen.getByText(t.act.rentDue('Hoàng Mai', 'Người 3', money(rent)))).toBeTruthy();
+    fireEvent.click(document.querySelector('.decision button[data-coach="assets"]')!);
+    expect(screen.getByRole('dialog', { name: t.assets.title })).toBeTruthy();
+    fireEvent.click(screen.getByLabelText(t.tile.close));
+    const owed = Math.ceil((rent - 10) * (1 + D.characters.C16.passives[0].rate) - 1e-9);
+    fireEvent.click(screen.getByText(t.act.borrow('Người 2', money(rent - 10), money(owed))));
+    expect(sent).toContainEqual({ type: 'action', payload: { action: { type: 'borrow' } } });
+    cleanup();
+    const r3 = applyAction(r2.state, { type: 'borrow', player: 'u1' });
+    receiveGame({ state: publicView(r3.state), events: [], clock: null });
+    render(<App />);
+    expect(screen.getAllByText(new RegExp(t.board.owes('Người 2', money(owed)))).length).toBeGreaterThan(0);
+  });
+
+  it('Bác sĩ lạ: Mở cổng sits next to the roll button; Thầy phong thủy picks from, then to', () => {
+    const { state } = createGame({ players: [{ id: 'u1', character: 'C17' }, { id: 'u2', character: 'C05' }], seed: 3 });
+    state.players[1].position = 11;
+    store.set({ room: seats(2), conn: 'connected' });
+    receiveGame({ state: publicView(state), events: [], clock: null });
+    render(<App />);
+    fireEvent.click(screen.getByText(t.act.portal('Mở cổng')));
+    expect(sent).toContainEqual({ type: 'action', payload: { action: { type: 'useSkill' } } });
+    cleanup();
+    const g = createGame({ players: [{ id: 'u1', character: 'C15' }, { id: 'u2', character: 'C05' }], seed: 3 }).state;
+    for (const id of ['P01', 'P02']) g.ownables[id] = { owner: 'u1', mortgaged: false, level: 2 };
+    for (const id of ['P03', 'P04', 'P05']) g.ownables[id] = { owner: 'u1', mortgaged: false, level: 1 };
+    receiveGame({ state: publicView(g), events: [], clock: null });
+    render(<App />);
+    fireEvent.click(screen.getByText(new RegExp(`${t.act.skills}: Dời nhà`)));
+    const pickFirst = () => [...document.querySelectorAll('.skill .buttons button')];
+    fireEvent.click(pickFirst().find((b) => b.textContent?.startsWith('Đông Anh'))!);
+    expect(screen.getByText(t.act.moveTo('Đông Anh'))).toBeTruthy();
+    fireEvent.click(pickFirst().find((b) => b.textContent?.startsWith('Hoàng Mai'))!);
+    expect(sent).toContainEqual({ type: 'action', payload: { action: { type: 'useSkill', from: 'P01', propertyId: 'P03' } } });
+  });
+
+  it('Thánh săn sale: Flash sale picks an unowned tile on the board', () => {
+    const { state } = createGame({ players: [{ id: 'u1', character: 'C13' }, { id: 'u2', character: 'C05' }], seed: 3 });
+    state.ownables.P21.owner = 'u2';
+    store.set({ room: seats(2), conn: 'connected' });
+    receiveGame({ state: publicView(state), events: [], clock: null });
+    render(<App />);
+    fireEvent.click(screen.getByText(new RegExp(`${t.act.skills}: 🏷 Flash sale`)));
+    expect(screen.getByText(t.act.flashPick)).toBeTruthy();
+    fireEvent.click(screen.getByTitle('Phố cổ Hà Nội')); // owned: just opens the tile
+    expect(sent.some((m) => m.type === 'action')).toBe(false);
+    fireEvent.click(screen.getByLabelText(t.tile.close));
+    fireEvent.click(screen.getByTitle('Hồ Gươm'));
+    expect(sent).toContainEqual({ type: 'action', payload: { action: { type: 'useSkill', propertyId: 'P22' } } });
+  });
+
+  it('Thiếu gia Vin: Mua đứt lists only lone opponent tiles; SVBK: Săn học bổng is one click', () => {
+    const { state } = createGame({ players: [{ id: 'u1', character: 'C01' }, { id: 'u2', character: 'C07' }], seed: 3 });
+    state.ownables.P06.owner = 'u1';
+    state.ownables.P07.owner = 'u2'; // lone tile of a group u1 started: offered
+    state.ownables.P03.owner = 'u2';
+    state.ownables.P04.owner = 'u2'; // u2 holds two of the group: not offered
+    store.set({ room: seats(2), conn: 'connected' });
+    receiveGame({ state: publicView(state), events: [], clock: null });
+    render(<App />);
+    fireEvent.click(screen.getByText(new RegExp(`${t.act.skills}: Mua đứt`)));
+    const offered = [...document.querySelectorAll('.skill .buttons button')].map((b) => b.textContent ?? '');
+    expect(offered.some((x) => x.startsWith('Mỹ Đình'))).toBe(true);
+    expect(offered.some((x) => x.startsWith('Hoàng Mai') || x.startsWith('Hà Đông'))).toBe(false);
+    cleanup();
+    const g = createGame({ players: [{ id: 'u1', character: 'C07' }, { id: 'u2', character: 'C01' }], seed: 3 }).state;
+    g.fund = 500;
+    receiveGame({ state: publicView(g), events: [], clock: null });
+    render(<App />);
+    fireEvent.click(screen.getByText(new RegExp(`${t.act.skills}: Săn học bổng`)));
+    expect(sent).toContainEqual({ type: 'action', payload: { action: { type: 'useSkill' } } });
+  });
+
+  it('the character sheet says when a mode uses its own numbers', () => {
+    const r = seats(2);
+    store.set({
+      room: { ...r, settings: { ...r.settings, mode: 'quick' }, phase: 'picking', picking: { order: ['u2', 'u1'], current: 'u1', available: ['C01'], clock: null } },
+    });
+    render(<App />);
+    expect(screen.getAllByText(/Chỉ số riêng cho .*chế độ Nhanh/).length).toBeGreaterThan(0);
+  });
+
+  it('S8: the Sell button says what selling a house brings back', () => {
+    playing((st) => {
+      for (const id of ['P01', 'P02']) st.ownables[id] = { owner: 'u1', mortgaged: false, level: 1 };
+    });
+    render(<App />);
+    fireEvent.click(screen.getByText(t.board.assets));
+    const back = money(Math.floor(D.ownables.P01.buildCost! * D.economy.buildingSellRate));
+    expect(screen.getAllByText(`${t.assets.sell} (+${back})`).length).toBeGreaterThan(0);
   });
 
   it('S7 trade and S8 assets open from the side panel', () => {

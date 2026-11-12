@@ -79,9 +79,20 @@ export function groupProperties(c: Ctx, group: string): string[] {
   return c.d.groups[group]?.properties ?? [];
 }
 
+/** The tile's owner is this player or (team games) a teammate. */
+export function ownedBySide(c: Ctx, id: string, playerId: PlayerId): boolean {
+  const owner = c.s.ownables[id]?.owner;
+  return !!owner && (owner === playerId || teammates(c, owner, playerId));
+}
+
+/**
+ * The player's side holds every tile of the colour group. In team games the
+ * teammates' tiles count together: each builds, mortgages and unmortgages
+ * their own tiles, the group's rent doubles and building is even across it.
+ */
 export function ownsFullGroup(c: Ctx, playerId: PlayerId, group: string): boolean {
   const props = groupProperties(c, group);
-  return props.length > 0 && props.every((id) => c.s.ownables[id].owner === playerId);
+  return props.length > 0 && props.every((id) => ownedBySide(c, id, playerId));
 }
 
 export function housesForHotel(c: Ctx): number {
@@ -118,6 +129,12 @@ export function countBuildings(c: Ctx, playerId: PlayerId): { houses: number; ho
  * Buildings anywhere in the colour group — or, with `owner`, on that owner's tiles of it
  * (a group can be shared when Thợ xây builds without the full group).
  */
+/** Buildings anywhere on the tiles of this player's side in the group (a team's shared group). */
+export function sideHasBuildings(c: Ctx, group: string | undefined, playerId: PlayerId): boolean {
+  if (!group) return false;
+  return groupProperties(c, group).some((id) => c.s.ownables[id].level > 0 && ownedBySide(c, id, playerId));
+}
+
 export function groupHasBuildings(c: Ctx, group: string | undefined, owner?: PlayerId): boolean {
   if (!group) return false;
   return groupProperties(c, group).some(

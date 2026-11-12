@@ -12,12 +12,14 @@ import {
 } from '../src';
 
 /**
- * Board data with the characters' small-table overrides (`byTableSize`) removed, so the
- * trait tests check the base numbers whatever the test table size. The overrides have
- * their own tests (test/tablesize.test.ts).
+ * Board data with the characters' table-size and mode overrides (`byTableSize`, `byMode`)
+ * removed, so the trait tests check the base numbers whatever the test table size or
+ * mode. The overrides have their own tests (test/tablesize.test.ts).
  */
 export function baseCharacters(d: GameData): GameData {
-  const characters = Object.fromEntries(Object.entries(d.characters).map(([id, ch]) => [id, { ...ch, byTableSize: undefined }]));
+  const characters = Object.fromEntries(
+    Object.entries(d.characters).map(([id, ch]) => [id, { ...ch, byTableSize: undefined, byMode: undefined }]),
+  );
   return { ...d, characters };
 }
 

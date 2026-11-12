@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { autoBoard } from '@hanoi-monopoly/engine';
-import { D, setBoard, setTablePlayers } from '../lib/gameData';
+import { D, setBoard, setTableKind, setTablePlayers, setTeamSize } from '../lib/gameData';
 import { Avatar } from '../art/icons';
 import { Clock } from '../components/Side';
 import { TeamTag } from '../components/TeamTag';
@@ -26,6 +26,8 @@ export function Pick({ room }: { room: RoomView }) {
   const players = room.seats.length;
   setBoard(room.settings.board === 'auto' || !room.settings.board ? autoBoard(players) : room.settings.board);
   setTablePlayers(players);
+  setTeamSize(room.settings.teams ? Math.ceil(players / room.settings.teams) : 0);
+  setTableKind({ mode: room.settings.mode, teams: !!room.settings.teams });
   return (
     <main className="pick">
       <header className="lobby-head">
@@ -64,6 +66,7 @@ export function Pick({ room }: { room: RoomView }) {
           {turnOrder.order
             .map((id) => `${nameOf(room, id)} (${(turnOrder.rolls[id] ?? []).map((r) => r[0] + r[1]).join('/')})`)
             .join(', ')}
+          {room.settings.teams ? ` (${t.pick.turnOrderTeams})` : ''}
         </p>
       )}
       <section className="pick-preview panel" aria-label={t.pick3d}>

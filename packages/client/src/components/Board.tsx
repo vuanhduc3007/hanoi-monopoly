@@ -3,14 +3,14 @@ import { type PublicState } from '@hanoi-monopoly/engine';
 import { D } from '../lib/gameData';
 import { cardName, describeCard, describeEffect, groupName, money, t } from '../i18n/vi';
 import { groupColor, sideLength, tileCell } from '../lib/board';
-import { colorOf, currentPlayer, hotelLevel, nameOf } from '../lib/selectors';
+import { colorOf, currentPlayer, hotelLevel, nameOf, ownerColorOf } from '../lib/selectors';
 import type { RoomView } from '../net/protocol';
 import { useStore } from '../store';
 import { CardBack, Flag, Hotel, House, TileIcon } from '../art/icons';
 import { artFor } from '../art/tileArt';
 import { Dice } from './Dice';
 import { Token } from './Token';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Board3D } from '../three/Board3D';
 import { Celebration } from './Celebration';
 import { ArrestBanner, CardDraw, DiceResult, MoneyFloaters, SicboResult, useMoneyChanges } from './BoardFx';
@@ -49,7 +49,7 @@ export function Board({ state, room, onTile }: Props) {
               {
                 gridRow: row + 1,
                 gridColumn: col + 1,
-                ...(own?.owner ? { '--owner': colorOf(room, own.owner) } : {}),
+                ...(own?.owner ? { '--owner': ownerColorOf(room, state, own.owner) } : {}),
               } as CSSProperties
             }
             onClick={() => onTile(tile.position)}
@@ -68,15 +68,15 @@ export function Board({ state, room, onTile }: Props) {
                 className={`tile-owner${own.mortgaged ? ' mortgaged' : ''}`}
                 title={own.mortgaged ? t.tile.ownerMortgaged(nameOf(room, own.owner)) : nameOf(room, own.owner)}
               >
-                <Flag color={colorOf(room, own.owner)} mortgaged={own.mortgaged} />
+                <Flag color={ownerColorOf(room, state, own.owner)} mortgaged={own.mortgaged} />
               </span>
             )}
             {own && own.level > 0 && (
               <span className="tile-buildings" aria-label={hotel ? t.tile.hotel : t.tile.house(own.level)}>
                 {hotel ? (
-                  <Hotel color={colorOf(room, own.owner!)} />
+                  <Hotel color={ownerColorOf(room, state, own.owner!)} />
                 ) : (
-                  Array.from({ length: own.level }, (_, i) => <House key={i} color={colorOf(room, own.owner!)} />)
+                  Array.from({ length: own.level }, (_, i) => <House key={i} color={ownerColorOf(room, state, own.owner!)} />)
                 )}
               </span>
             )}
@@ -109,6 +109,25 @@ export function Board({ state, room, onTile }: Props) {
   );
 }
 
+/** Chế độ Nhanh: time left, and the other way the game ends. */
+function QuickCountdown({ endsAt, teams }: { endsAt: number | null; teams: boolean }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  if (endsAt === null) return null;
+  const left = Math.max(0, Math.ceil((endsAt - now) / 1000));
+  const mm = Math.floor(left / 60);
+  const ss = String(left % 60).padStart(2, '0');
+  return (
+    <div className={`quick-countdown${left <= 300 ? ' quick-low' : ''}`}>
+      ⏳ {t.board.quickLeft(`${mm}:${ss}`)}
+      <div className="muted">{t.board.quickEnd(D.config.quickMode.endWhenBankrupt, teams)}</div>
+    </div>
+  );
+}
+
 function Center({ state, room }: { state: PublicState; room: RoomView }) {
   const lastCard = useStore((s) => s.lastCard);
   const current = currentPlayer(state);
@@ -125,6 +144,9 @@ function Center({ state, room }: { state: PublicState; room: RoomView }) {
       <div className="center-turn">
         {t.board.turn(state.turn.number)} · {t.board.turnOf(nameOf(room, current.id))}
       </div>
+      {state.config.mode === 'quick' && (
+        <QuickCountdown endsAt={room.quickEndsAt ?? null} teams={state.players.some((p) => p.team !== undefined && p.team !== null)} />
+      )}
       {lastCard && (
         <div key={lastCard.at} className={`card-flip deck-${D.cards[lastCard.cardId]?.deck}`}>
           <CardBack deck={D.cards[lastCard.cardId].deck} size={34} />

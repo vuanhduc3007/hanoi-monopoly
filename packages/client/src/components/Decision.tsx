@@ -1,8 +1,19 @@
 import { useState } from 'react';
-import { gambleWorst, whyCantBuild, type PublicState } from '@hanoi-monopoly/engine';
+import {
+  buyoutPriceFor,
+  flashSalePrice,
+  gambleWorst,
+  loanOfferFor,
+  portalTargetsFor,
+  whyCantFreeBuild,
+  whyCantMoveHouse,
+  whyCantBuyout,
+  type BuildBlock,
+  type PublicState,
+} from '@hanoi-monopoly/engine';
 import { D } from '../lib/gameData';
 import { cardName, describeCard, groupName, money, sicboName, t, tileName } from '../i18n/vi';
-import { hasTrait, isMyTurn, me, nameOf, ownedBy, skillOf, teammates, unmortgageCost, waitingFor } from '../lib/selectors';
+import { hasTrait, isMyTurn, me, nameOf, ownedBy, ownedBySide, skillOf, teammates, unmortgageCost, waitingFor } from '../lib/selectors';
 import { act, send } from '../net/connection';
 import type { RoomView } from '../net/protocol';
 import { useAnimSettled } from '../store';
@@ -12,10 +23,16 @@ interface Props {
   room: RoomView;
   openAssets: () => void;
   openTrade: () => void;
+  /** Du lịch / Flash sale: the player is choosing a tile on the board. */
+  pick?: PickMode;
+  setPick?: (mode: PickMode) => void;
 }
 
+/** Choosing a tile on the board for a skill. */
+export type PickMode = 'travel' | 'flash' | null;
+
 /** S6 — whatever the game is waiting for, from the viewer's side. */
-export function Decision({ state, room, openAssets, openTrade }: Props) {
+export function Decision({ state, room, openAssets, openTrade, pick = null, setPick = () => undefined }: Props) {
   const self = me(room, state);
   const pend = state.pending;
   const waiting = waitingFor(state);
@@ -150,6 +167,13 @@ export function Decision({ state, room, openAssets, openTrade }: Props) {
             {pend.discount && (
               <button data-coach="skill" onClick={() => act({ type: 'useSkill' })}>{t.act.rentDiscountUse(money(Math.ceil(pend.raw * (1 - ((skillOf(self.character)?.rate as number) ?? 0)) - 1e-9)))}</button>
             )}
+            {/* Short of cash: raise it right here (sell, mortgage, trade) before choosing. */}
+            {self.cash < pend.task.amount && (
+              <>
+                <button data-coach="assets" onClick={openAssets}>{t.board.assets}</button>
+                <button data-coach="trade" onClick={openTrade}>{t.board.trade}</button>
+              </>
+            )}
           </div>
         </>
       );
@@ -172,11 +196,22 @@ export function Decision({ state, room, openAssets, openTrade }: Props) {
         </>
       );
       break;
-    case 'liquidation':
+    case 'liquidation': {
+      const loan = loanOfferFor(state, self.id, D);
       body = (
         <>
+          {pend.task.kind === 'rent' && D.ownables[pend.task.reason] && (
+            <p className="rent-due">
+              {t.act.rentDue(tileName(pend.task.reason), nameOf(room, pend.task.owner), money(pend.task.amount))}
+            </p>
+          )}
           <p>{t.act.liquidation(money(pend.task.amount), money(self.cash))}</p>
           <div className="buttons">
+            {loan && (
+              <button onClick={() => act({ type: 'borrow' })}>
+                {t.act.borrow(nameOf(room, loan.lender), money(loan.amount), money(loan.owed))}
+              </button>
+            )}
             <button data-coach="assets" onClick={openAssets}>{t.board.assets}</button>
             <button data-coach="trade" onClick={openTrade}>{t.board.trade}</button>
             <button className="primary" disabled={self.cash < pend.task.amount} onClick={() => act({ type: 'payDebt' })}>
@@ -189,6 +224,7 @@ export function Decision({ state, room, openAssets, openTrade }: Props) {
         </>
       );
       break;
+    }
     case 'inheritMortgage': {
       const full = unmortgageCost(state, self.id, pend.propertyId);
       const interest = full - D.ownables[pend.propertyId].mortgage;
@@ -208,15 +244,51 @@ export function Decision({ state, room, openAssets, openTrade }: Props) {
       break;
     }
     default:
-      body = <TurnActions state={state} room={room} />;
+      body = <TurnActions state={state} room={room} pick={pick} setPick={setPick} />;
   }
   return <section className="panel decision">{body}</section>;
 }
 
-function TurnActions({ state, room }: { state: PublicState; room: RoomView }) {
+function TurnActions({
+  state,
+  room,
+  pick,
+  setPick,
+}: {
+  state: PublicState;
+  room: RoomView;
+  pick: PickMode;
+  setPick: (mode: PickMode) => void;
+}) {
   const self = me(room, state)!;
   const roll = state.turn.phase === 'roll';
   if (!isMyTurn(room, state)) return null;
+  const sk = skillOf(self.character);
+  const ready = state.config.characters && !self.skillUsed;
+  // Du lịch and Mở cổng replace the roll.
+  const canTravel = roll && !self.inJail && ready && sk?.type === 'travel';
+  const canPortal = roll && !self.inJail && ready && sk?.type === 'portal';
+  const portalOk = canPortal && portalTargetsFor(state, self.id, D).length > 0;
+  if (pick === 'travel' && canTravel) {
+    return (
+      <>
+        <p className="travel-hint">{t.act.travelPick}</p>
+        <div className="buttons">
+          <button onClick={() => setPick(null)}>{t.act.travelCancel}</button>
+        </div>
+      </>
+    );
+  }
+  if (pick === 'flash' && ready && sk?.type === 'flash_sale') {
+    return (
+      <>
+        <p className="travel-hint">{sk.completesGroup === false ? t.act.flashPickNoComplete : t.act.flashPick}</p>
+        <div className="buttons">
+          <button onClick={() => setPick(null)}>{t.act.flashCancel}</button>
+        </div>
+      </>
+    );
+  }
   return (
     <>
       {self.inJail && roll && <p>{t.act.jailPrompt}</p>}
@@ -236,27 +308,164 @@ function TurnActions({ state, room }: { state: PublicState; room: RoomView }) {
           <button className="primary" data-coach="roll" onClick={() => act({ type: 'roll' })}>
             {t.act.roll}
           </button>
-        ) : (
+        ) : null}
+        {canTravel && (
+          <button data-coach="skill" onClick={() => setPick('travel')}>
+            ✈ {sk!.name}
+          </button>
+        )}
+        {canPortal && (
+          <button data-coach="skill" disabled={!portalOk} title={t.act.portalTitle} onClick={() => act({ type: 'useSkill' })}>
+            {t.act.portal(sk!.name)}
+          </button>
+        )}
+        {!roll && (
           <button className="primary" data-coach="endTurn" onClick={() => act({ type: 'endTurn' })}>
             {t.act.endTurn}
           </button>
         )}
       </div>
-      <TurnSkill state={state} room={room} />
+      <TurnSkill state={state} room={room} setPick={setPick} />
     </>
   );
 }
 
 /** Bóc phốt (choose an opponent) and Tung tin quy hoạch (choose a group) during one's own turn. */
-function TurnSkill({ state, room }: { state: PublicState; room: RoomView }) {
+function TurnSkill({ state, room, setPick }: { state: PublicState; room: RoomView; setPick: (mode: PickMode) => void }) {
   const self = me(room, state)!;
   const skill = skillOf(self.character);
   const [open, setOpen] = useState(false);
+  const [moveFrom, setMoveFrom] = useState<string | null>(null);
   if (!skill || !state.config.characters) return null;
   if (self.skillUsed) {
     return self.skillCooldown ? <p className="muted skill-cooldown">{t.act.skillCooldown(skill.name, self.skillCooldown)}</p> : null;
   }
   if (state.pending) return null;
+  if (skill.type === 'forced_loan') {
+    const amount = skill.amount as number;
+    const owed = Math.ceil(amount * (skill.repayRate as number) - 1e-9);
+    const anyone = state.players.some((p) => p.id !== self.id && !p.bankrupt && !teammates(state, self.id, p.id));
+    return (
+      <div className="skill">
+        <button data-coach="skill" disabled={self.cash < amount || !anyone} onClick={() => act({ type: 'useSkill' })}>
+          {t.act.skills}: {t.act.forcedLoan(money(amount), money(owed))}
+        </button>
+      </div>
+    );
+  }
+  if (skill.type === 'flash_sale') {
+    return (
+      <div className="skill">
+        <button data-coach="skill" onClick={() => setPick('flash')}>
+          {t.act.skills}: 🏷 {skill.name}
+        </button>
+      </div>
+    );
+  }
+  if (skill.type === 'raise_rent') {
+    const max = skill.maxPerTile as number;
+    const mine = ownedBy(state, self.id).filter((id) => D.ownables[id].kind === 'property');
+    return (
+      <div className="skill">
+        <button data-coach="skill" onClick={() => setOpen(!open)}>
+          {t.act.skills}: {skill.name}
+        </button>
+        {open && (
+          <div className="buttons">
+            <span className="muted">{mine.length ? t.act.chooseRaise : t.act.noRaise}</span>
+            {mine.map((id) => {
+              const n = self.rentBoosts?.[id] ?? 0;
+              return (
+                <button
+                  key={id}
+                  disabled={n >= max}
+                  style={{ borderColor: D.groups[D.ownables[id].group ?? '']?.color }}
+                  onClick={() => act({ type: 'useSkill', propertyId: id })}
+                >
+                  {tileName(id)}
+                  {n > 0 && ` · ${t.act.raised(n, max)}`}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+  if (skill.type === 'move_house') {
+    const mine = ownedBy(state, self.id).filter((id) => D.ownables[id].kind === 'property');
+    const ok = (from: string, to: string) => whyCantMoveHouse(state, self.id, from, to, D) === null;
+    const sources = mine.filter((from) => mine.some((to) => ok(from, to)));
+    const targets = moveFrom ? mine.filter((to) => ok(moveFrom, to)) : [];
+    const tileButton = (id: string, onClick: () => void) => (
+      <button key={id} style={{ borderColor: D.groups[D.ownables[id].group ?? '']?.color }} onClick={onClick}>
+        {tileName(id)} · {state.ownables[id].level} 🏠
+      </button>
+    );
+    return (
+      <div className="skill">
+        <button data-coach="skill" onClick={() => (setOpen(!open), setMoveFrom(null))}>
+          {t.act.skills}: {skill.name}
+        </button>
+        {open && !moveFrom && (
+          <div className="buttons">
+            <span className="muted">{sources.length ? t.act.moveFrom : t.act.noMoves}</span>
+            {sources.map((id) => tileButton(id, () => setMoveFrom(id)))}
+          </div>
+        )}
+        {open && moveFrom && (
+          <div className="buttons">
+            <span className="muted">{t.act.moveTo(tileName(moveFrom))}</span>
+            {targets.map((id) =>
+              tileButton(id, () => {
+                setMoveFrom(null);
+                setOpen(false);
+                act({ type: 'useSkill', from: moveFrom, propertyId: id });
+              }),
+            )}
+            <button className="link" onClick={() => setMoveFrom(null)}>
+              {t.act.moveAgain}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+  if (skill.type === 'scholarship') {
+    const fromFund = state.config.scholarshipFund ? Math.min(state.fund, skill.maxAmount as number) : 0;
+    const amount = fromFund > 0 ? fromFund : (skill.fallbackAmount as number);
+    return (
+      <div className="skill">
+        <button data-coach="skill" onClick={() => act({ type: 'useSkill' })}>
+          {t.act.skills}: {t.act.scholarship(skill.name, money(amount), fromFund > 0)}
+        </button>
+      </div>
+    );
+  }
+  if (skill.type === 'buyout') {
+    const targets = Object.keys(state.ownables).filter((id) => whyCantBuyout(state, self.id, id, D) === null);
+    return (
+      <div className="skill">
+        <button data-coach="skill" onClick={() => setOpen(!open)}>
+          {t.act.skills}: {skill.name}
+        </button>
+        {open && (
+          <div className="buttons">
+            <span className="muted">{targets.length ? t.act.chooseBuyout : t.act.noBuyout}</span>
+            {targets.map((id) => (
+              <button
+                key={id}
+                style={{ borderColor: D.groups[D.ownables[id].group ?? '']?.color }}
+                onClick={() => act({ type: 'useSkill', propertyId: id })}
+              >
+                {tileName(id)} · {nameOf(room, state.ownables[id].owner)} · {money(buyoutPriceFor(state, self.id, id, D))}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
   // One-click skills.
   if (skill.type === 'host_sicbo' || skill.type === 'collect_contribution') {
     return (
@@ -274,9 +483,9 @@ function TurnSkill({ state, room }: { state: PublicState; room: RoomView }) {
             const o = state.ownables[id];
             return o.owner && o.owner !== self.id && o.mortgaged;
           })
-        : ownedBy(state, self.id).filter(
-            (id) => D.ownables[id].kind === 'property' && freeBuildAllowed(state, self.id, id),
-          );
+        : ownedBy(state, self.id).filter((id) => D.ownables[id].kind === 'property' && freeBuildBlock(state, self.id, id) === null);
+  // Nothing to build on: say why (the most common reason over the player's land).
+  const why = skill.type === 'free_build' && targets.length === 0 ? freeBuildReason(state, self.id) : null;
     return (
       <div className="skill">
         <button data-coach="skill" onClick={() => setOpen(!open)}>
@@ -285,7 +494,7 @@ function TurnSkill({ state, room }: { state: PublicState; room: RoomView }) {
         {open && (
           <div className="buttons">
             <span className="muted">{skill.type === 'buy_mortgaged' ? t.act.chooseMortgaged : t.act.chooseFreeBuild}</span>
-            {targets.length === 0 && <span className="muted">{t.act.noTargets}</span>}
+            {targets.length === 0 && <span className="muted">{why ? t.act.noTargetsWhy(why) : t.act.noTargets}</span>}
             {targets.map((id) => (
               <button
                 key={id}
@@ -332,17 +541,32 @@ function TurnSkill({ state, room }: { state: PublicState; room: RoomView }) {
   );
 }
 
-/** Thợ xây: a free house is allowed here (the engine also allows a first house without the full group). */
-function freeBuildAllowed(state: PublicState, playerId: string, id: string): boolean {
-  const why = whyCantBuild(state, playerId, id);
-  if (why === null || why === 'noCash') return true;
-  const sk = skillOf(state.players.find((p) => p.id === playerId)?.character ?? null);
-  if (why !== 'needFullGroup' || !sk?.anyTile || state.ownables[id].level > 0) return false;
-  const partial = ownedBy(state, playerId).filter((x) => {
-    const g = D.ownables[x].group;
-    return state.ownables[x].level > 0 && g && !D.groups[g].properties.every((y) => state.ownables[y].owner === playerId);
-  }).length;
-  return partial < ((sk.anyTileMax as number | undefined) ?? Infinity) && !state.ownables[id].mortgaged;
+/** Thợ xây: may the free house go here? "noCash" never blocks a free house. */
+function freeBuildBlock(state: PublicState, playerId: string, id: string): BuildBlock | null {
+  const why = whyCantFreeBuild(state, playerId, id, D);
+  return why === 'noCash' ? null : why;
+}
+
+/** Why Tự tay xây has no tile: no land at all, or the most common block over the player's land. */
+function freeBuildReason(state: PublicState, playerId: string): string {
+  const land = ownedBy(state, playerId).filter((id) => D.ownables[id].kind === 'property');
+  if (land.length === 0) return t.act.noLand;
+  const counts = new Map<BuildBlock, number>();
+  for (const id of land) {
+    const b = freeBuildBlock(state, playerId, id);
+    if (b) counts.set(b, (counts.get(b) ?? 0) + 1);
+  }
+  const top = [...counts.entries()].sort((x, y) => y[1] - x[1])[0]?.[0];
+  if (top === 'needFullGroup') {
+    // The lone-tile house ("nhà chui") is already standing somewhere: say where, not just "need the group".
+    const fullGroup = (g: string) =>
+      Object.keys(D.ownables)
+        .filter((o) => D.ownables[o].group === g)
+        .every((o) => ownedBySide(state, o, playerId));
+    const chui = land.find((id) => state.ownables[id].level > 0 && !fullGroup(D.ownables[id].group!));
+    if (chui) return t.act.chuiUsed(tileName(chui));
+  }
+  return top ? t.assets.why[top] : t.act.noTargets;
 }
 
 /** "Thắng chỉ trả … · thua trả … · ra bão trả …" for Con bạc's bets. */

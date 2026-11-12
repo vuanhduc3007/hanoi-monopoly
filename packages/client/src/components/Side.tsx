@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import type { PublicState } from '@hanoi-monopoly/engine';
+import { netWorth, type PublicState } from '@hanoi-monopoly/engine';
 import { charName, formatEvent, money, t } from '../i18n/vi';
 import { colorOf, currentPlayer, nameOf, who } from '../lib/selectors';
+import { D } from '../lib/gameData';
+import { teamName } from '../i18n/vi';
+import { TEAM_COLORS } from '../lib/board';
 import { Token } from './Token';
 import { TeamTag } from './TeamTag';
 import { send } from '../net/connection';
@@ -11,9 +14,37 @@ import { money as fmtMoney } from '../i18n/vi';
 
 export function PlayerList({ state, room }: { state: PublicState; room: RoomView }) {
   const current = currentPlayer(state).id;
+  const quick = state.config.mode === 'quick';
+  const worth = (id: string) => netWorth(state as never, id, D);
+  // Quick mode ranks by net worth: show each player's place.
+  const alive = state.players.filter((p) => !p.bankrupt);
+  const place = (id: string) => [...alive].sort((a, b) => worth(b.id) - worth(a.id)).findIndex((p) => p.id === id) + 1;
+  const teams = [...new Set(state.players.map((p) => p.team).filter((x): x is number => x !== undefined && x !== null))];
   return (
     <section className="panel players">
       <h3>{t.board.players}</h3>
+      {teams.length > 0 && (
+        <div className="team-totals">
+          {teams
+            .map((team) => {
+              const members = state.players.filter((p) => p.team === team);
+              const left = members.filter((p) => !p.bankrupt);
+              return { team, left: left.length, size: members.length, total: left.reduce((a, p) => a + worth(p.id), 0) };
+            })
+            .sort((a, b) => Number(b.left > 0) - Number(a.left > 0) || b.total - a.total)
+            .map((x) => (
+              <div key={x.team} className={`team-total${x.left === 0 ? ' player-out' : ''}`} style={{ borderColor: TEAM_COLORS[x.team % TEAM_COLORS.length] }}>
+                <span className="team-total-name" style={{ color: TEAM_COLORS[x.team % TEAM_COLORS.length] }}>
+                  {teamName(x.team)}
+                </span>
+                <span className="muted">{t.teams.alive(x.left, x.size)}</span>
+                <span className="team-total-worth" title={t.board.worthTitle}>
+                  {x.left === 0 ? t.board.bankrupt : money(x.total)}
+                </span>
+              </div>
+            ))}
+        </div>
+      )}
       {state.players.map((p) => {
         const seat = room.seats.find((s) => s.id === p.id);
         return (
@@ -42,10 +73,21 @@ export function PlayerList({ state, room }: { state: PublicState; room: RoomView
                 {p.bankrupt && ` · ${t.board.bankrupt}`}
                 {p.jailCards.length > 0 && ' · 🪪'}
               </div>
+              {(p.debts ?? []).map((d) => (
+                <div key={d.to} className="muted player-debt" title={t.board.owesTitle}>
+                  💸 {t.board.owes(nameOf(room, d.to), money(d.amount))}
+                </div>
+              ))}
             </div>
             <div className="player-cash">
               {p.bankrupt ? '—' : money(p.cash)}
               <CashDelta player={p.id} />
+              {(quick || teams.length > 0) && !p.bankrupt && (
+                <div className="player-worth muted" title={t.board.worthTitle}>
+                  {quick && teams.length === 0 && <strong>#{place(p.id)} </strong>}
+                  {t.board.worth(money(worth(p.id)))}
+                </div>
+              )}
             </div>
           </div>
         );

@@ -64,6 +64,11 @@ export interface CharacterDef {
    * `passives` / `drawbacks` and shallow-merges into `skill`.
    */
   byTableSize?: TableSizeOverride[];
+  /**
+   * Different numbers for a game mode (Nhanh) and / or team games, applied after
+   * `byTableSize`: every matching entry, in order (`players` optionally narrows it).
+   */
+  byMode?: ModeOverride[];
 }
 
 export interface TableSizeOverride {
@@ -73,17 +78,45 @@ export interface TableSizeOverride {
   skill?: Partial<Effect>;
 }
 
+export interface ModeOverride {
+  mode?: 'classic' | 'quick';
+  teams?: boolean;
+  players?: number[];
+  passives?: Effect[];
+  drawbacks?: Effect[];
+  skill?: Partial<Effect>;
+}
+
+/** What a character's numbers depend on besides the player count. */
+export interface TableKind {
+  mode?: 'classic' | 'quick';
+  teams?: boolean;
+}
+
 /** A character as it plays at a table of `players` players. */
-export function characterFor(d: GameData, id: string, players: number): CharacterDef {
+export function characterFor(d: GameData, id: string, players: number, table: TableKind = {}): CharacterDef {
   const def = d.characters[id];
   const o = def.byTableSize?.find((x) => x.players.includes(players));
-  if (!o) return def;
-  return {
-    ...def,
-    passives: o.passives ?? def.passives,
-    drawbacks: o.drawbacks ?? def.drawbacks,
-    skill: { ...def.skill, ...o.skill } as CharacterDef['skill'],
-  };
+  let out: CharacterDef = !o
+    ? def
+    : {
+        ...def,
+        passives: o.passives ?? def.passives,
+        drawbacks: o.drawbacks ?? def.drawbacks,
+        skill: { ...def.skill, ...o.skill } as CharacterDef['skill'],
+      };
+  for (const m of def.byMode ?? []) {
+    if (m.mode !== undefined && m.mode !== (table.mode ?? 'classic')) continue;
+    if (m.teams !== undefined && m.teams !== !!table.teams) continue;
+    if (m.players && !m.players.includes(players)) continue;
+    out = {
+      ...out,
+      passives: m.passives ?? out.passives,
+      drawbacks: m.drawbacks ?? out.drawbacks,
+      skill: { ...out.skill, ...m.skill } as CharacterDef['skill'],
+    };
+  }
+  return out;
 }
 
 export interface Economy {

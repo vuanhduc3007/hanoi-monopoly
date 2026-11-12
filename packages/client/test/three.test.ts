@@ -184,3 +184,19 @@ describe('owner colours', () => {
     expect(colorsIn(makeHouse('#2E4A7D')).has(new THREE.Color('#5F7F3A').getHexString())).toBe(false);
   });
 });
+
+describe('Mở cổng', () => {
+  it('a portal swap hops both tokens instead of walking', async () => {
+    const { planFromEvents } = await import('../src/three/path');
+    const plan = planFromEvents(
+      [
+        { type: 'moved', player: 'a', from: 5, to: 11, steps: 0, direct: true, portal: true },
+        { type: 'moved', player: 'b', from: 11, to: 5, steps: 0, direct: true, portal: true },
+      ],
+      { a: 5, b: 11 },
+      10,
+    );
+    expect(plan.steps.a).toEqual([{ tile: 11, mode: 'hop' }]);
+    expect(plan.steps.b).toEqual([{ tile: 5, mode: 'hop' }]);
+  });
+});

@@ -11,6 +11,7 @@ import {
   ownableDef,
   ownedBy,
   ownsFullGroup,
+  sideHasBuildings,
   type Ctx,
 } from './ctx';
 import { buildFreezeActive, unmortgageInterestRate } from './effects';
@@ -31,10 +32,14 @@ export function buildingStock(c: Ctx): { houses: number; hotels: number } {
   return { houses: limit.houses - houses, hotels: limit.hotels - hotels };
 }
 
-/** Own turn (free phase or deciding on a purchase), or settling one's own debt. */
+/**
+ * Own turn (free phase or deciding on a purchase), or raising cash for something the
+ * player owes: a debt, a rent prompt (Ăn vạ) or a tài xỉu bet (selling / mortgaging only).
+ */
 function canManage(c: Ctx, p: PlayerState, allowLiquidation: boolean): boolean {
   const pend = c.s.pending;
-  if (allowLiquidation && pend?.type === 'liquidation' && pend.player === p.id) return true;
+  const owing = pend?.type === 'liquidation' || pend?.type === 'payRent' || pend?.type === 'gamble';
+  if (allowLiquidation && owing && pend.player === p.id) return true;
   if (!isMyTurn(c, p.id)) return false;
   return pend === null || (pend.type === 'buy' && pend.player === p.id);
 }
@@ -114,6 +119,34 @@ export function partialFreeBuild(c: Ctx, p: PlayerState): boolean {
     return c.s.ownables[id].level > 0 && g !== undefined && !ownsFullGroup(c, p.id, g);
   }).length;
   return standing < max;
+}
+
+export type MoveHouseBlock = BuildBlock | 'sameTile' | 'noHouseToMove' | 'sellEvenly' | 'housesOnly';
+
+/**
+ * Thầy phong thủy's Dời nhà: may one house go from `from` to `to`? The house leaves `from`
+ * as if sold (houses only, evenly over his own tiles) and arrives at `to` as if built (full
+ * group, evenly, not past the last house), at no cost.
+ */
+export function moveHouseBlock(c: Ctx, p: PlayerState, from: string, to: string): MoveHouseBlock | null {
+  if (!canManage(c, p, false)) return 'notYourTurn';
+  if (from === to) return 'sameTile';
+  const src = c.s.ownables[from];
+  const def = ownableDef(c, from);
+  if (src.owner !== p.id) return 'notOwner';
+  if (src.level === 0) return 'noHouseToMove';
+  if (src.level >= hotelLevel(c)) return 'housesOnly';
+  const mine = groupProperties(c, def.group!).filter((g) => c.s.ownables[g].owner === p.id);
+  if (src.level !== Math.max(...mine.map((g) => c.s.ownables[g].level))) return 'sellEvenly';
+  const dst = c.s.ownables[to];
+  if (dst && dst.level + 1 >= hotelLevel(c)) return 'housesOnly';
+  // Check the arrival with the house already gone (same group: still even after the move).
+  src.level -= 1;
+  try {
+    return buildBlock(c, p, to, 0);
+  } finally {
+    src.level += 1;
+  }
 }
 
 /** Why `p` may not build on `id` right now, or null if allowed. */
@@ -270,7 +303,7 @@ function validateTrade(c: Ctx, t: Trade, toUnmortgage: string[]): void {
     for (const id of b.properties) {
       const def = ownableDef(c, id);
       if (c.s.ownables[id].owner !== giver.id) fail(`${giver.id} does not own ${id}`);
-      if (groupHasBuildings(c, def.group, giver.id)) fail(`Cannot trade ${id}: its group has buildings`);
+      if (sideHasBuildings(c, def.group, giver.id)) fail(`Cannot trade ${id}: its group has buildings`);
       if (!canOwn(c, receiver, id)) fail(`${receiver.id} may not own ${id}`);
     }
     for (const card of b.jailCards) if (!giver.jailCards.includes(card)) fail(`${giver.id} lacks ${card}`);

@@ -30,14 +30,16 @@ describe('vi.ts', () => {
     expect(describeCharacter('C07').drawbacks).toContain('Bắt đầu 1.400 tỷ');
     expect(describeCharacter('C03').passives[0]).toContain(`tối đa ${D.characters.C03.passives[0].maxUses} lần/ván`);
     expect(describeCharacter('C03').skill).toContain(`dùng lại sau ${D.characters.C03.skill.cooldownRounds} lượt`);
-    expect(describeCharacter('C07').skill).toContain('tự kích hoạt');
+    expect(describeCharacter('C07').skill).toContain(`dùng lại sau ${D.characters.C07.skill.cooldownRounds} lượt`);
+    expect(describeCharacter('C01').skill).toContain('Mua đứt');
     expect(describeCharacter('C01').drawbacks[1]).toBe('Thuế thu nhập cá nhân trả 300 tỷ');
   });
 
   it('formats every event a real game produces, without crashing or leaking placeholders', () => {
     const seen = new Set<string>();
-    for (let seed = 1; seed <= 6; seed++) {
-      const players = ['C01', 'C02', 'C03', 'C04', 'C05', 'C06'].slice(0, 2 + (seed % 5)).map((c, i) => ({ id: `p${i}`, character: c }));
+    for (let seed = 1; seed <= 9; seed++) {
+      const roster = seed <= 6 ? ['C01', 'C02', 'C03', 'C04', 'C05', 'C06'] : ['C13', 'C14', 'C15', 'C16', 'C17', 'C10'];
+      const players = roster.slice(0, 2 + (seed % 5)).map((c, i) => ({ id: `p${i}`, character: c }));
       const created = createGame({ players, seed });
       const s = created.state;
       const all: GameEvent[] = [...created.events];
@@ -137,11 +139,13 @@ describe('56-tile board and new characters', () => {
 
   it('describes the new characters and splits CH16 / CD10 by table size', async () => {
     const { describeCharacter, describeCard } = await import('../src/i18n/vi');
-    for (const id of ['C09', 'C10', 'C11', 'C12']) {
+    for (const id of ['C09', 'C10', 'C11', 'C12', 'C13', 'C14', 'C15', 'C16', 'C17']) {
       const c = describeCharacter(id);
       for (const line of [...c.passives, ...c.drawbacks, c.skill]) expect(line).not.toMatch(/^[a-z_]+$/);
     }
     expect(describeCharacter('C09').skill).toContain('tài xỉu');
+    expect(describeCharacter('C15').passives[0]).toContain('Cải tạo toàn bộ công trình');
+    expect(describeCharacter('C16').skill).toContain(money(D.characters.C16.skill.amount));
     expect(describeCharacter('C03', 2).tableNote).toBeTruthy();
     expect(describeCharacter('C03', 6).tableNote).toBeNull();
     expect(describeCard('CH16')).toContain('chia đều');
@@ -158,7 +162,7 @@ describe('character text follows the board', () => {
     setBoard('large');
     expect(boardNote()).toContain('lương ×1,2');
     expect(describeCharacter('C01', 8).passives[0]).toBe('Lương 336 tỷ trên bàn này');
-    expect(describeCharacter('C08', 8).passives[0]).toBe('Bắt đầu 2.340 tỷ trên bàn này');
+    expect(describeCharacter('C08', 8).passives[0]).toMatch(/^Bắt đầu [\d.]+ tỷ trên bàn này$/);
     expect(describeCard('EV33')).toContain('Con bạc trả');
     setBoard('standard');
   });

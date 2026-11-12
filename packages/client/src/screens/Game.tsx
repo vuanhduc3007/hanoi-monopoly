@@ -3,13 +3,15 @@ import { Assets } from '../components/Assets';
 import { Characters } from '../components/Characters';
 import { Coach, TutorialButton } from '../components/Coach';
 import { Board } from '../components/Board';
-import { Decision } from '../components/Decision';
+import { Decision, type PickMode } from '../components/Decision';
 import { Chat, Clock, Log, PlayerList } from '../components/Side';
 import { TileDetail } from '../components/TileDetail';
 import { Trade } from '../components/Trade';
 import { t } from '../i18n/vi';
-import { me } from '../lib/selectors';
-import { leaveRoom, send } from '../net/connection';
+import { D } from '../lib/gameData';
+import { whyCantFlashSale } from '@hanoi-monopoly/engine';
+import { isMyTurn, me } from '../lib/selectors';
+import { act, leaveRoom, send } from '../net/connection';
 import type { RoomView } from '../net/protocol';
 import { useStore } from '../store';
 import { GameOver } from './GameOver';
@@ -45,6 +47,7 @@ export function Game({ room }: { room: RoomView }) {
   const clock = useStore((s) => s.clock);
   const over = useStore((s) => s.gameOver);
   const [tile, setTile] = useState<number | null>(null);
+  const [pick, setPick] = useState<PickMode>(null);
   const [panel, setPanel] = useState<'assets' | 'trade' | null>(null);
   const [drawer, setDrawer] = useState(false);
   const [chars, setChars] = useState(false);
@@ -59,12 +62,28 @@ export function Game({ room }: { room: RoomView }) {
   const self = me(room, state);
   const incoming = self ? state.trades.filter((x) => x.to === self.id).length : 0;
   const playing = !!self && !self.bankrupt;
+  // Choosing a tile on the board: Du lịch (only while it is still this player's roll) or
+  // Flash sale (an unowned tile, any time in the turn).
+  const picking =
+    pick !== null && !!self && isMyTurn(room, state) && !state.pending && (pick === 'flash' || state.turn.phase === 'roll');
+  const onTile = (pos: number) => {
+    if (!picking) return setTile(pos);
+    if (pick === 'travel') {
+      if (pos === self!.position) return;
+      setPick(null);
+      return act({ type: 'useSkill', position: pos });
+    }
+    const ref = D.board[pos].ref;
+    if (!ref || whyCantFlashSale(state, self!.id, ref, D) !== null) return setTile(pos);
+    setPick(null);
+    act({ type: 'useSkill', propertyId: ref });
+  };
   return (
     <main className="game">
-      <div className="board-wrap" data-coach="board">
+      <div className={`board-wrap${picking ? ' picking' : ''}`} data-coach="board">
         <div className="board-scroll">
           <div className="board-scale" style={{ width: `${zoom * 100}%` }}>
-            <Board state={state} room={room} onTile={setTile} />
+            <Board state={state} room={room} onTile={onTile} />
           </div>
         </div>
         <div className="zoom-controls">
@@ -104,7 +123,14 @@ export function Game({ room }: { room: RoomView }) {
           </div>
         </div>
         {playing && <Coach state={state} room={room} scope="game" />}
-        <Decision state={state} room={room} openAssets={() => setPanel('assets')} openTrade={() => setPanel('trade')} />
+        <Decision
+          state={state}
+          room={room}
+          openAssets={() => setPanel('assets')}
+          openTrade={() => setPanel('trade')}
+          pick={picking ? pick : null}
+          setPick={setPick}
+        />
         <button className="drawer-toggle" onClick={() => setDrawer(!drawer)} aria-expanded={drawer}>
           {drawer ? t.mobile.less : t.mobile.more}
         </button>

@@ -47,6 +47,8 @@ export interface RoomView {
   seats: SeatView[];
   spectators: number;
   picking: { order: string[]; current: string; available: string[]; clock: ClockInfo | null } | null;
+  /** Quick mode: when the game ends on time (server clock, ms). */
+  quickEndsAt?: number | null;
 }
 
 export interface GameMsg {

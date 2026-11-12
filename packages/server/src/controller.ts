@@ -185,6 +185,8 @@ export class GameController {
   private version = 0;
   private botBlockedAt = -1;
   private quickTimer: Timer | null = null;
+  /** Quick mode: when the game ends on time (server clock, ms). */
+  private quickEndsAt: number | null = null;
   private abandonTimer: Timer | null = null;
   private turnNumber = 0;
   private turnStartedAt = 0;
@@ -664,6 +666,7 @@ export class GameController {
     this.turnStartedAt = this.clock.now();
     this.turnPlayer = this.state.players[this.state.turn.current].id;
     if (log.config.mode === 'quick') {
+      this.quickEndsAt = this.clock.now() + this.d.config.quickMode.timeLimitMin * 60_000;
       this.quickTimer = this.clock.setTimeout(
         () => this.systemAction({ type: 'endGame' }),
         this.d.config.quickMode.timeLimitMin * 60_000,
@@ -962,6 +965,7 @@ export class GameController {
     this.botTimer?.clear();
     this.botTimer = null;
     this.quickTimer?.clear();
+    this.quickEndsAt = null;
     this.abandonTimer?.clear();
     this.abandonTimer = null;
     for (const t of this.tradeTimers.values()) t.clear();
@@ -991,6 +995,7 @@ export class GameController {
     this.botTimer?.clear();
     this.botTimer = null;
     this.quickTimer?.clear();
+    this.quickEndsAt = null;
     this.quickTimer = null;
     for (const t of this.tradeTimers.values()) t.clear();
     this.tradeTimers.clear();
@@ -1024,6 +1029,7 @@ export class GameController {
         learner: s.learner,
       })),
       spectators: this.spectators.size,
+      quickEndsAt: this.phase === 'playing' ? this.quickEndsAt : null,
       picking: picker
         ? { order: this.pickOrder, current: picker.id, available: this.availableCharacters(), clock: this.clockInfo() }
         : null,

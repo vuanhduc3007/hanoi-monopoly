@@ -2,7 +2,7 @@ import { type PlayerState, type PublicState } from '@hanoi-monopoly/engine';
 import { charOf, D } from './gameData';
 import { t, type Who } from '../i18n/vi';
 import type { RoomView } from '../net/protocol';
-import { PLAYER_COLORS } from './board';
+import { PLAYER_COLORS, TEAM_COLORS } from './board';
 
 export function nameOf(room: RoomView | null, id: string | null | undefined): string {
   if (!id) return '';
@@ -14,6 +14,21 @@ export function nameOf(room: RoomView | null, id: string | null | undefined): st
 export function colorOf(room: RoomView | null, id: string): string {
   const i = room?.seats.findIndex((s) => s.id === id) ?? 0;
   return PLAYER_COLORS[Math.max(0, i) % PLAYER_COLORS.length];
+}
+
+/**
+ * Colour of an owner's flags and buildings: in team games the team colour, so a colour
+ * group held by teammates together reads as one; otherwise the player's own colour.
+ */
+export function ownerColorOf(room: RoomView | null, state: PublicState | null, id: string): string {
+  const team = state?.players.find((p) => p.id === id)?.team;
+  return team !== undefined && team !== null ? TEAM_COLORS[team % TEAM_COLORS.length] : colorOf(room, id);
+}
+
+/** Tile is owned by this player or a teammate. */
+export function ownedBySide(state: PublicState, id: string, playerId: string): boolean {
+  const owner = state.ownables[id]?.owner;
+  return !!owner && (owner === playerId || teammates(state, owner, playerId));
 }
 
 export function who(room: RoomView | null, state: PublicState | null): Who {

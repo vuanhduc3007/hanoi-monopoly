@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { type PublicState } from '@hanoi-monopoly/engine';
 import { D } from '../lib/gameData';
 import { t } from '../i18n/vi';
-import { colorOf, currentPlayer, hotelLevel } from '../lib/selectors';
+import { colorOf, currentPlayer, hotelLevel, ownerColorOf } from '../lib/selectors';
 import type { RoomView } from '../net/protocol';
 import { store } from '../store';
 import { BoardScene, type Anchor, type BuildingView, type PieceView } from './boardScene';
@@ -90,7 +90,7 @@ export function Board3D({ state, room, onActive }: { state: PublicState; room: R
         position: positionOf(id),
         houses: o.level === H ? 0 : o.level,
         hotel: o.level === H,
-        color: o.owner ? colorOf(room, o.owner) : '#B8312F',
+        color: o.owner ? ownerColorOf(room, state, o.owner) : '#B8312F',
       }));
     // Choreograph this update's events (dice first, then walking / arrests).
     const events = store.get().game?.events ?? [];

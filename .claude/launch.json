@@ -26,6 +26,27 @@
       "port": 5173
     },
     {
+      "name": "itch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "-y",
+        "pnpm@9.15.0",
+        "--filter",
+        "@hanoi-monopoly/client",
+        "exec",
+        "vite",
+        "preview",
+        "--mode",
+        "itch",
+        "--outDir",
+        "dist-itch",
+        "--port",
+        "4174",
+        "--strictPort"
+      ],
+      "port": 4174
+    },
+    {
       "name": "prod",
       "runtimeExecutable": "node",
       "runtimeArgs": [

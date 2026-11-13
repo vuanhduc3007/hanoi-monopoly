@@ -17,6 +17,7 @@ vi.mock('../src/net/connection', () => ({
   joinRoom: async () => undefined,
   savedName: () => '',
   setTutorial: () => undefined,
+  copyText: async () => true,
   inviteLink: (code: string) => `https://test.example/?room=${code}`,
 }));
 

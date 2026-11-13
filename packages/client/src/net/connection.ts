@@ -27,11 +27,38 @@ export function serverUrl(env: { VITE_SERVER_URL?: string; PROD?: boolean } = im
 }
 
 /**
- * Invite link for a room: VITE_PUBLIC_URL if set (packaged apps, whose own
- * origin is the app shell rather than the website), else the current page.
+ * Invite link for a room: VITE_PUBLIC_URL if set (the itch.io build, whose
+ * own address cannot carry a room code), else the current page.
  */
 export function inviteLink(code: string, env: { VITE_PUBLIC_URL?: string } = import.meta.env, loc: Location = location): string {
   return `${env.VITE_PUBLIC_URL || `${loc.origin}${loc.pathname}`}?room=${code}`;
+}
+
+/**
+ * Copy text to the clipboard. The async API is refused inside a cross-origin
+ * frame (itch.io), so fall back to copying from a hidden textarea.
+ */
+export async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const el = document.createElement('textarea');
+    el.value = text;
+    el.setAttribute('readonly', '');
+    el.style.position = 'fixed';
+    el.style.opacity = '0';
+    document.body.appendChild(el);
+    el.select();
+    let ok = false;
+    try {
+      ok = document.execCommand('copy');
+    } catch {
+      ok = false;
+    }
+    el.remove();
+    return ok;
+  }
 }
 
 let client: Client | null = null;

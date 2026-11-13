@@ -8,7 +8,7 @@ import { TEAM_COLORS } from '../lib/board';
 import { MuteButton } from '../sound/MuteButton';
 import { charName, t } from '../i18n/vi';
 import { colorOf, nameOf } from '../lib/selectors';
-import { inviteLink, leaveRoom, send } from '../net/connection';
+import { copyText, inviteLink, leaveRoom, send } from '../net/connection';
 import type { RoomSettings, RoomView, SeatView } from '../net/protocol';
 
 /** S2 — players, room settings, ready, chat. */
@@ -48,7 +48,7 @@ export function Lobby({ room }: { room: RoomView }) {
           {t.lobby.code}: <strong>{room.code}</strong>
           <button
             onClick={() => {
-              void navigator.clipboard?.writeText(link);
+              void copyText(link);
               setCopied(true);
               setTimeout(() => setCopied(false), 1500);
             }}

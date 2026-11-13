@@ -93,10 +93,10 @@ describe('server address', () => {
     expect(serverUrl({ VITE_SERVER_URL: 'wss://x.example' }, dev)).toBe('wss://x.example');
   });
 
-  it('builds invite links from the page, or from VITE_PUBLIC_URL in a packaged app', async () => {
+  it('builds invite links from the page, or from VITE_PUBLIC_URL in the itch.io build', async () => {
     const { inviteLink } = await import('../src/net/connection');
     const web = { origin: 'https://hanoi.onrender.com', pathname: '/' } as Location;
-    const shell = { origin: 'capacitor://localhost', pathname: '/' } as Location;
+    const shell = { origin: 'https://html-classic.itch.zone', pathname: '/html/123/index.html' } as Location;
     expect(inviteLink('ABC234', {}, web)).toBe('https://hanoi.onrender.com/?room=ABC234');
     expect(inviteLink('ABC234', { VITE_PUBLIC_URL: 'https://hanoi.onrender.com/' }, shell)).toBe('https://hanoi.onrender.com/?room=ABC234');
   });

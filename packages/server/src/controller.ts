@@ -781,12 +781,15 @@ export class GameController {
     }
   }
 
-  /** Offers lapse after tradeOfferSec — but never while the recipient has Giao dịch open. */
+  /** Offers lapse after tradeOfferSec — but never while the recipient's side has Giao dịch open. */
   private tradeExpiry(id: string): Timer {
     return this.clock.setTimeout(() => {
       const t = this.state?.trades.find((x) => x.id === id);
-      const to = t && this.seats.find((x) => x.id === t.to);
-      if (to?.thinking === 'trade') {
+      const team = t && this.state!.players.find((p) => p.id === t.to)?.team;
+      const side = t
+        ? this.state!.players.filter((p) => p.id === t.to || (team !== undefined && p.team === team && !p.bankrupt)).map((p) => p.id)
+        : [];
+      if (this.seats.some((x) => side.includes(x.id) && x.thinking === 'trade')) {
         this.tradeTimers.set(id, this.tradeExpiry(id));
         return;
       }

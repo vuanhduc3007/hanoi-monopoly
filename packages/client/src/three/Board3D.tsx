@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { type PublicState } from '@hanoi-monopoly/engine';
 import { D } from '../lib/gameData';
 import { t } from '../i18n/vi';
@@ -11,6 +11,9 @@ import { hasWebGL } from './models';
 
 /** Extra canvas space above the board so tall pieces on the top row are not clipped. */
 export const TOP_BLEED = 0.1;
+/** A lost GPU context: show the 2D pieces, then try a new canvas this many times. */
+const RESTORE_TRIES = 3;
+const RESTORE_MS = 1500;
 
 /**
  * Transparent WebGL layer over the 2D board. Calls onActive(true) once it
@@ -21,6 +24,9 @@ export function Board3D({ state, room, onActive }: { state: PublicState; room: R
   const scene = useRef<BoardScene | null>(null);
   /** Positions before the latest update (to plan walks). */
   const positions = useRef<Record<string, number> | null>(null);
+  /** Bumped to remount the canvas after the GPU lost its context. */
+  const [gen, setGen] = useState(0);
+  const tries = useRef(0);
 
   useEffect(() => {
     const el = canvas.current;
@@ -33,6 +39,12 @@ export function Board3D({ state, room, onActive }: { state: PublicState; room: R
     }
     scene.current = s;
     s.onArrest = (player) => store.set({ arrest: { player, at: Date.now() } });
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    s.onContextLost = () => {
+      onActive(false);
+      store.set({ board3d: false });
+      if (tries.current++ < RESTORE_TRIES) retry = setTimeout(() => setGen((g) => g + 1), RESTORE_MS);
+    };
     const board = el.parentElement!;
     const measure = () => {
       const box = el.getBoundingClientRect();
@@ -57,6 +69,7 @@ export function Board3D({ state, room, onActive }: { state: PublicState; room: R
     const onVisibility = () => (document.hidden ? s.stop() : s.start());
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
+      clearTimeout(retry);
       ro.disconnect();
       document.removeEventListener('visibilitychange', onVisibility);
       s.dispose();
@@ -65,7 +78,7 @@ export function Board3D({ state, room, onActive }: { state: PublicState; room: R
       store.set({ board3d: false });
       onActive(false);
     };
-  }, [onActive]);
+  }, [onActive, gen]);
 
   useEffect(() => {
     const s = scene.current;
@@ -100,9 +113,9 @@ export function Board3D({ state, room, onActive }: { state: PublicState; room: R
     const busy = s.sync(pieces, buildings, plan);
     positions.current = Object.fromEntries(state.players.map((p) => [p.id, p.position]));
     store.set({ animUntil: Date.now() + busy });
-  }, [state, room]);
+  }, [state, room, gen]);
 
-  return <canvas ref={canvas} className="board-3d" aria-hidden style={{ top: `-${TOP_BLEED * 100}%`, height: `${(1 + TOP_BLEED) * 100}%` }} />;
+  return <canvas key={gen} ref={canvas} className="board-3d" aria-hidden style={{ top: `-${TOP_BLEED * 100}%`, height: `${(1 + TOP_BLEED) * 100}%` }} />;
 }
 
 const positionOf = (id: string) => D.ownables[id].position;

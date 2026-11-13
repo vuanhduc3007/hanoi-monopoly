@@ -87,6 +87,15 @@ interface Die {
 const ELEVATION = THREE.MathUtils.degToRad(55);
 const DICE_STAY_MS = 3200;
 const ARREST_MS = 1500;
+const BUILD_POP_MS = 520;
+/** Device pixels ratio cap: sharper than this costs GPU memory and fill rate for little. */
+const MAX_RATIO = 1.5;
+/**
+ * Drawing-buffer budget (device pixels). A zoomed-in board makes the canvas several
+ * thousand pixels wide; beyond this the ratio drops instead, so the GPU never runs out
+ * of memory (a lost context leaves a blank board).
+ */
+const MAX_PIXELS = 3_000_000;
 
 export class BoardScene {
   private renderer: THREE.WebGLRenderer;
@@ -110,14 +119,24 @@ export class BoardScene {
   private watchdog: ReturnType<typeof setInterval> | undefined;
   private lastStep = 0;
   private youLabel: string;
+  private maxRatio: number;
+  private lost = false;
+  private canvas: HTMLCanvasElement;
   /** Called when a piece starts its arrest pause (for the 2D banner + whistle). */
   onArrest?: (playerId: string) => void;
+  /** The GPU dropped the context (driver reset, out of memory): the canvas is blank now. */
+  onContextLost?: () => void;
 
   constructor(canvas: HTMLCanvasElement, youLabel: string) {
     this.youLabel = youLabel;
-    this.renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.canvas = canvas;
+    const dpr = window.devicePixelRatio || 1;
+    this.maxRatio = Math.min(dpr, MAX_RATIO);
+    // Multisampling only where pixels are big; on dense screens it mostly costs.
+    this.renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: dpr < 1.5, powerPreference: 'low-power' });
+    this.renderer.setPixelRatio(this.maxRatio);
     this.renderer.setClearColor(0x000000, 0);
+    canvas.addEventListener('webglcontextlost', this.handleLost);
     this.scene.add(new THREE.HemisphereLight(0xfff6e0, 0x6d625a, 1.6));
     const sun = new THREE.DirectionalLight(0xffffff, 1.6);
     sun.position.set(-300, 900, 600);
@@ -130,6 +149,7 @@ export class BoardScene {
     this.height = Math.max(1, height);
     this.anchors = anchors;
     this.center = center;
+    this.renderer.setPixelRatio(Math.min(this.maxRatio, Math.sqrt(MAX_PIXELS / (this.width * this.height))));
     this.renderer.setSize(this.width, this.height, false);
     const c = this.camera;
     c.left = -this.width / 2;
@@ -383,8 +403,27 @@ export class BoardScene {
 
   // ---------------------------------------------------------------- loop
 
+  private handleLost = (e: Event): void => {
+    e.preventDefault();
+    this.lost = true;
+    this.stop();
+    this.onContextLost?.();
+  };
+
+  /**
+   * Something still moves: dice, walking pieces, buildings popping up. Otherwise the
+   * loop stops and the last frame stays on the canvas (no GPU work while nobody moves).
+   */
+  private animating(now: number): boolean {
+    if (now < this.holdUntil) return true;
+    if (this.dice.some((d) => d.obj.visible && now - d.born < DICE_MS + DICE_STAY_MS + 100)) return true;
+    for (const p of this.pieces.values()) if (p.queue.length) return true;
+    for (const b of this.buildings.values()) if (now - b.born < BUILD_POP_MS + 50) return true;
+    return false;
+  }
+
   start(): void {
-    if (this.running) return;
+    if (this.running || this.lost) return;
     this.running = true;
     const tick = () => {
       if (!this.running) return;
@@ -400,9 +439,11 @@ export class BoardScene {
   }
 
   private step(): void {
+    if (this.lost) return;
     this.lastStep = performance.now();
     this.update(this.lastStep);
     this.render();
+    if (!this.animating(this.lastStep)) this.stop();
   }
 
   stop(): void {
@@ -413,18 +454,14 @@ export class BoardScene {
 
   private update(now: number): void {
     this.updateDice(now);
+    // Still poses when idle (no bobbing / swaying): the loop can stop between moves.
     for (const p of this.pieces.values()) {
       this.advance(p, now);
       p.ring.visible = p.view.isCurrent;
-      if (p.view.isCurrent) {
-        const s = 1 + Math.sin(now / 220) * 0.12;
-        p.ring.scale.set(s, s, s);
-      }
-      if (p.marker) p.marker.position.y = 1.45 + Math.sin(now / 260) * 0.08;
-      if (!p.queue.length) p.obj.rotation.y = Math.sin(now / 900 + p.view.id.length) * 0.15;
+      if (!p.queue.length) p.obj.rotation.y = 0;
     }
     for (const b of this.buildings.values()) {
-      const t = Math.min(1, (now - b.born) / 520);
+      const t = Math.min(1, (now - b.born) / BUILD_POP_MS);
       b.obj.scale.setScalar(Math.max(0.001, easeOutBack(t)));
     }
   }
@@ -487,11 +524,12 @@ export class BoardScene {
   }
 
   private render(): void {
-    this.renderer.render(this.scene, this.camera);
+    if (!this.lost) this.renderer.render(this.scene, this.camera);
   }
 
   dispose(): void {
     this.stop();
+    this.canvas.removeEventListener('webglcontextlost', this.handleLost);
     for (const p of this.pieces.values()) disposeObject(p.obj);
     for (const b of this.buildings.values()) disposeObject(b.obj);
     for (const d of this.dice) disposeObject(d.obj);

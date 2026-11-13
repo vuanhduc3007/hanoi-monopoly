@@ -228,12 +228,22 @@ describe('team games: bots', () => {
     expect(a).toMatchObject({ type: 'build', player: 'p1', propertyId: 'P05' });
   });
 
-  it("a bot accepts a teammate's offer that completes a group for either side, never an opponent's gift-grab", () => {
-    const g = teams([null, null, null, null], [0, 1, 0, 1]).give('p3', ['P03', 'P04']).give('p1', ['P05']);
-    const ask = { id: 1, from: 'p3', to: 'p1', offer: { properties: [] }, request: { properties: ['P05'] } } as never;
-    expect(botAcceptsTrade(g.s, 'p1', ask, g.d)).toBe(true);
+  it("a bot never takes a gift-grab, and accepts a swap that completes its team's group", () => {
+    const g = teams([null, null, null, null], [0, 1, 0, 1]).give('p3', ['P03']).give('p1', ['P05']).give('p2', ['P04', 'P01']);
     const grab = { id: 2, from: 'p2', to: 'p1', offer: { properties: [] }, request: { properties: ['P05'] } } as never;
     expect(botAcceptsTrade(g.s, 'p1', grab, g.d)).toBe(false);
+    // P04 completes P03 + P04 + P05 with the teammate's P03.
+    const swap = { id: 3, from: 'p2', to: 'p1', offer: { properties: ['P04'] }, request: { properties: [] } } as never;
+    expect(botAcceptsTrade(g.s, 'p1', swap, g.d)).toBe(true);
+  });
+
+  it("a bot offers the swap to a whole team, giving its teammate's tile", () => {
+    // p1 lacks P01 (held by p2), p2's side lacks P04 (held by p1's teammate p3).
+    const g = teams([null, null, null, null], [0, 1, 0, 1]).give('p1', ['P02']).give('p3', ['P04']).give('p2', ['P01']).give('p4', ['P03', 'P05']);
+    g.setCurrent('p1');
+    g.s.turn.phase = 'end';
+    const a = botActionFor(g.s, 'p1', g.d);
+    expect(a).toMatchObject({ type: 'proposeTrade', to: 'p2', offer: { properties: ['P04'] }, request: { properties: ['P01'] } });
   });
 
   it('bot-only team games finish on every board', { timeout: 60_000 }, () => {
@@ -255,5 +265,57 @@ describe('team games: bots', () => {
       // nobody ever paid a teammate
       for (const p of s.players) expect(Number.isFinite(p.cash)).toBe(true);
     }
+  });
+});
+
+describe('team games: trades are between teams', () => {
+  const four = () => teams([null, null, null, null], [0, 1, 0, 1]);
+
+  it('a player cannot trade with a teammate', () => {
+    const g = four().give('p1', ['P01']);
+    expect(() => g.do({ type: 'proposeTrade', player: 'p1', to: 'p3', offer: { properties: ['P01'] }, request: {} })).toThrow(
+      /teammate/,
+    );
+  });
+
+  it("an offer gives and asks any member's tiles; any member of the other team answers it", () => {
+    const g = four().give('p3', ['P01']).give('p2', ['P06']);
+    const [w0, w1] = [g.cash('p1'), g.cash('p2')];
+    const ev = g.do({ type: 'proposeTrade', player: 'p1', to: 'p2', offer: { properties: ['P01'] }, request: { properties: ['P06'], cash: 50 } });
+    const tr = ev.find((e) => e.type === 'tradeProposed')!.trade as { id: string };
+    // A member of a third side (here: p1's own teammate) cannot answer it.
+    expect(() => g.do({ type: 'respondTrade', player: 'p3', tradeId: tr.id, accept: true })).toThrow(/Not your trade/);
+    g.do({ type: 'respondTrade', player: 'p4', tradeId: tr.id, accept: true });
+    expect(g.s.ownables.P01.owner).toBe('p4');
+    expect(g.s.ownables.P06.owner).toBe('p1');
+    expect(g.cash('p1')).toBe(w0 + 50);
+    expect(g.cash('p3')).toBe(w0 + 50);
+    expect(g.cash('p2')).toBe(w1 - 50);
+    expect(g.cash('p4')).toBe(w1 - 50);
+  });
+
+  it("a teammate's jail card can be offered; the proposer's teammate can withdraw the offer", () => {
+    const g = four();
+    g.p('p3').jailCards.push('CH11');
+    const ev = g.do({ type: 'proposeTrade', player: 'p1', to: 'p2', offer: { jailCards: ['CH11'] }, request: { cash: 10 } });
+    const tr = ev.find((e) => e.type === 'tradeProposed')!.trade as { id: string };
+    expect(() => g.do({ type: 'cancelTrade', player: 'p4', tradeId: tr.id })).toThrow(/proposer/);
+    g.do({ type: 'cancelTrade', player: 'p3', tradeId: tr.id });
+    expect(g.s.trades).toHaveLength(0);
+    const ev2 = g.do({ type: 'proposeTrade', player: 'p1', to: 'p2', offer: { jailCards: ['CH11'] }, request: { cash: 10 } });
+    g.do({ type: 'respondTrade', player: 'p2', tradeId: (ev2.find((e) => e.type === 'tradeProposed')!.trade as { id: string }).id, accept: true });
+    expect(g.p('p3').jailCards).toEqual([]);
+    expect(g.p('p2').jailCards).toEqual(['CH11']);
+  });
+
+  it('a member who surrenders hands his open offers to the teammate', () => {
+    const g = four().give('p1', ['P01']);
+    g.setCurrent('p2');
+    const ev = g.do({ type: 'proposeTrade', player: 'p1', to: 'p2', offer: { properties: ['P01'] }, request: { cash: 10 } });
+    const tr = ev.find((e) => e.type === 'tradeProposed')!.trade as { id: string };
+    g.do({ type: 'surrender', player: 'p1' });
+    expect(g.s.trades).toEqual([expect.objectContaining({ id: tr.id, from: 'p3', to: 'p2' })]);
+    g.do({ type: 'respondTrade', player: 'p4', tradeId: tr.id, accept: true });
+    expect(g.s.ownables.P01.owner).toBe('p4');
   });
 });

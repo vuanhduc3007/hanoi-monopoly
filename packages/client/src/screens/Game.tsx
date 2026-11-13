@@ -11,7 +11,7 @@ import { Modal } from '../components/Modal';
 import { t } from '../i18n/vi';
 import { D } from '../lib/gameData';
 import { whyCantFlashSale, type PublicState } from '@hanoi-monopoly/engine';
-import { isMyTurn, me } from '../lib/selectors';
+import { isMyTurn, me, offersFor } from '../lib/selectors';
 import { act, copyText, inviteLink, leaveRoom, send } from '../net/connection';
 import type { RoomView } from '../net/protocol';
 import { useStore } from '../store';
@@ -105,7 +105,7 @@ export function Game({ room }: { room: RoomView }) {
   if (!game) return null;
   const state = game.state;
   const self = me(room, state);
-  const incoming = self ? state.trades.filter((x) => x.to === self.id).length : 0;
+  const incoming = self ? offersFor(state, self.id).length : 0;
   const playing = !!self && !self.bankrupt;
   // Choosing a tile on the board: Du lịch (only while it is still this player's roll) or
   // Flash sale (an unowned tile, any time in the turn).

@@ -1220,7 +1220,27 @@
             "rate": 0.3,
             "cooldownRounds": 4,
             "completesGroup": false
-          }
+          },
+          "drawbacks": [
+            {
+              "type": "starting_cash",
+              "value": 1850
+            }
+          ]
+        },
+        {
+          "teams": true,
+          "mode": "quick",
+          "players": [
+            5,
+            6
+          ],
+          "drawbacks": [
+            {
+              "type": "starting_cash",
+              "value": 1600
+            }
+          ]
         },
         {
           "teams": true,

@@ -535,11 +535,35 @@ select {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  container-type: inline-size;
 }
+/* One fixed row: room code, clock, icon buttons, leave. A grid, so a clock going from
+   "1:23" to "9s" (or away between turns) never moves or wraps the buttons. */
 .side-status {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(4.5ch, 1fr);
+  grid-auto-flow: column;
+  grid-auto-columns: auto;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
+}
+.side-status > button {
+  white-space: nowrap;
+}
+.side-status .mute,
+.side-status .tutorial-toggle {
+  padding: 2px 7px;
+}
+.side-status .link {
+  padding: 4px 2px;
+  font-size: 14px;
+}
+/* A narrow panel: the code without "Phòng", the clock without its label. */
+@container (max-width: 430px) {
+  .room-code-label,
+  .side-status .clock-kind {
+    display: none;
+  }
 }
 /* The flag alone (title and dialog say what it does), so the clock keeps its room. */
 .surrender {
@@ -548,8 +572,8 @@ select {
 /* The clock takes whatever room is left and never pushes the buttons around;
    when space runs out the label shrinks, never the seconds. */
 .side-clock {
-  flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 .clock {
   display: flex;
@@ -575,11 +599,6 @@ select {
 }
 .room-code strong {
   letter-spacing: 0.08em;
-}
-@media (max-width: 480px) {
-  .room-code-label {
-    display: none;
-  }
 }
 .side-actions {
   display: grid;
@@ -1158,6 +1177,17 @@ h3,
 .board-3d-on .tile-buildings {
   display: none;
 }
+/* Tile names stay readable over the 3D pieces: drawn above the canvas on a paper chip.
+   (Tiles make no stacking context, so this z-index competes with the canvas'.) */
+.board-3d-on .tile-name {
+  position: relative;
+  z-index: 6;
+  max-width: 100%;
+  padding: 0 2px;
+  border-radius: 3px;
+  background: rgba(247, 238, 216, 0.82);
+  pointer-events: none;
+}
 
 /* ---- purchase / build pop-up ---- */
 .celebration {
@@ -1717,7 +1747,9 @@ button.bet {
   display: block;
 }
 .tile-owner:not(.mortgaged) .flag path {
-  animation: flag-wave 2.4s ease-in-out infinite;
+  /* Waves twice when planted, then rests: an endless wave repainted every owned tile,
+     shadow filter included, on every frame. */
+  animation: flag-wave 2.4s ease-in-out 2;
   transform-origin: 25% 50%;
 }
 .tile-owner.mortgaged {

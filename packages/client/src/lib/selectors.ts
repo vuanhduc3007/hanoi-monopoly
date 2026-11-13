@@ -92,6 +92,21 @@ export function hotelLevel(state: PublicState): number {
   return D.economy.housesForHotel[state.config.mode] + 1;
 }
 
+/** The player and (team games) his living teammates. */
+export function sideMembers(state: PublicState, playerId: string): PlayerState[] {
+  return state.players.filter((p) => p.id === playerId || (!p.bankrupt && teammates(state, p.id, playerId)));
+}
+
+/** Tiles of the player's side: his own plus (team games) his teammates'. */
+export function sideTiles(state: PublicState, playerId: string): string[] {
+  return Object.keys(state.ownables).filter((id) => ownedBySide(state, id, playerId));
+}
+
+/** Trade offers this player's side may answer (in team games: sent to any member). */
+export function offersFor(state: PublicState, playerId: string) {
+  return state.trades.filter((x) => x.to === playerId || teammates(state, x.to, playerId));
+}
+
 export function ownedBy(state: PublicState, playerId: string): string[] {
   return Object.keys(state.ownables).filter((id) => state.ownables[id].owner === playerId);
 }

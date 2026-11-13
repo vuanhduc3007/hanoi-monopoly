@@ -33,7 +33,6 @@ import {
   ownedBy,
   ownedBySide,
   ownsFullGroup,
-  teammates,
 } from './ctx';
 import { dataFor, type GameData } from './data';
 import { applyActionInPlace, buyoutBlock, buyoutPrice, portalTargets } from './engine';
@@ -599,16 +598,15 @@ function findSwap(c: Ctx, p: PlayerState): Action | null {
   for (const g of groups) {
     const need = missing(c, p.id, g);
     if (need.length === 0 || need.length === groupProperties(c, g).length || !tradable(c, g)) continue;
-    const owners = new Set(need.map((id) => c.s.ownables[id].owner));
-    if (owners.size !== 1) continue;
-    const qId = [...owners][0];
-    if (!qId || need.some((id) => c.s.ownables[id].mortgaged || !canOwn(c, p, id))) continue;
+    // One other side holds them all (in team games: any of its members).
+    const qId = c.s.ownables[need[0]].owner;
+    if (!qId || need.some((id) => !ownedBySide(c, id, qId) || c.s.ownables[id].mortgaged || !canOwn(c, p, id))) continue;
     const q = getPlayer(c, qId);
     for (const h of groups) {
       if (h === g || !tradable(c, h)) continue;
       const give = missing(c, q.id, h);
       if (give.length === 0 || give.length === groupProperties(c, h).length) continue;
-      if (!give.every((id) => c.s.ownables[id].owner === p.id && !c.s.ownables[id].mortgaged && canOwn(c, q, id))) continue;
+      if (!give.every((id) => ownedBySide(c, id, p.id) && !c.s.ownables[id].mortgaged && canOwn(c, q, id))) continue;
       return { type: 'proposeTrade', player: p.id, to: q.id, offer: { properties: give }, request: { properties: need } };
     }
   }
@@ -617,16 +615,12 @@ function findSwap(c: Ctx, p: PlayerState): Action | null {
 
 /**
  * GDD 7.4: accept only if the trade completes one of the bot's colour groups (in team
- * games: its team's — teammates' tiles count together). Between teammates tiles stay
- * in the team, so an offer is fine unless it asks for much more cash than it gives.
+ * games: its team's — teammates' tiles count together).
  */
 export function botAcceptsTrade(s: GameState, playerId: string, trade: Trade, data?: GameData): boolean {
   const d = data ?? dataFor(s.config.board);
   if (trade.to !== playerId) return false;
   const c: Ctx = { s, ev: [], d };
-  if (teammates(c, playerId, trade.from)) {
-    return (trade.request.cash ?? 0) <= (trade.offer.cash ?? 0) + getPlayer(c, playerId).cash / 4;
-  }
   const side = Object.keys(c.s.ownables).filter((id) => ownedBySide(c, id, playerId));
   const after = new Set([...side.filter((id) => !trade.request.properties.includes(id)), ...trade.offer.properties]);
   return Object.entries(d.groups).some(

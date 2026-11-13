@@ -342,6 +342,33 @@ describe('screens', () => {
     expect(sent).toContainEqual({ type: 'action', payload: { action: { type: 'mortgage', propertyId: 'P01' } } });
   });
 
+  it('team game: Giao dịch lists the other teams only; an offer to a teammate shows for me too', () => {
+    const s = createGame({ players: [0, 1, 0, 1, 2, 2].map((team, i) => ({ id: `u${i + 1}`, team })), seed: 3 }).state;
+    s.ownables.P01.owner = 'u3';
+    s.ownables.P06.owner = 'u4';
+    s.turn.current = s.players.findIndex((p) => p.id === 'u1');
+    s.trades = [
+      { id: 'TR1', from: 'u5', to: 'u3', offer: { cash: 20, properties: [], jailCards: [] }, request: { cash: 0, properties: ['P01'], jailCards: [] }, unmortgage: [] },
+    ];
+    const room = seats(6);
+    room.seats.forEach((x, i) => (x.team = [0, 1, 0, 1, 2, 2][i]));
+    room.seats[1].control = 'bot';
+    store.set({ room, conn: 'connected' });
+    receiveGame({ state: publicView(s), events: [], clock: null });
+    render(<App />);
+    fireEvent.click(screen.getByText(t.board.trade));
+    const options = [...screen.getByRole('combobox').querySelectorAll('option')].map((o) => o.textContent);
+    expect(options).toEqual([`${t.teams.names[1]} (Người 2, Người 4)`, `${t.teams.names[2]} (Người 5, Người 6)`]);
+    // My teammate's tile is mine to offer; theirs (any member's) to ask for.
+    expect(screen.getByText(new RegExp('· Người 3'))).toBeTruthy();
+    expect(screen.getByText(new RegExp('· Người 4'))).toBeTruthy();
+    fireEvent.click(screen.getByText(t.trade.send));
+    // Sent to the team's human member, not the bot.
+    expect(sent).toContainEqual(expect.objectContaining({ payload: { action: expect.objectContaining({ type: 'proposeTrade', to: 'u4' }) } }));
+    fireEvent.click(screen.getByText(t.trade.accept));
+    expect(sent).toContainEqual({ type: 'action', payload: { action: { type: 'respondTrade', tradeId: 'TR1', accept: true, unmortgage: [] } } });
+  });
+
   it('Đầu hàng asks first, then sends surrender; blocked while a decision of mine waits', () => {
     playing();
     render(<App />);

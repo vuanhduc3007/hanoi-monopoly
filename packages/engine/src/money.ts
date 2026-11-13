@@ -283,7 +283,8 @@ export function surrender(c: Ctx, p: PlayerState): void {
   heir.jailCards.push(...p.jailCards);
   p.jailCards = [];
   expireEffectsOf(c, p.id);
-  c.s.trades = c.s.trades.filter((t) => t.from !== p.id && t.to !== p.id);
+  // Offers stay open for the team: the heir sends or answers them now.
+  c.s.trades = c.s.trades.map((t) => (t.from === p.id ? { ...t, from: heir.id } : t.to === p.id ? { ...t, to: heir.id } : t));
   // The wallet stays with the team (the sync skips players who are out).
   p.cash = 0;
   p.bankrupt = true;

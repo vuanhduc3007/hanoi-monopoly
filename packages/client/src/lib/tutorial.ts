@@ -6,7 +6,7 @@
  */
 import type { GameEvent, PlayerState, PublicState } from '@hanoi-monopoly/engine';
 import { D } from './gameData';
-import { hotelLevel, ownedBy, ownedBySide, unmortgageCost } from './selectors';
+import { hotelLevel, offersFor, ownedBy, ownedBySide, unmortgageCost } from './selectors';
 
 /** Where a tip is shown: the side panel during play, or inside an open panel. */
 export type TipScope = 'game' | 'assets' | 'trade';
@@ -120,7 +120,7 @@ export const TIPS: Tip[] = [
     scope: 'game',
     target: 'trade',
     when: (c) => {
-      const x = c.state.trades.find((tr) => tr.to === c.self.id);
+      const x = offersFor(c.state, c.self.id)[0];
       return x ? { from: c.name(x.from) } : null;
     },
   },

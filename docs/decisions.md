@@ -289,7 +289,7 @@ Người đi đầu thắng: 39,6% / 32,7% / 33,6% / 29,6% / 25,3% / 24,0% / 20,
 
 Chủ phòng chọn 2, 3 hoặc 4 đội (Rồng, Phượng, Lân, Quy). Người chơi tự bấm "Vào đội", chủ phòng có nút xáo đều. Ván chỉ bắt đầu khi đội nào cũng có người và các đội lệch nhau tối đa 1 người. Luật:
 - Ví tiền và đất của ai người nấy giữ. **Tiền không bao giờ chuyển giữa đồng đội**: vào đất đồng đội thì miễn thuê. Thẻ "trả mỗi người" / "thu của mỗi người" chỉ tính đối thủ, và tổng tiền chia cho số đối thủ. Kỹ năng Họp tổ, Mở sòng chỉ áp vào đội khác. Bóc phốt không nhắm được đồng đội. Thẻ thu tiền về cho một nhân vật thì đồng đội của người đó được miễn, riêng tiền sửa nhà thì đồng đội nộp cho ngân hàng.
-- Giao dịch giữa đồng đội vẫn như thường. Bot sẽ nhường đồng đội ô cuối của một nhóm mà đồng đội đang gom gần đủ, và nhận đề nghị của đồng đội nếu nó giúp một bên gom đủ nhóm mà không phá nhóm nào của mình.
+- Giao dịch **giữa các đội** (xem mục Giao dịch đội bên dưới); đồng đội không giao dịch với nhau.
 - Thứ tự lượt: tung xúc xắc như cũ, rồi **xếp xen kẽ các đội**. Đội có người tung cao nhất đi trước; trong đội giữ thứ tự tung.
 - Thắng: **đội cuối cùng còn người chưa phá sản**. Hết giờ (chế độ Nhanh) thì cộng tài sản những người còn trụ của mỗi đội. Bảng xếp hạng xếp theo đội, trong đội theo tài sản.
 
@@ -447,3 +447,18 @@ Mọi nhân vật ở mọi cỡ bàn đều trong ±2,8 điểm % (trước đ�
 | Thánh săn sale | −1,3 | −3,6 | +0,8 | +0,4 | +1,2 | +0,2 | +2,9 | +3,7 | +3,4 | −3,5 | −1,5 | +1,1 | +1,8 | +0,4 | −0,6 |
 | lệch xa nhất | C11 −3,1 | C01 +4,3 | C06 −3,2 | C15 −2,4 | C04 −1,5 | C07 +3,5 | C10 −3,5 | C13 +3,7 | C13 +3,4 | C13 −3,5 | C03 +2,6 | C02 +2,5 | C10 −3,4 | C09 +3,1 | C07 +2,0 |
 
+### Giao dịch đội, header, tên ô, hiệu năng bàn cờ
+
+- **Giao dịch đội**: đồng đội đã chung ví, chung đất nên không giao dịch với nhau nữa (engine từ chối). Bảng Giao dịch ở chế độ đội liệt kê **các đội khác** ("Đội Phượng (tên các thành viên)") thay vì từng người. Mỗi bên đưa / đòi được đất và giấy tờ CH11 của **bất kỳ thành viên nào** trong đội; tiền đi từ ví chung.
+  - Đề nghị gửi tới một thành viên của đội kia (ưu tiên người thật đang kết nối, không phải bot), nhưng **cả đội đều thấy** (kể cả số trên nút Giao dịch) và **ai trong đội cũng chấp nhận / từ chối được**. Người bấm chấp nhận đứng tên phần đất nhận về. Bên gửi: đồng đội của người gửi cũng hủy được đề nghị.
+  - Đề nghị không tự hủy khi bất kỳ ai trong đội nhận đang mở bảng Giao dịch.
+  - Một người đầu hàng mà đồng đội còn trụ: đề nghị đang mở của họ chuyển sang đồng đội nhận phần đất, không bị xóa.
+  - Bot: gom đủ nhóm bằng cách đổi với cả đội đối phương (đất có thể nằm rải ở nhiều thành viên), đưa được cả đất của đồng đội.
+- **Header bên phải** (mã phòng, đồng hồ, 🎓, 🔊, 🏳, Rời phòng) là một lưới cố định một dòng: đồng hồ đổi từ "1:23" sang "9s" hay biến mất giữa các lượt không còn đẩy các nút qua lại, "Rời phòng" không xuống dòng. Bảng hẹp thì ẩn chữ "Phòng" và nhãn đồng hồ ("Tung", "Quyết định"), giữ số giây.
+- **Tên ô không bị quân che**: khi bật lớp 3D, tên ô được vẽ trên canvas, nền giấy hơi trong suốt; quân vẫn đứng nguyên chỗ cũ.
+- **Hiệu năng / màn trắng**:
+  - Lớp 3D chỉ vẽ khi có thứ đang chuyển động (xúc xắc, quân đi, nhà mọc lên); đứng yên thì dừng hẳn (trước đây vẽ 60 hình/giây liên tục). Bỏ hiệu ứng lắc lư / nhún nhảy lúc đứng yên.
+  - Độ phân giải canvas tối đa 1,5× và tổng tối đa 3 triệu điểm ảnh (phóng to bàn cờ thì giảm tỉ lệ thay vì làm canvas to quá sức GPU). Khử răng cưa chỉ bật ở màn hình mật độ thấp; xin GPU chế độ tiết kiệm điện.
+  - GPU mất context (nguyên nhân thường gặp của bàn cờ trắng xóa): hiện ngay quân 2D, sau 1,5 giây tạo lại canvas 3D (tối đa 3 lần).
+  - Cờ cắm trên ô chỉ phấp phới 2 lần khi vừa cắm rồi đứng yên; trước đây mọi lá cờ (có bóng mờ) vẽ lại mỗi khung hình.
+- **Cân bằng lại chế độ Đội sau khi đổi giao dịch** (seed 505): bot giờ đổi đất với cả đội đối phương nên gom đủ nhóm nhanh hơn, Thánh săn sale tụt ở đội 5–6 người (−8,8 / −5,4 / −4,5). Chỉnh: đội 5–6 người vốn 1.850 (Đội + Nhanh 5–6 người: 1.600). Sau chỉnh: −3,4 / +0,7 / +0,6. Các nhân vật khác ở chế độ Đội nằm trong khoảng ±4: lệch xa nhất là Thánh săn sale ở Đội + Nhanh 8 người (−3,8) và Thợ xây ở Đội + Nhanh 4 người (−4,0), sát khoảng tin cậy ±2,3, nên chưa chỉnh.

@@ -98,7 +98,7 @@ export const t = {
     allowSpectators: 'Cho phép khán giả',
     teams: 'Chế độ đội',
     teamOptions: (n: number) => (n === 0 ? 'Không (mỗi người một phe)' : `${n} đội`),
-    teamHint: 'Cả đội dùng chung một ví (tiền khởi đầu cộng lại) và chung đất: ai trong đội cũng xây, bán, thế chấp được mọi ô của đội, đất tính chung nhóm màu và cắm cờ màu đội. Đồng đội không thu tiền thuê của nhau; thẻ và kỹ năng chỉ nhắm vào đội khác. Ví hết mà không xoay nổi thì cả đội cùng phá sản. Đội cuối cùng còn trụ (hoặc tổng tài sản cao nhất khi hết giờ) thắng. Lượt đi xen kẽ giữa các đội.',
+    teamHint: 'Cả đội dùng chung một ví (tiền khởi đầu cộng lại) và chung đất: ai trong đội cũng xây, bán, thế chấp được mọi ô của đội, đất tính chung nhóm màu và cắm cờ màu đội. Đồng đội không thu tiền thuê của nhau; thẻ và kỹ năng chỉ nhắm vào đội khác. Giao dịch giữa các đội: cả đội nhận được đề nghị, ai trong đội cũng trả lời được. Ví hết mà không xoay nổi thì cả đội cùng phá sản. Đội cuối cùng còn trụ (hoặc tổng tài sản cao nhất khi hết giờ) thắng. Lượt đi xen kẽ giữa các đội.',
     joinTeam: 'Vào đội',
     shuffleTeams: 'Xáo đội ngẫu nhiên',
     unevenTeams: 'Các đội phải có người và lệch nhau tối đa 1 người.',
@@ -302,8 +302,13 @@ export const t = {
   trade: {
     title: 'Giao dịch',
     with: 'Với',
+    withTeam: 'Với đội',
     youGive: 'Bạn đưa',
     youGet: 'Bạn nhận',
+    teamGives: 'Đội bạn đưa',
+    teamGets: 'Đội bạn nhận',
+    teamHint:
+      'Chơi đội: giao dịch giữa các đội. Đất, giấy tờ và ví là của chung cả đội; đề nghị gửi đến một đội thì cả đội đều thấy, ai trong đội cũng chấp nhận hoặc từ chối được.',
     cash: 'Tiền',
     jailCard: 'Giấy tờ xe (CH11)',
     unmortgageNow: 'Chuộc ngay',

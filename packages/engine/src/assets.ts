@@ -12,6 +12,7 @@ import {
   ownedBySide,
   ownsFullGroup,
   sideHasBuildings,
+  teammates,
   type Ctx,
 } from './ctx';
 import { buildFreezeActive, unmortgageInterestRate } from './effects';
@@ -270,6 +271,8 @@ export function proposeTrade(
 ): Trade {
   const to = getPlayer(c, toId);
   if (to.id === from.id || to.bankrupt || from.bankrupt) fail('Invalid trade partner');
+  // Teammates already share the wallet, the tiles and the jail cards.
+  if (teammates(c, from.id, to.id)) fail('Cannot trade with a teammate');
   const trade: Trade = {
     id: `TR${c.s.nextUid++}`,
     from: from.id,
@@ -296,17 +299,26 @@ function transferCost(c: Ctx, receiver: PlayerState, ids: string[], unmortgageNo
   return cost;
 }
 
+/** Team games: the giver's side holds the card (any living member). */
+function sideCardHolder(c: Ctx, giver: PlayerState, card: string): PlayerState | undefined {
+  return [giver, ...c.s.players.filter((q) => !q.bankrupt && teammates(c, q.id, giver.id))].find((q) => q.jailCards.includes(card));
+}
+
+/**
+ * Team games trade side to side: either side gives any of its members' tiles and jail
+ * cards, and what it receives goes to the member who sent or answered the offer.
+ */
 function validateTrade(c: Ctx, t: Trade, toUnmortgage: string[]): void {
   const from = getPlayer(c, t.from);
   const to = getPlayer(c, t.to);
   const check = (giver: PlayerState, receiver: PlayerState, b: TradeBundle) => {
     for (const id of b.properties) {
       const def = ownableDef(c, id);
-      if (c.s.ownables[id].owner !== giver.id) fail(`${giver.id} does not own ${id}`);
+      if (!ownedBySide(c, id, giver.id)) fail(`${giver.id} does not own ${id}`);
       if (sideHasBuildings(c, def.group, giver.id)) fail(`Cannot trade ${id}: its group has buildings`);
       if (!canOwn(c, receiver, id)) fail(`${receiver.id} may not own ${id}`);
     }
-    for (const card of b.jailCards) if (!giver.jailCards.includes(card)) fail(`${giver.id} lacks ${card}`);
+    for (const card of b.jailCards) if (!sideCardHolder(c, giver, card)) fail(`${giver.id} lacks ${card}`);
   };
   check(from, to, t.offer);
   check(to, from, t.request);
@@ -332,20 +344,23 @@ function moveBundle(c: Ctx, giver: PlayerState, receiver: PlayerState, b: TradeB
     own.owner = receiver.id;
   }
   for (const card of b.jailCards) {
-    giver.jailCards.splice(giver.jailCards.indexOf(card), 1);
+    const holder = sideCardHolder(c, giver, card)!;
+    holder.jailCards.splice(holder.jailCards.indexOf(card), 1);
     receiver.jailCards.push(card);
   }
 }
 
 export function respondTrade(c: Ctx, p: PlayerState, tradeId: string, accept: boolean, toUnmortgage: string[] = []) {
-  const t = c.s.trades.find((x) => x.id === tradeId);
-  if (!t) fail('Unknown trade');
-  if (t.to !== p.id) fail('Not your trade to answer');
+  const offered = c.s.trades.find((x) => x.id === tradeId);
+  if (!offered) fail('Unknown trade');
+  // An offer to a team: any living member answers it for the team.
+  if (offered.to !== p.id && !teammates(c, offered.to, p.id)) fail('Not your trade to answer');
   c.s.trades = c.s.trades.filter((x) => x.id !== tradeId);
   if (!accept) {
-    emit(c, 'tradeRejected', { tradeId });
+    emit(c, 'tradeRejected', { tradeId, player: p.id });
     return;
   }
+  const t: Trade = { ...offered, to: p.id };
   validateTrade(c, t, toUnmortgage);
   const from = getPlayer(c, t.from);
   moveBundle(c, from, p, t.offer, toUnmortgage);
@@ -356,7 +371,7 @@ export function respondTrade(c: Ctx, p: PlayerState, tradeId: string, accept: bo
 export function cancelTrade(c: Ctx, playerId: string | undefined, tradeId: string): void {
   const t = c.s.trades.find((x) => x.id === tradeId);
   if (!t) fail('Unknown trade');
-  if (playerId !== undefined && t.from !== playerId) fail('Only the proposer can cancel');
+  if (playerId !== undefined && t.from !== playerId && !teammates(c, t.from, playerId)) fail('Only the proposer can cancel');
   c.s.trades = c.s.trades.filter((x) => x.id !== tradeId);
   emit(c, 'tradeCancelled', { tradeId });
 }

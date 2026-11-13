@@ -1953,3 +1953,17 @@ button.small {
   font-size: 0.8em;
   color: var(--red, #b8312f);
 }
+
+/* Ủng hộ tác giả (màn hình chính) */
+.donate-link {
+  display: block;
+  margin: 12px auto 0;
+}
+.donate-qr {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  margin: 8px auto 0;
+  border-radius: var(--radius);
+}

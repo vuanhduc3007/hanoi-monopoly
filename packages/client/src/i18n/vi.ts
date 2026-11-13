@@ -47,6 +47,12 @@ export const t = {
   },
 
   // S2
+  donate: {
+    button: '☕ Ủng hộ tác giả',
+    title: 'Ủng hộ tác giả',
+    body: 'Game miễn phí và không có quảng cáo. Nếu bạn thấy vui, có thể mời tác giả một ly cà phê bằng cách quét mã bằng ứng dụng ngân hàng.',
+    qrAlt: 'Mã QR chuyển khoản ngân hàng của tác giả',
+  },
   surrender: {
     button: 'Đầu hàng',
     title: 'Đầu hàng?',

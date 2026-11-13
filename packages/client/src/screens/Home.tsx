@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { TutorialSetting } from '../components/Coach';
+import { Modal } from '../components/Modal';
 import { t } from '../i18n/vi';
 import { createRoom, joinRoom, savedName } from '../net/connection';
 import { useStore } from '../store';
@@ -10,6 +11,7 @@ export function Home() {
   const invite = new URLSearchParams(location.search).get('room') ?? '';
   const [name, setName] = useState(savedName());
   const [code, setCode] = useState(invite.toUpperCase());
+  const [donate, setDonate] = useState(false);
   const busy = conn === 'connecting' || conn === 'reconnecting';
   return (
     <main className="home">
@@ -53,6 +55,15 @@ export function Home() {
           ))}
         </ul>
       </details>
+      <button className="link donate-link" onClick={() => setDonate(true)}>
+        {t.donate.button}
+      </button>
+      {donate && (
+        <Modal title={t.donate.title} onClose={() => setDonate(false)}>
+          <p>{t.donate.body}</p>
+          <img className="donate-qr" src={`${import.meta.env.BASE_URL}donate-qr.png`} alt={t.donate.qrAlt} />
+        </Modal>
+      )}
     </main>
   );
 }

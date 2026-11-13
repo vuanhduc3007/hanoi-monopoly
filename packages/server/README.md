@@ -30,6 +30,7 @@ const again = await client.reconnect(room.reconnectionToken);  // after a droppe
 | `setConfig` | `{ mode?, board?, characters?, scholarshipFund?, buildingLimit?, maxPlayers?, allowSpectators?, teams?, draft? }` — `board`: `auto` (40 tiles for 2–4, 48 for 5–6, 56 for 7–8 players) \| `standard` \| `extended` \| `large`; `maxPlayers` 2–8; `teams`: 0 (off) or one of `room.teamCounts` (2/3/4) — changing it deals every seat evenly; `draft`: `pick` \| `random` (Bốc thăm: characters drawn for everyone) | lobby, host |
 | `setTeam` | `{ team }` — 0-based; resets your ready flag | lobby, teams on |
 | `shuffleTeams` | `{}` — deal seats into teams evenly at random | lobby, host, teams on |
+| `kick` | `{ seat }` — remove another player; they get `kicked`, are disconnected, and cannot rejoin this room from that browser (`KICKED`) | lobby, host |
 | `start` | `{}` | lobby, host (≥ 2 players, all ready; with teams every team has a player and sizes differ by ≤ 1) |
 | `rematch` | `{}` | game over, host — back to the lobby with the connected players |
 | `pick` | `{ character: 'C01'… }` or `{ random: true }` | picking, your turn to pick |
@@ -49,6 +50,7 @@ const again = await client.reconnect(room.reconnectionToken);  // after a droppe
 | `picked` | `{ seat, character, random }` |
 | `clock` | `{ clock }` — the clock changed without a game update (paused / extended) |
 | `game` | `{ state: PublicState, events: GameEvent[], clock: { kind, deadline } \| null }` — clock kinds: roll, buy, decision, reveal, rent, auction, turn, liquidation, pick; a face-down card has `pending.cardId = ''` |
+| `kicked` | `{}` — the host removed you from the lobby; the connection closes next |
 | `botTakeover` | `{ seat, reason: 'disconnect' \| 'afk' \| 'left' }` |
 | `gameOver` | `{ winner, winnerTeam, ranking, seed, stats: { rentPaid, rentEarned, rentByTile }, log }` — `winnerTeam` is null outside team games |
 | `chat` / `emote` | `{ from, spectator, text \| emote, at }` |

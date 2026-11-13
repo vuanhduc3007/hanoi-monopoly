@@ -62,6 +62,43 @@ describe('lobby', () => {
   });
 });
 
+describe('kick', () => {
+  const secret = (n: number) => `secret-of-player-${n}`;
+
+  it('host removes a lobby player, who is told, disconnected and cannot come back', () => {
+    const kickedSessions: string[] = [];
+    const { ctl, out } = harness({ onKicked: (id) => kickedSessions.push(id) });
+    ctl.join('s1', { name: 'A', secret: secret(1) });
+    ctl.join('s2', { name: 'B', secret: secret(2) });
+    ctl.join('s3', { name: 'C', secret: secret(3) });
+    ctl.message('s1', 'kick', { seat: 'u2' });
+    expect(ctl.seats.map((s) => s.id)).toEqual(['u1', 'u3']);
+    expect(out.sent.some((x) => x.to === 's2' && x.type === 'kicked')).toBe(true);
+    expect(kickedSessions).toEqual(['s2']);
+    expect(out.last('room', 's1').seats).toHaveLength(2);
+    // Same browser: refused as a player, on resume and as a spectator.
+    for (const o of [{ name: 'B' }, { resume: true }, { spectator: true }]) {
+      expect(() => ctl.join('s2b', { ...o, secret: secret(2) })).toThrow(expect.objectContaining({ code: 'KICKED' }));
+    }
+    // Someone else can still take the free seat.
+    expect(ctl.join('s4', { name: 'D', secret: secret(4) })).toBe('player');
+  });
+
+  it('only the host kicks, never themselves, and only in the lobby', () => {
+    const { ctl, out } = lobby(3, true);
+    ctl.message('s2', 'kick', { seat: 'u3' });
+    expect(out.errors('s2')).toEqual(['NOT_HOST']);
+    ctl.message('s1', 'kick', { seat: 'u1' });
+    ctl.message('s1', 'kick', { seat: 'nobody' });
+    expect(out.errors('s1')).toEqual(['BAD_MESSAGE', 'BAD_MESSAGE']);
+    expect(ctl.seats).toHaveLength(3);
+    ctl.message('s1', 'start', {});
+    ctl.message('s1', 'kick', { seat: 'u3' });
+    expect(out.errors('s1')).toContain('WRONG_PHASE');
+    expect(ctl.seats).toHaveLength(3);
+  });
+});
+
 describe('turn order and character picks', () => {
   it('picks go in reverse turn order; taken / out-of-turn picks fail; timeout picks at random', () => {
     const { ctl, out, clock } = lobby(3, true);

@@ -54,6 +54,11 @@ export class GameRoom extends Room {
         this.holds.delete(old);
         this.clients.getById(old)?.leave(4000);
       },
+      onKicked: (sessionId) => {
+        this.holds.get(sessionId)?.reject(new Error('kicked'));
+        this.holds.delete(sessionId);
+        this.clients.getById(sessionId)?.leave(4000);
+      },
     });
     this.onMessage('*', (client, type, message) => {
       try {

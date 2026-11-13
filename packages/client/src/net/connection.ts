@@ -196,6 +196,14 @@ function attach(r: Room, secret: string = mySecret()): void {
   r.onMessage('chat', (m: ChatMsg) => store.set((s) => ({ chat: [...s.chat, m].slice(-100) })));
   r.onMessage('emote', (m: ChatMsg) => store.set((s) => ({ chat: [...s.chat, m].slice(-100) })));
   r.onMessage('error', (m: { code: string; message?: string }) => pushToast(m.code, m.message));
+  r.onMessage('kicked', () => {
+    // The host removed us: back to the home screen, and no reconnection attempts.
+    if (room !== r) return;
+    room = null;
+    forget();
+    store.reset();
+    pushToast('KICKED');
+  });
   r.onLeave((code: number) => {
     if (room !== r) return;
     room = null;

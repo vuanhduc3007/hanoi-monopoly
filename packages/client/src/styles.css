@@ -265,6 +265,11 @@ select {
   flex: none;
   white-space: nowrap;
 }
+.player .kick {
+  flex: none;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+}
 .player-name {
   font-weight: 600;
 }

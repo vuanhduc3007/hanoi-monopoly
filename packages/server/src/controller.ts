@@ -113,7 +113,8 @@ export type ErrorCode =
   | 'WRONG_PHASE'
   | 'RULE'
   | 'RATE_LIMIT'
-  | 'NO_SEAT';
+  | 'NO_SEAT'
+  | 'KICKED';
 
 export class RoomError extends Error {
   constructor(public code: ErrorCode, message?: string) {
@@ -135,6 +136,8 @@ export interface ControllerOptions {
   onFinished?: (log: GameLog) => void;
   /** A seat moved to a new connection (page reload): drop the old one. */
   onReplaced?: (oldSessionId: string) => void;
+  /** The host removed this player from the lobby: close their connection. */
+  onKicked?: (sessionId: string) => void;
 }
 
 type TimerKind = 'roll' | 'buy' | 'decision' | 'auction' | 'turn' | 'liquidation' | 'pick' | 'reveal' | 'rent';
@@ -159,6 +162,8 @@ export class GameController {
   private botDelayMs: number;
   private nextSeat = 1;
   private lastChat = new Map<string, number>();
+  /** Secrets of players the host removed: they cannot come back to this room. */
+  private kicked = new Set<string>();
 
   // picking
   private turnOrder: string[] = [];
@@ -223,6 +228,7 @@ export class GameController {
     options: { name?: unknown; spectator?: unknown; secret?: unknown; resume?: unknown; reclaim?: unknown } = {},
   ): 'player' | 'spectator' {
     const secret = cleanSecret(options.secret);
+    if (secret && this.kicked.has(secret)) throw new RoomError('KICKED');
     const mine = secret ? this.seats.find((s) => s.secret === secret) : undefined;
     // `reclaim`: a new tab in the same browser re-entering the room code. It may only
     // take a seat nobody is using, so it never kicks out a tab that is still open.
@@ -428,6 +434,10 @@ export class GameController {
         if (!this.settings.teams) throw new RoomError('BAD_CONFIG', 'teams');
         this.balanceTeams(true);
         return this.broadcastRoom();
+      case 'kick':
+        this.requirePhase('lobby');
+        if (!seat.host) throw new RoomError('NOT_HOST');
+        return this.kick(m.seat);
       case 'start':
         this.requirePhase('lobby');
         if (!seat.host) throw new RoomError('NOT_HOST');
@@ -449,6 +459,16 @@ export class GameController {
       default:
         throw new RoomError('BAD_MESSAGE', `Unknown message ${type}`);
     }
+  }
+
+  /** Host removes a player from the lobby; that browser cannot rejoin this room. */
+  private kick(seatId: unknown): void {
+    const target = this.seats.find((s) => s.id === seatId);
+    if (!target || target.host) throw new RoomError('BAD_MESSAGE', 'seat');
+    if (target.secret) this.kicked.add(target.secret);
+    this.out.send(target.sessionId, 'kicked', {});
+    this.removeSeat(target);
+    this.o.onKicked?.(target.sessionId);
   }
 
   private requirePhase(p: Phase): void {

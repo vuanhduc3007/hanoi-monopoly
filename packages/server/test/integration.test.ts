@@ -119,4 +119,22 @@ describe('Colyseus room (real server)', () => {
     await b2.leave();
     await host.leave();
   }, 20_000);
+
+  it('host kicks a lobby player: told, disconnected, refused when coming back', async () => {
+    const url = `ws://localhost:${PORT}`;
+    const host = await new Client(url).create(ROOM_NAME, { name: 'A', secret: 'a'.repeat(32) });
+    const code = host.roomId;
+    const b = await new Client(url).joinById(code, { name: 'B', secret: 'k'.repeat(32) });
+    const ha = inbox(host);
+    const hb = inbox(b);
+    await ha.next('room', (m) => m.seats.length === 2);
+    const left = new Promise<number>((resolve) => b.onLeave((c) => resolve(c)));
+    host.send('kick', { seat: 'u2' });
+    await hb.next('kicked');
+    expect(await left).toBe(4000);
+    await ha.next('room', (m) => m.seats.length === 1);
+    const again = await new Client(url).joinById(code, { name: 'B', secret: 'k'.repeat(32) }).catch((e) => e);
+    expect(String(again?.message ?? again)).toContain('KICKED');
+    await host.leave();
+  }, 20_000);
 });

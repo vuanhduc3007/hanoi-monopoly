@@ -5,6 +5,7 @@ import { Chat } from '../components/Side';
 import { Token } from '../components/Token';
 import { TeamTag } from '../components/TeamTag';
 import { TEAM_COLORS } from '../lib/board';
+import { Modal } from '../components/Modal';
 import { MuteButton } from '../sound/MuteButton';
 import { charName, t } from '../i18n/vi';
 import { colorOf, nameOf } from '../lib/selectors';
@@ -16,6 +17,8 @@ export function Lobby({ room }: { room: RoomView }) {
   const mySeat = room.seats.find((s) => s.id === room.you);
   const host = !!mySeat?.host;
   const [copied, setCopied] = useState(false);
+  const [kicking, setKicking] = useState<string | null>(null);
+  const kickSeat = room.seats.find((x) => x.id === kicking && !x.host);
   const link = inviteLink(room.code);
   const s = room.settings;
   const teamCount = s.teams ?? 0;
@@ -38,6 +41,11 @@ export function Lobby({ room }: { room: RoomView }) {
         )}
       </span>
       <span className={`ready-state ${seat.host || seat.ready ? 'ok' : 'muted'}`}>{seat.host || seat.ready ? t.lobby.ready : t.lobby.notReady}</span>
+      {host && seat.id !== room.you && (
+        <button className="kick" onClick={() => setKicking(seat.id)}>
+          {t.lobby.kick}
+        </button>
+      )}
     </div>
   );
   return (
@@ -164,6 +172,23 @@ export function Lobby({ room }: { room: RoomView }) {
         </section>
         <Chat room={room} />
       </div>
+      {kickSeat && (
+        <Modal title={t.lobby.kickTitle(nameOf(room, kickSeat.id))} onClose={() => setKicking(null)}>
+          <p>{t.lobby.kickBody}</p>
+          <div className="buttons">
+            <button onClick={() => setKicking(null)}>{t.lobby.kickCancel}</button>
+            <button
+              className="danger"
+              onClick={() => {
+                send('kick', { seat: kickSeat.id });
+                setKicking(null);
+              }}
+            >
+              {t.lobby.kickConfirm}
+            </button>
+          </div>
+        </Modal>
+      )}
     </main>
   );
 }

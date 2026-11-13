@@ -1,0 +1,19 @@
+{
+  "name": "@hanoi-monopoly/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build:web": "pnpm --filter @hanoi-monopoly/client run build:app",
+    "sync": "pnpm run build:web && cap sync",
+    "android": "pnpm run sync && cap open android",
+    "ios": "pnpm run sync && cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.2",
+    "@capacitor/core": "8.6.2",
+    "@capacitor/ios": "8.6.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.2"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "appId": "com.cotyphuhanoi.app",
+  "appName": "Cờ Tỷ Phú Hà Nội",
+  "webDir": "../client/dist-app",
+  "backgroundColor": "#f3e9d2"
+}

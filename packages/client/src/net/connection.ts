@@ -26,6 +26,14 @@ export function serverUrl(env: { VITE_SERVER_URL?: string; PROD?: boolean } = im
   return env.PROD ? `${ws}://${loc.host}` : `${ws}://${loc.hostname}:2567`;
 }
 
+/**
+ * Invite link for a room: VITE_PUBLIC_URL if set (packaged apps, whose own
+ * origin is the app shell rather than the website), else the current page.
+ */
+export function inviteLink(code: string, env: { VITE_PUBLIC_URL?: string } = import.meta.env, loc: Location = location): string {
+  return `${env.VITE_PUBLIC_URL || `${loc.origin}${loc.pathname}`}?room=${code}`;
+}
+
 let client: Client | null = null;
 let room: Room | null = null;
 

@@ -12,7 +12,7 @@ import { t } from '../i18n/vi';
 import { D } from '../lib/gameData';
 import { whyCantFlashSale, type PublicState } from '@hanoi-monopoly/engine';
 import { isMyTurn, me } from '../lib/selectors';
-import { act, leaveRoom, send } from '../net/connection';
+import { act, inviteLink, leaveRoom, send } from '../net/connection';
 import type { RoomView } from '../net/protocol';
 import { useStore } from '../store';
 import { GameOver } from './GameOver';
@@ -27,7 +27,7 @@ function RoomCode({ code }: { code: string }) {
       className="room-code"
       title={t.lobby.copyLink}
       onClick={() => {
-        void navigator.clipboard?.writeText(`${location.origin}${location.pathname}?room=${code}`);
+        void navigator.clipboard?.writeText(inviteLink(code));
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
       }}

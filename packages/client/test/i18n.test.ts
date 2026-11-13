@@ -92,6 +92,14 @@ describe('server address', () => {
     expect(serverUrl({ PROD: false }, dev)).toBe('ws://localhost:2567');
     expect(serverUrl({ VITE_SERVER_URL: 'wss://x.example' }, dev)).toBe('wss://x.example');
   });
+
+  it('builds invite links from the page, or from VITE_PUBLIC_URL in a packaged app', async () => {
+    const { inviteLink } = await import('../src/net/connection');
+    const web = { origin: 'https://hanoi.onrender.com', pathname: '/' } as Location;
+    const shell = { origin: 'capacitor://localhost', pathname: '/' } as Location;
+    expect(inviteLink('ABC234', {}, web)).toBe('https://hanoi.onrender.com/?room=ABC234');
+    expect(inviteLink('ABC234', { VITE_PUBLIC_URL: 'https://hanoi.onrender.com/' }, shell)).toBe('https://hanoi.onrender.com/?room=ABC234');
+  });
 });
 
 describe('48-tile board layout', () => {

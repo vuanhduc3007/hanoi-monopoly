@@ -1,0 +1,29 @@
+{
+  "name": "@hanoi-monopoly/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cờ Tỷ Phú Hà Nội — desktop build for Steam",
+  "author": "vuanhduc3007",
+  "main": "main.cjs",
+  "scripts": {
+    "build:web": "pnpm --filter @hanoi-monopoly/client run build:app",
+    "start": "pnpm run build:web && electron .",
+    "smoke": "electron . --smoke",
+    "dist": "pnpm run build:web && electron-builder --dir"
+  },
+  "devDependencies": {
+    "electron": "45.3.1",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "com.cotyphuhanoi.app",
+    "productName": "Co Ty Phu Ha Noi",
+    "directories": { "output": "release" },
+    "files": ["main.cjs"],
+    "extraResources": [{ "from": "../client/dist-app", "to": "web" }],
+    "icon": "../client/public/icon-512.png",
+    "win": { "target": "dir" },
+    "mac": { "target": "dir", "category": "public.app-category.board-games" },
+    "linux": { "target": "dir", "category": "Game" }
+  }
+}

@@ -8,7 +8,7 @@ import { TEAM_COLORS } from '../lib/board';
 import { MuteButton } from '../sound/MuteButton';
 import { charName, t } from '../i18n/vi';
 import { colorOf, nameOf } from '../lib/selectors';
-import { leaveRoom, send } from '../net/connection';
+import { inviteLink, leaveRoom, send } from '../net/connection';
 import type { RoomSettings, RoomView, SeatView } from '../net/protocol';
 
 /** S2 — players, room settings, ready, chat. */
@@ -16,7 +16,7 @@ export function Lobby({ room }: { room: RoomView }) {
   const mySeat = room.seats.find((s) => s.id === room.you);
   const host = !!mySeat?.host;
   const [copied, setCopied] = useState(false);
-  const link = `${location.origin}${location.pathname}?room=${room.code}`;
+  const link = inviteLink(room.code);
   const s = room.settings;
   const teamCount = s.teams ?? 0;
   const teamSizes = Array.from({ length: teamCount }, (_, i) => room.seats.filter((x) => x.team === i).length);

@@ -371,3 +371,76 @@ export function checkGameEnd(c: Ctx): boolean {
   }
   return false;
 }
+
+/** A decision of this player is waiting (owing money aside): he cannot leave yet. */
+function midDecision(c: Ctx, id: string): boolean {
+  const pend = c.s.pending;
+  if (!pend) return false;
+  if (pend.type === 'sicboBet') return pend.host === id || pend.waiting.includes(id);
+  return 'player' in pend && pend.player === id && pend.type !== 'liquidation';
+}
+
+/**
+ * Team games: propose, agree to, decline or withdraw a surrender of the whole team.
+ * Agreeing starts a proposal if there is none; declining (or withdrawing) drops it.
+ */
+export function voteTeamSurrender(c: Ctx, p: PlayerState, agree: boolean): void {
+  if (p.bankrupt) fail('Already out of the game');
+  if (p.team === undefined) fail('Not a team game');
+  const key = String(p.team);
+  const votes = { ...(c.s.surrenderVotes ?? {}) };
+  const current = votes[key] ?? [];
+  if (!agree) {
+    if (!current.length) return;
+    delete votes[key];
+    c.s.surrenderVotes = votes;
+    emit(c, 'teamSurrenderDeclined', { player: p.id, team: p.team });
+    return;
+  }
+  if (current.includes(p.id)) return;
+  votes[key] = [...current, p.id];
+  c.s.surrenderVotes = votes;
+  emit(c, current.length ? 'teamSurrenderAgreed' : 'teamSurrenderProposed', { player: p.id, team: p.team });
+}
+
+/**
+ * Carry out a team surrender every living member agreed to, once none of them is in the
+ * middle of a decision. The shared wallet means the team falls together: everything goes
+ * to the creditor of a member who owes money, otherwise to the bank (tiles auctioned).
+ * Returns true when a team left.
+ */
+export function checkTeamSurrender(c: Ctx): boolean {
+  const votes = c.s.surrenderVotes;
+  if (!votes || c.s.status !== 'playing') return false;
+  let done = false;
+  for (const key of Object.keys(votes)) {
+    const alive = activePlayers(c).filter((q) => q.team === Number(key));
+    const agreed = votes[key].filter((id) => alive.some((q) => q.id === id));
+    if (!alive.length || !agreed.length) {
+      delete votes[key];
+      continue;
+    }
+    votes[key] = agreed;
+    if (agreed.length < alive.length || alive.some((q) => midDecision(c, q.id))) continue;
+    delete votes[key];
+    emit(c, 'teamSurrendered', { team: Number(key), players: alive.map((q) => q.id) });
+    const pend = c.s.pending;
+    if (pend?.type === 'auction') {
+      pend.eligible = pend.eligible.filter((id) => !alive.some((q) => q.id === id));
+      if (alive.some((q) => q.id === pend.highBidder)) {
+        pend.highBidder = null;
+        pend.highBid = 0;
+      }
+    }
+    if (pend?.type === 'liquidation' && alive.some((q) => q.id === pend.player)) {
+      c.s.pending = null;
+      goBankrupt(c, getPlayer(c, pend.player), pend.task);
+    } else {
+      goBankrupt(c, alive[0], payTask(alive[0].id, { kind: 'bank' }, 0, 'fee', 'surrender'));
+    }
+    done = true;
+    if (c.s.status !== 'playing') break;
+  }
+  if (!Object.keys(votes).length) delete c.s.surrenderVotes;
+  return done;
+}

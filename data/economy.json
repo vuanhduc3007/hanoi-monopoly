@@ -16,8 +16,8 @@
   "buildingSellRate": 0.5,
   "monopolyBaseRentMultiplier": 2,
   "buildingLimit": {
-    "houses": 32,
-    "hotels": 12
+    "houses": 48,
+    "hotels": 16
   },
   "transportRent": [
     25,

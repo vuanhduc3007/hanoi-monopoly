@@ -442,10 +442,6 @@ export class GameController {
         this.requirePhase('lobby');
         if (!seat.host) throw new RoomError('NOT_HOST');
         return this.start();
-      case 'rematch':
-        this.requirePhase('over');
-        if (!seat.host) throw new RoomError('NOT_HOST');
-        return this.rematch();
       case 'pick':
         this.requirePhase('picking');
         if (m.random === true) {
@@ -964,10 +960,11 @@ export class GameController {
     }
   }
 
-  /** Host starts over in the same room: back to the lobby with the players still here. */
-  private rematch(): void {
+  /** After a game: the room goes back to its lobby with the players still here. */
+  private backToLobby(): void {
     this.dispose();
-    this.seats = this.seats.filter((s) => s.connected && s.botReason !== 'left' && s.botReason !== 'afk');
+    // Still connected (an AFK player too: his screen follows the room) and not gone for good.
+    this.seats = this.seats.filter((s) => s.connected && s.botReason !== 'left');
     if (this.seats.length && !this.seats.some((s) => s.host)) this.seats[0].host = true;
     for (const s of this.seats) {
       Object.assign(s, { ready: false, character: null, control: 'human', botReason: null, afkTurns: 0, timedOutThisTurn: false });
@@ -1007,8 +1004,9 @@ export class GameController {
       stats: this.stats,
       log,
     });
-    this.broadcastRoom();
     this.o.onFinished?.(log);
+    // Everyone lands back in the room's lobby at once; the results show over it.
+    this.backToLobby();
   }
 
   dispose(): void {

@@ -13,8 +13,8 @@
       200
     ],
     "buildingLimit": {
-      "houses": 48,
-      "hotels": 17
+      "houses": 72,
+      "hotels": 24
     },
     "startingCashMultiplier": 1.3,
     "utilityMultiplier": {

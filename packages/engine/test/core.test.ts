@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { applyAction, createGame, rollTurnOrder } from '../src';
 import { D, G, has, withCharacter } from './helpers';
 
+/** Tiles that, at 4 houses each, take every house the bank has (P03 onwards). */
+const FILL_STOCK = Array.from({ length: D.economy.buildingLimit.houses / 4 }, (_, i) => `P${String(i + 3).padStart(2, '0')}`);
+
 const two = () => G.create([null, null]);
 const three = () => G.create([null, null, null]);
 
@@ -265,12 +268,12 @@ describe('building', () => {
     expect(has(g.events, 'built', { hotel: true })).toBe(true);
   });
 
-  it('house stock limit (32)', () => {
+  it('house stock limit (economy.buildingLimit)', () => {
     const g = three().give('p1', ['P01', 'P02']);
-    g.give('p3', ['P03', 'P04', 'P05', 'P06', 'P07', 'P08', 'P09', 'P10'], { level: 4 });
+    g.give('p3', FILL_STOCK, { level: 4 });
     expect(() => g.do({ type: 'build', player: 'p1', propertyId: 'P01' })).toThrow(/No houses/);
     const h = G.create([null, null, null], { buildingLimit: false }).give('p1', ['P01', 'P02']);
-    h.give('p3', ['P03', 'P04', 'P05', 'P06', 'P07', 'P08', 'P09', 'P10'], { level: 4 });
+    h.give('p3', FILL_STOCK, { level: 4 });
     h.do({ type: 'build', player: 'p1', propertyId: 'P01' });
   });
 
@@ -282,7 +285,7 @@ describe('building', () => {
     expect(g.cash('p1')).toBe(1525);
 
     const h = three().give('p1', ['P01', 'P02'], { level: 5 });
-    h.give('p3', ['P03', 'P04', 'P05', 'P06', 'P07', 'P08', 'P09', 'P10'], { level: 4 });
+    h.give('p3', FILL_STOCK, { level: 4 });
     h.do({ type: 'sellBuilding', player: 'p1', propertyId: 'P01' });
     expect(h.s.ownables.P01.level).toBe(0);
     expect(h.cash('p1')).toBe(1500 + 5 * 25);

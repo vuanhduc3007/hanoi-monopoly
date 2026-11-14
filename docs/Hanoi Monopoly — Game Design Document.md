@@ -90,7 +90,7 @@ Thang giá dùng lại Monopoly gốc vì vị trí ô giống hệt, nên cân 
 | Thế chấp | 50% giá mua |
 | Chuộc lại | Giá thế chấp + 10% |
 | Bán nhà cho ngân hàng | 50% giá xây |
-| Giới hạn công trình (tùy chọn phòng) | 32 nhà, 12 khách sạn |
+| Giới hạn công trình (tùy chọn phòng) | 48 nhà, 16 khách sạn (bàn 48 ô: 60 / 20; bàn 56 ô: 72 / 24) |
 
 ### 3.2 Bảng giá 22 bất động sản
 
@@ -372,7 +372,7 @@ Kiến trúc server-authoritative: React client chỉ gửi hành động và hi
 
 ### 7.4 Bot và cân bằng
 
-- Bot cơ bản: luôn mua nếu còn ≥ 200 sau khi mua; xây đến 3 nhà khi đủ nhóm; đấu giá đến tối đa giá in; từ chối giao dịch trừ khi giúp hoàn thành nhóm.
+- Bot cơ bản: luôn mua nếu còn ≥ 200 sau khi mua; xây đến 3 nhà khi đủ nhóm, dư tiền (còn ≥ 1.000 sau khi xây) thì xây tiếp lên khách sạn; đấu giá đến tối đa giá in; từ chối giao dịch trừ khi giúp hoàn thành nhóm.
 - Công cụ mô phỏng CLI: chạy N ván bot vs bot, xuất tỉ lệ thắng theo nhân vật, độ dài ván, tần suất dừng từng ô, lợi nhuận theo nhóm màu. Mục tiêu: 10.000 ván mỗi lần chạy.
 
 ## 8. Giao diện, đồ họa, âm thanh

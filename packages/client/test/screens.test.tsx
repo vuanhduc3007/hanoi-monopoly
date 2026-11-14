@@ -387,6 +387,22 @@ describe('screens', () => {
     expect((screen.getByLabelText(t.surrender.button) as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it('S8 Tài sản shows the bank stock; when the houses run out, it says whose tiles hold them', () => {
+    playing((st) => {
+      st.ownables.P01.owner = 'u1';
+      st.ownables.P02.owner = 'u1';
+      // Every house is on u2's tiles (4 each), so u1 cannot build although the stock has hotels.
+      const tiles = Object.keys(D.ownables).filter((id) => D.ownables[id].kind === 'property' && !['P01', 'P02'].includes(id));
+      for (const id of tiles.slice(0, D.economy.buildingLimit.houses / 4)) Object.assign(st.ownables[id], { owner: 'u2', level: 4 });
+    });
+    render(<App />);
+    fireEvent.click(screen.getByText(t.board.assets));
+    const L = D.economy.buildingLimit;
+    expect(screen.getByText(t.assets.stock(0, L.houses, L.hotels, L.hotels))).toBeTruthy();
+    expect(screen.getByText(`— ${t.assets.housesOn(`Người 2 (${L.houses})`)}`)).toBeTruthy();
+    expect(screen.getAllByText(t.assets.why.noHousesLeft).length).toBeGreaterThan(0);
+  });
+
   it('S7 trade and S8 assets open from the side panel', () => {
     playing((st) => {
       st.ownables.P01.owner = 'u1';
@@ -401,15 +417,37 @@ describe('screens', () => {
     expect(screen.getByRole('dialog', { name: t.trade.title })).toBeTruthy();
   });
 
-  it('S9 game over shows ranking and rematch for the host', () => {
+  it('S9 game over: results show over the lobby the room returns to; closing them leaves the lobby', () => {
     const s = playing();
     const r = applyAction(s, { type: 'endGame' });
-    receiveGame({ state: publicView(r.state), events: r.events, clock: null });
-    store.set({ gameOver: { winner: r.state.winner, ranking: r.state.ranking, seed: 3, stats: { rentPaid: {}, rentEarned: {}, rentByTile: { P22: 50 } } } });
+    const over = { winner: r.state.winner, ranking: r.state.ranking, seed: 3, stats: { rentPaid: {}, rentEarned: {}, rentByTile: { P22: 50 } } };
+    store.set({ room: { ...seats(2), phase: 'lobby' }, game: null, lastResult: { over, state: publicView(r.state) } });
     render(<App />);
     expect(screen.getByRole('dialog', { name: t.over.title })).toBeTruthy();
-    fireEvent.click(screen.getByText(t.over.rematch));
-    expect(sent).toContainEqual({ type: 'rematch', payload: undefined });
+    expect(screen.getByText(t.lobby.title)).toBeTruthy();
+    fireEvent.click(screen.getByText(t.over.toLobby));
+    expect(screen.queryByRole('dialog', { name: t.over.title })).toBeNull();
+    expect(store.get().lastResult).toBeNull();
+  });
+
+  it('team game: Đầu hàng offers the whole team; a teammate sees the proposal and agrees', () => {
+    const s = createGame({ players: [0, 1, 0, 1].map((team, i) => ({ id: `u${i + 1}`, team })), seed: 3 }).state;
+    const room = seats(4);
+    room.seats.forEach((x, i) => (x.team = [0, 1, 0, 1][i]));
+    store.set({ room, conn: 'connected' });
+    receiveGame({ state: publicView(s), events: [], clock: null });
+    render(<App />);
+    fireEvent.click(screen.getByLabelText(t.surrender.button));
+    fireEvent.click(screen.getByText(t.surrender.team));
+    expect(sent).toContainEqual({ type: 'action', payload: { action: { type: 'teamSurrender', agree: true } } });
+    cleanup();
+    sent.length = 0;
+    const voted = applyAction(s, { type: 'teamSurrender', player: 'u3', agree: true }).state;
+    receiveGame({ state: publicView(voted), events: [], clock: null });
+    render(<App />);
+    expect(screen.getByText(t.surrender.proposed('Người 3', 1, 2))).toBeTruthy();
+    fireEvent.click(screen.getByText(t.surrender.agree));
+    expect(sent).toContainEqual({ type: 'action', payload: { action: { type: 'teamSurrender', agree: true } } });
   });
 
   it('S9 team game: the winning team and its players are named', () => {

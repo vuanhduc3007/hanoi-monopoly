@@ -462,3 +462,37 @@ Mọi nhân vật ở mọi cỡ bàn đều trong ±2,8 điểm % (trước đ�
   - GPU mất context (nguyên nhân thường gặp của bàn cờ trắng xóa): hiện ngay quân 2D, sau 1,5 giây tạo lại canvas 3D (tối đa 3 lần).
   - Cờ cắm trên ô chỉ phấp phới 2 lần khi vừa cắm rồi đứng yên; trước đây mọi lá cờ (có bóng mờ) vẽ lại mỗi khung hình.
 - **Cân bằng lại chế độ Đội sau khi đổi giao dịch** (seed 505): bot giờ đổi đất với cả đội đối phương nên gom đủ nhóm nhanh hơn, Thánh săn sale tụt ở đội 5–6 người (−8,8 / −5,4 / −4,5). Chỉnh: đội 5–6 người vốn 1.850 (Đội + Nhanh 5–6 người: 1.600). Sau chỉnh: −3,4 / +0,7 / +0,6. Các nhân vật khác ở chế độ Đội nằm trong khoảng ±4: lệch xa nhất là Thánh săn sale ở Đội + Nhanh 8 người (−3,8) và Thợ xây ở Đội + Nhanh 4 người (−4,0), sát khoảng tin cậy ±2,3, nên chưa chỉnh.
+
+### Kho nhà lớn hơn, cả đội đầu hàng, hết ván về phòng chờ
+
+- **Kho nhà / khách sạn của ngân hàng** (khi bật "Giới hạn số nhà"): cũ 32 / 12 (40 ô), 40 / 15 (48 ô), 48 / 17 (56 ô) — khoảng 1,5 nhà mỗi ô đất, bàn đông người hay hết nhà giữa ván. Mới: khoảng 2,2 nhà và 0,7 khách sạn mỗi ô đất:
+
+  | Bàn | Ô đất | Nhà | Khách sạn |
+  | --- | --- | --- | --- |
+  | Tiêu chuẩn 40 ô | 22 | 48 | 16 |
+  | Mở rộng 48 ô | 28 | 60 | 20 |
+  | Đại 56 ô | 33 | 72 | 24 |
+
+  Đủ để khoảng một nửa số ô đất cùng lúc có 4 nhà; vẫn còn giới hạn nên gom nhà để chặn đối thủ vẫn là một cách chơi.
+- **Cả đội đầu hàng** (chế độ Đội): nút 🏳 có thêm "Đề nghị cả đội đầu hàng". Đồng đội thấy khung "X muốn cả đội đầu hàng (1/3 đồng ý)" với nút Đồng ý / Không. **Chỉ khi mọi đồng đội còn trụ đều đồng ý** thì cả đội rời ván: tiền và đất về ngân hàng (đất đem đấu giá), hoặc về chủ nợ nếu một thành viên đang thiếu tiền. Một người bấm Không (hoặc người đề nghị rút lại) là hủy đề nghị. Đồng ý xong mà một thành viên còn quyết định đang chờ (mua đất, rút thẻ…) thì đội đầu hàng ngay khi quyết định đó xong. Bot đứng thay một đồng đội thì đồng ý theo. Đầu hàng một mình vẫn như cũ.
+- **Hết ván về phòng chờ**: ván kết thúc là cả phòng tự về phòng chờ cũ (giữ mã phòng, đội, người còn kết nối, kể cả người đang treo máy; chủ phòng rời thì người khác làm chủ). Bảng kết quả hiện đè lên phòng chờ, bấm "Về phòng chờ" để đóng. Bỏ nút "Chơi lại" của chủ phòng.
+- Cân bằng sau khi tăng kho nhà (seed 505, đủ 15 cấu hình): gần như mọi nhân vật trong ±3,7. Vượt nhẹ: Bác sĩ lạ đội 6 người (2 đội ×3) +4,4, Thợ xây Đội + Nhanh 4 người −4,2, Tài xế Grab đội 6 người (3 đội ×2) +4,0, Thánh săn sale Đội + Nhanh 8 người −3,9 — đều sát khoảng tin cậy (±1,6…±2,3) nên chưa chỉnh. Thiếu gia Vin bàn 3 người từ +4,3 xuống +3,1.
+
+### Kho nhà minh bạch, bot lên khách sạn, sửa chữ Mua đứt và hướng dẫn
+
+- **"Không xây được dù trên bàn toàn khách sạn"**: không phải lỗi engine. Quét 200 ván bot (5 kiểu bàn, ~384.000 lần kiểm tra xây) không có lần từ chối nào sai luật. Nguyên nhân: bot chỉ xây tới 3 nhà và không bao giờ lên khách sạn, nên giữ hết kho nhà (khoảng 29% lần muốn xây gặp "Ngân hàng hết nhà"). Khách sạn không tốn nhà và lên khách sạn còn trả nhà về kho, nên nhìn bàn toàn khách sạn mà kho nhà vẫn cạn.
+  - **Bot**: vẫn xây tới 3 nhà khi còn ≥ 200 sau khi xây; còn ≥ 1.000 sau khi xây thì xây tiếp lên khách sạn (`richReserve`). Thử 600 trước: lệch cân bằng nhiều hơn (Nô lệ tư bản +4, Thánh săn sale đội 4 người +5,7).
+  - **Tài sản** hiện dòng 🏦 "Ngân hàng còn X/48 nhà · Y/16 khách sạn"; hết nhà thì ghi nhà đang nằm trên đất của ai. Nhân vật không được lên khách sạn (Cò đất) có dòng giải thích thay vì nút bị khóa im lặng.
+- **Mua đứt (Thiếu gia Vin)**: mô tả kỹ năng và dòng "chưa có ô nào mua đứt được" thêm luật đã có trong engine: không được mua ô làm mình đủ nhóm màu.
+- **Hướng dẫn người mới**: cập nhật cho chế độ Đội — chào mừng nói đội thắng / đội bị loại; mẹo Chơi theo đội nói giao dịch giữa các đội và đầu hàng cả đội; mẹo Giao dịch hướng dẫn chọn đội và cột "Đội bạn đưa / nhận"; đề nghị đến thì "muốn giao dịch với đội bạn". Các mẹo về đất (đủ nhóm, đã xây, thiếu tiền, chuộc đất, xem ô) tính cả đất đồng đội. Mẹo Tài sản giải thích kho nhà / khách sạn riêng; mẹo Có nhà nói lên khách sạn thì nhà trả về ngân hàng.
+- **Cân bằng lại sau khi bot lên khách sạn** (seed 505): bot giàu hơn về cuối ván làm lệch một số nhân vật. Chỉnh:
+  - Nô lệ tư bản: vốn bàn 6 / 7 / 8 người 1.150 / 1.100 / 1.050 (từ 1.200 / 1.150 / 1.100).
+  - Thánh săn sale: đội 4 người Flash sale hồi 10 lượt, vốn 1.250; đội 5–6 người vốn 1.800; Đội + Nhanh 7–8 người vốn 1.300.
+  - Tài xế Grab: đội 6–8 người kỹ năng hồi 11 (từ 9).
+  - F0 chứng khoán: chế độ Đội cổ tức 10% (từ 9%).
+  - Bác sĩ lạ: chế độ Đội Mở cổng hồi 16 (từ 14).
+  - Ninja Lead: chế độ Đội Ăn vạ hồi 5.
+  - Chủ trọ: chế độ Đội Tăng giá phòng +30% (từ 25%).
+  - Thợ xây: đội 4 người giảm giá xây 10% (từ 0).
+  - Kết quả: Truyền thống / Nhanh trong ±3,6; chế độ Đội lệch xa nhất Tài xế Grab đội 8 người +3,9, Chủ trọ đội 6 người (2×3) −3,8, Ninja Lead và Bác sĩ lạ đội 4–6 người +3,4…+3,5.
+

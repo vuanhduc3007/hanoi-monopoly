@@ -3,7 +3,7 @@
  * disconnect / AFK replacement. Pure: reads a state, returns one action.
  *
  * - Buys when it keeps ≥ `buyReserve` after paying.
- * - Builds up to `maxHouses` per tile once it owns a full group.
+ * - Builds up to `maxHouses` per tile once it owns a full group, and on to a hotel when rich.
  * - Bids in auctions up to the list price (never more than its cash).
  * - Rejects trades unless they complete one of its colour groups.
  */
@@ -48,6 +48,8 @@ export interface BotOptions {
   buildReserve: number;
   /** Stop building at this many houses per tile. */
   maxHouses: number;
+  /** Past maxHouses (up to a hotel) only while this much cash is left after building. */
+  richReserve: number;
   /** Cash to keep after unmortgaging. */
   unmortgageReserve: number;
   /** Ăn vạ is worth it from this rent upward (or when the rent exceeds cash). */
@@ -62,6 +64,7 @@ export const BOT_DEFAULTS: BotOptions = {
   buyReserve: 200,
   buildReserve: 200,
   maxHouses: 3,
+  richReserve: 1000,
   unmortgageReserve: 500,
   rentDiscountFrom: 100,
   eventCancelFrom: 60,
@@ -110,6 +113,9 @@ export function botActionFor(
   const c: Ctx = { s, ev: [], d };
   const me = getPlayer(c, playerId);
   if (me.bankrupt) return null;
+  // A teammate wants the team to surrender: the bot standing in goes along.
+  const votes = me.team !== undefined ? s.surrenderVotes?.[String(me.team)] : undefined;
+  if (votes?.length && !votes.includes(playerId)) return { type: 'teamSurrender', player: playerId, agree: true };
   const offer = s.trades.find((t) => t.to === playerId);
   if (offer) {
     return { type: 'respondTrade', player: playerId, tradeId: offer.id, accept: botAcceptsTrade(s, playerId, offer, d) };
@@ -452,8 +458,10 @@ function endOfTurn(c: Ctx, p: PlayerState, o: BotOptions): Action {
   }
   for (const id of candidates) {
     const level = c.s.ownables[id].level;
-    if (level >= o.maxHouses) continue;
-    if (p.cash - buildCostFor(c, p, id) < o.buildReserve) continue;
+    // Up to maxHouses with a small reserve; with money to spare, on to a hotel — which puts
+    // its houses back in the bank (a bot holding at 3 houses everywhere starves the stock).
+    const reserve = level >= o.maxHouses ? o.richReserve : o.buildReserve;
+    if (p.cash - buildCostFor(c, p, id) < reserve) continue;
     if (buildError(c, p, id) === null) return { type: 'build', player: p.id, propertyId: id };
   }
   return { type: 'endTurn', player: p.id };

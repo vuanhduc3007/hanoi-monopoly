@@ -566,6 +566,20 @@ select {
   }
 }
 /* The flag alone (title and dialog say what it does), so the clock keeps its room. */
+.bank-stock {
+  margin: 4px 0 8px;
+  font-size: 14px;
+}
+.bank-stock-out {
+  color: var(--red);
+  font-weight: 600;
+}
+.team-surrender {
+  border-color: var(--red);
+}
+.team-surrender p {
+  margin: 0 0 8px;
+}
 .surrender {
   white-space: nowrap;
 }

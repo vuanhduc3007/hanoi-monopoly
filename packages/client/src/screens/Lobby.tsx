@@ -6,6 +6,8 @@ import { Token } from '../components/Token';
 import { TeamTag } from '../components/TeamTag';
 import { TEAM_COLORS } from '../lib/board';
 import { Modal } from '../components/Modal';
+import { useStore } from '../store';
+import { GameOver } from './GameOver';
 import { MuteButton } from '../sound/MuteButton';
 import { charName, t } from '../i18n/vi';
 import { colorOf, nameOf } from '../lib/selectors';
@@ -18,6 +20,7 @@ export function Lobby({ room }: { room: RoomView }) {
   const host = !!mySeat?.host;
   const [copied, setCopied] = useState(false);
   const [kicking, setKicking] = useState<string | null>(null);
+  const lastResult = useStore((s) => s.lastResult);
   const kickSeat = room.seats.find((x) => x.id === kicking && !x.host);
   const link = inviteLink(room.code);
   const s = room.settings;
@@ -50,6 +53,7 @@ export function Lobby({ room }: { room: RoomView }) {
   );
   return (
     <main className="lobby">
+      {lastResult && <GameOver room={room} />}
       <header className="lobby-head">
         <h1>{t.lobby.title}</h1>
         <div className="code">

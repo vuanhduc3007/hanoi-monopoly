@@ -162,7 +162,7 @@ describe('playing', () => {
     const ms = D.config.quickMode.timeLimitMin * 60_000;
     expect(h.out.last('room', 's2').quickEndsAt).toBe(h.clock.now() + ms);
     h.clock.advance(ms + 10);
-    expect(h.ctl.state!.status).toBe('over');
+    expect(h.out.last('game').state.status).toBe('over');
     expect(h.out.last('room', 's2').quickEndsAt).toBeNull();
   });
 
@@ -312,12 +312,13 @@ describe('playing', () => {
       expect(h.ctl.log!.actions.length).toBeGreaterThan(100);
       h.clock.advance(1);
     }
-    expect(h.ctl.phase).toBe('over');
+    // Everyone left: the room is back in an empty lobby.
+    expect(h.ctl.phase).toBe('lobby');
     expect(h.finished).toHaveLength(1);
     const log = JSON.parse(JSON.stringify(h.finished[0]));
     const final = replay(log);
-    expect(final.winner).toBe(h.ctl.state!.winner);
-    expect(final.players).toEqual(h.ctl.state!.players);
+    expect(final.winner).toBe(h.out.last('gameOver').winner);
+    expect(final.players).toEqual(h.out.last('game').state.players);
     expect(h.out.last('gameOver').seed).toBe(log.seed);
   });
 
@@ -329,13 +330,13 @@ describe('playing', () => {
     h.ctl.leave('s2', false);
     // Nobody plays: clocks + bots (after 60s) keep it moving until the 60-minute limit.
     h.clock.advance(D.config.quickMode.timeLimitMin * 60_000 + 1);
-    expect(h.ctl.phase).toBe('over');
-    expect(h.ctl.state!.ranking).toHaveLength(2);
+    expect(h.ctl.phase).toBe('lobby');
+    expect(h.out.last('gameOver').ranking).toHaveLength(2);
   });
 });
 
 describe('end of game', () => {
-  it('gameOver carries rent stats; host can start a rematch with the players still here', () => {
+  it('gameOver carries rent stats; the room goes straight back to its lobby with the players still here', () => {
     const h = started(3, { botDelayMs: 500 });
     for (const sid of ['s1', 's2', 's3']) h.ctl.leave(sid, false);
     h.clock.advance(sec(T.disconnectBotSec));
@@ -343,13 +344,10 @@ describe('end of game', () => {
     h.ctl.rejoin('s2');
     // s1 and s2 are back but let the bots finish quickly: end by host-less time limit
     (h.ctl as any).systemAction({ type: 'endGame' });
-    expect(h.ctl.phase).toBe('over');
     const over = h.out.last('gameOver');
     expect(over.stats).toHaveProperty('rentByTile');
-    h.ctl.message('s2', 'rematch', {});
-    expect(h.out.errors('s2')).toContain('NOT_HOST');
-    h.ctl.message('s1', 'rematch', {});
     expect(h.ctl.phase).toBe('lobby');
+    expect(h.out.last('room', 's2').phase).toBe('lobby');
     expect(h.ctl.seats.map((s) => s.sessionId)).toEqual(expect.arrayContaining(['s1', 's2']));
     expect(h.ctl.seats).toHaveLength(2);
     expect(h.ctl.seats.every((s) => !s.character && s.control === 'human' && !s.ready)).toBe(true);
@@ -596,7 +594,7 @@ describe('teams', () => {
     h.ctl.message('s1', 'start', {});
     for (let i = 1; i <= 4; i++) h.ctl.leave(`s${i}`, true);
     h.clock.advance(sec(D.config.quickMode.timeLimitMin * 60));
-    expect(h.ctl.phase).toBe('over');
+    expect(h.ctl.phase).toBe('lobby');
     const over = h.out.last('gameOver');
     expect([0, 1]).toContain(over.winnerTeam);
     expect(replay(h.finished[0]).winnerTeam).toBe(over.winnerTeam);

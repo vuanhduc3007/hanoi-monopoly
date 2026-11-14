@@ -6,7 +6,7 @@
  */
 import type { GameEvent, PlayerState, PublicState } from '@hanoi-monopoly/engine';
 import { D } from './gameData';
-import { hotelLevel, offersFor, ownedBy, ownedBySide, unmortgageCost } from './selectors';
+import { hotelLevel, offersFor, ownedBySide, sideTiles, unmortgageCost } from './selectors';
 
 /** Where a tip is shown: the side panel during play, or inside an open panel. */
 export type TipScope = 'game' | 'assets' | 'trade';
@@ -38,18 +38,19 @@ function pendingMine(c: TipCtx, type: string) {
   return p && p.type === type && 'player' in p && p.player === c.self.id ? p : null;
 }
 
+const isTeam = (c: TipCtx) => c.self.team !== undefined && c.self.team !== null;
+
 /** Nothing for the player to answer right now, during their own turn. */
 function freeTurn(c: TipCtx): boolean {
   return c.myTurn && !c.state.pending;
 }
 
-/** Per colour group: its tiles, the ones my side holds (teammates count), and whether I hold any myself. */
+/** Per colour group: its tiles and the ones my side holds (teammates count). */
 function groupsOf(c: TipCtx) {
   return Object.entries(D.groups).map(([g, def]) => ({
     g,
     ids: def.properties,
     mine: def.properties.filter((id) => ownedBySide(c.state, id, c.self.id)),
-    own: def.properties.some((id) => c.state.ownables[id]?.owner === c.self.id),
   }));
 }
 
@@ -121,7 +122,7 @@ export const TIPS: Tip[] = [
     target: 'trade',
     when: (c) => {
       const x = offersFor(c.state, c.self.id)[0];
-      return x ? { from: c.name(x.from) } : null;
+      return x ? { from: c.name(x.from), team: isTeam(c) } : null;
     },
   },
   // ------------------------------------------------ start of the game
@@ -133,6 +134,7 @@ export const TIPS: Tip[] = [
       minutes: D.config.quickMode.timeLimitMin,
       salary: D.economy.goSalary,
       start: D.board[0].name,
+      team: isTeam(c),
     }),
   },
   { id: 'team', scope: 'game', when: (c) => (c.self.team !== undefined && c.self.team !== null ? yes : null) },
@@ -160,8 +162,8 @@ export const TIPS: Tip[] = [
     when: (c) => {
       if (!freeTurn(c)) return null;
       const full = groupsOf(c).find(
-        ({ ids, mine, own }) =>
-          own && mine.length === ids.length && ids.every((id) => c.state.ownables[id].level === 0 && !c.state.ownables[id].mortgaged),
+        ({ ids, mine }) =>
+          mine.length === ids.length && ids.every((id) => c.state.ownables[id].level === 0 && !c.state.ownables[id].mortgaged),
       );
       if (!full) return null;
       const cost = D.ownables[full.ids[0]].buildCost ?? 0;
@@ -173,7 +175,7 @@ export const TIPS: Tip[] = [
     scope: 'game',
     target: 'assets',
     when: (c) =>
-      freeTurn(c) && ownedBy(c.state, c.self.id).some((id) => c.state.ownables[id].level > 0)
+      freeTurn(c) && sideTiles(c.state, c.self.id).some((id) => c.state.ownables[id].level > 0)
         ? { hotelAt: hotelLevel(c.state) - 1 }
         : null,
   },
@@ -198,7 +200,7 @@ export const TIPS: Tip[] = [
     target: 'assets',
     when: (c) => {
       if (c.self.cash >= D.economy.goSalary) return null;
-      const canMortgage = ownedBy(c.state, c.self.id).some((id) => !c.state.ownables[id].mortgaged && c.state.ownables[id].level === 0);
+      const canMortgage = sideTiles(c.state, c.self.id).some((id) => !c.state.ownables[id].mortgaged && c.state.ownables[id].level === 0);
       return canMortgage ? { rate: Math.round(D.economy.mortgageRate * 100) } : null;
     },
   },
@@ -208,7 +210,7 @@ export const TIPS: Tip[] = [
     target: 'assets',
     when: (c) => {
       if (!freeTurn(c)) return null;
-      const id = ownedBy(c.state, c.self.id).find(
+      const id = sideTiles(c.state, c.self.id).find(
         (x) => c.state.ownables[x].mortgaged && c.self.cash >= unmortgageCost(c.state, c.self.id, x) + D.economy.goSalary,
       );
       return id ? { tile: id, interest: Math.round(D.economy.unmortgageInterest * 100) } : null;
@@ -240,7 +242,7 @@ export const TIPS: Tip[] = [
     target: 'endTurn',
     when: (c) => (freeTurn(c) && c.state.turn.phase === 'end' ? yes : null),
   },
-  { id: 'tileInfo', scope: 'game', target: 'board', when: (c) => (ownedBy(c.state, c.self.id).length > 0 ? yes : null) },
+  { id: 'tileInfo', scope: 'game', target: 'board', when: (c) => (sideTiles(c.state, c.self.id).length > 0 ? yes : null) },
   { id: 'waiting', scope: 'game', target: 'actions', when: (c) => (!c.myTurn && !c.state.pending ? yes : null) },
   // ------------------------------------------------ inside the panels
   {
@@ -251,10 +253,11 @@ export const TIPS: Tip[] = [
       rate: Math.round(D.economy.mortgageRate * 100),
       interest: Math.round(D.economy.unmortgageInterest * 100),
       sellRate: Math.round(D.economy.buildingSellRate * 100),
+      stock: c.state.config.buildingLimit,
       minutes: Math.round((D.config.timers.assetsExtraSec ?? 120) / 60),
     }),
   },
-  { id: 'tradeIntro', scope: 'trade', when: () => ({ sec: D.config.timers.tradeOfferSec }) },
+  { id: 'tradeIntro', scope: 'trade', when: (c) => ({ sec: D.config.timers.tradeOfferSec, team: isTeam(c) }) },
 ];
 
 export const TIP_IDS = TIPS.map((x) => x.id);

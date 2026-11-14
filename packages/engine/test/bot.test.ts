@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyActionInPlace, botAcceptsTrade, botAction, botActionFor, createGame } from '../src';
+import { applyActionInPlace, BOT_DEFAULTS, botAcceptsTrade, botAction, botActionFor, createGame } from '../src';
 import { D, G } from './helpers';
 
 describe('bot policy (GDD 7.4)', () => {
@@ -38,10 +38,15 @@ describe('bot policy (GDD 7.4)', () => {
     expect(botAction(g.s)).toEqual({ type: 'closeAuction' });
   });
 
-  it('builds up to 3 houses when it owns a full group, keeping a reserve', () => {
+  it('builds up to 3 houses when it owns a full group, keeping a reserve; with money to spare, on to a hotel', () => {
     const g = G.create([null, null]).give('p1', ['P01', 'P02'], { level: 3 });
     g.s.turn.phase = 'end';
+    const cost = D.ownables.P01.buildCost!;
+    g.setCash('p1', BOT_DEFAULTS.richReserve + cost - 1);
     expect(botAction(g.s)).toEqual({ type: 'endTurn', player: 'p1' });
+    g.setCash('p1', BOT_DEFAULTS.richReserve + cost);
+    expect(botAction(g.s)).toEqual({ type: 'build', player: 'p1', propertyId: 'P01' });
+    g.setCash('p1', 1500);
     g.s.ownables.P01.level = 2;
     expect(botAction(g.s)).toEqual({ type: 'build', player: 'p1', propertyId: 'P01' });
     g.setCash('p1', 240);

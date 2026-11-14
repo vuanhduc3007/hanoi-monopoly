@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
-import type { GameEvent } from '@hanoi-monopoly/engine';
+import type { GameEvent, PublicState } from '@hanoi-monopoly/engine';
 import { setBoard, setTableKind, setTablePlayers, setTeamSize } from './lib/gameData';
 import type { ChatMsg, ClockInfo, GameMsg, GameOverMsg, RoomView } from './net/protocol';
 
@@ -34,6 +34,8 @@ export interface AppState {
   toasts: Toast[];
   turnOrder: { order: string[]; rolls: Record<string, number[][]> } | null;
   gameOver: GameOverMsg | null;
+  /** The game that just ended, shown over the lobby the room returns to (closed by the player). */
+  lastResult: { over: GameOverMsg; state: PublicState | null } | null;
   /** Last card drawn, for the flip animation. */
   lastCard: { cardId: string; player: string; at: number } | null;
   /** Board animations (dice, walking) run until this time; prompts wait for it. */
@@ -58,6 +60,7 @@ export const initialState: AppState = {
   toasts: [],
   turnOrder: null,
   gameOver: null,
+  lastResult: null,
   lastCard: null,
   animUntil: 0,
   arrest: null,

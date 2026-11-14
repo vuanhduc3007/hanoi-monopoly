@@ -56,7 +56,7 @@ import {
 import { dataFor, defaultData, type GameData } from './data';
 import { addActiveEffect, singleDieActive } from './effects';
 import { borrow, forcedLoan, loanOffer, type LoanOffer } from './loans';
-import { declareBankruptcy, execPay, finishGame, payTask, settleDebt, score, surrender } from './money';
+import { checkTeamSurrender, declareBankruptcy, execPay, finishGame, payTask, settleDebt, score, surrender, voteTeamSurrender } from './money';
 import {
   bid,
   buy,
@@ -259,6 +259,11 @@ export function applyActionInPlace(s: GameState, action: Action, data?: GameData
   dispatch(c, action);
   syncTeamCash(c);
   run(c);
+  // A team that agreed to surrender leaves as soon as none of its members is mid-decision.
+  if (checkTeamSurrender(c)) {
+    syncTeamCash(c);
+    run(c);
+  }
   return { state: s, events: c.ev };
 }
 
@@ -846,6 +851,8 @@ function dispatch(c: Ctx, a: Action): void {
     }
     case 'surrender':
       return surrender(c, getPlayer(c, a.player));
+    case 'teamSurrender':
+      return voteTeamSurrender(c, getPlayer(c, a.player), a.agree);
     case 'resolveMortgage':
       return resolveInheritedMortgage(c, getPlayer(c, a.player), a.unmortgage);
     case 'endTurn': {

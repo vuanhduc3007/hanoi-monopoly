@@ -11,7 +11,7 @@ import { Modal } from '../components/Modal';
 import { t } from '../i18n/vi';
 import { D } from '../lib/gameData';
 import { whyCantFlashSale, type PublicState } from '@hanoi-monopoly/engine';
-import { isMyTurn, me, offersFor } from '../lib/selectors';
+import { isMyTurn, me, nameOf, offersFor } from '../lib/selectors';
 import { act, copyText, inviteLink, leaveRoom, send } from '../net/connection';
 import type { RoomView } from '../net/protocol';
 import { useStore } from '../store';
@@ -42,7 +42,37 @@ function RoomCode({ code }: { code: string }) {
   );
 }
 
-/** Đầu hàng: leave the game for good, after a confirmation. */
+/** Team games: a teammate proposed to surrender as a team — agree, decline, or wait. */
+function TeamSurrenderVote({ state, room, selfId }: { state: PublicState; room: RoomView; selfId: string }) {
+  const self = state.players.find((p) => p.id === selfId);
+  if (!self || self.bankrupt || self.team === undefined || self.team === null) return null;
+  const votes = state.surrenderVotes?.[String(self.team)];
+  if (!votes?.length) return null;
+  const alive = state.players.filter((p) => !p.bankrupt && p.team === self.team);
+  const agreed = votes.filter((id) => alive.some((p) => p.id === id));
+  const mine = agreed.includes(selfId);
+  return (
+    <div className="panel team-surrender" role="status">
+      <p>
+        {mine
+          ? agreed.length >= alive.length
+            ? t.surrender.waitingDecision
+            : t.surrender.waitingMates(agreed.length, alive.length)
+          : t.surrender.proposed(agreed.map((id) => nameOf(room, id)).join(', '), agreed.length, alive.length)}
+      </p>
+      <div className="buttons">
+        {!mine && (
+          <button className="danger" onClick={() => act({ type: 'teamSurrender', agree: true })}>
+            {t.surrender.agree}
+          </button>
+        )}
+        <button onClick={() => act({ type: 'teamSurrender', agree: false })}>{mine ? t.surrender.withdraw : t.surrender.decline}</button>
+      </div>
+    </div>
+  );
+}
+
+/** Đầu hàng: leave the game for good, after a confirmation (team games: or propose it for the team). */
 function SurrenderButton({ state, selfId }: { state: PublicState; selfId: string }) {
   const [asking, setAsking] = useState(false);
   const self = state.players.find((p) => p.id === selfId)!;
@@ -65,7 +95,7 @@ function SurrenderButton({ state, selfId }: { state: PublicState; selfId: string
       </button>
       {asking && (
         <Modal title={t.surrender.title} onClose={() => setAsking(false)}>
-          <p>{mates ? t.surrender.bodyTeam : t.surrender.body}</p>
+          <p>{mates ? t.surrender.bodyTeamChoice : t.surrender.body}</p>
           {busy && <p className="muted">{t.surrender.busy}</p>}
           <div className="buttons">
             <button onClick={() => setAsking(false)}>{t.surrender.cancel}</button>
@@ -77,8 +107,19 @@ function SurrenderButton({ state, selfId }: { state: PublicState; selfId: string
                 act({ type: 'surrender' });
               }}
             >
-              {t.surrender.confirm}
+              {mates ? t.surrender.alone : t.surrender.confirm}
             </button>
+            {mates && (
+              <button
+                className="danger"
+                onClick={() => {
+                  setAsking(false);
+                  act({ type: 'teamSurrender', agree: true });
+                }}
+              >
+                {t.surrender.team}
+              </button>
+            )}
           </div>
         </Modal>
       )}
@@ -168,6 +209,7 @@ export function Game({ room }: { room: RoomView }) {
             </button>
           </div>
         </div>
+        {playing && <TeamSurrenderVote state={state} room={room} selfId={self!.id} />}
         {playing && <Coach state={state} room={room} scope="game" />}
         <Decision
           state={state}

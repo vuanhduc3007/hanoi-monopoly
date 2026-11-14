@@ -1,22 +1,22 @@
 import { charName, money, t, teamName, tileName } from '../i18n/vi';
 import { TeamTag } from '../components/TeamTag';
 import { colorOf, nameOf } from '../lib/selectors';
-import { leaveRoom, send } from '../net/connection';
+import { leaveRoom } from '../net/connection';
 import type { RoomView } from '../net/protocol';
-import { useStore } from '../store';
+import { store, useStore } from '../store';
 import { Token } from '../components/Token';
 import { TEAM_COLORS } from '../lib/board';
 
 /** S9 — ranking, stats (most profitable tile, total rent paid), play again. */
 export function GameOver({ room }: { room: RoomView }) {
-  const over = useStore((s) => s.gameOver);
-  const state = useStore((s) => s.game?.state);
+  const last = useStore((s) => s.lastResult);
+  const over = useStore((s) => s.gameOver) ?? last?.over;
+  const state = useStore((s) => s.game?.state) ?? last?.state ?? undefined;
   const ranking = over?.ranking ?? state?.ranking ?? [];
   const winner = over?.winner ?? state?.winner ?? null;
   const winnerTeam = over?.winnerTeam ?? state?.winnerTeam ?? null;
   const teamMates = winnerTeam !== null && state ? state.players.filter((p) => p.team === winnerTeam).map((p) => nameOf(room, p.id)) : [];
   const stats = over?.stats;
-  const host = room.seats.find((s) => s.id === room.you)?.host;
   const best = stats ? Object.entries(stats.rentByTile).sort((a, b) => b[1] - a[1])[0] : undefined;
   return (
     <div className="modal-backdrop">
@@ -64,11 +64,10 @@ export function GameOver({ room }: { room: RoomView }) {
           </p>
         )}
         <div className="buttons">
-          {host && (
-            <button className="primary" onClick={() => send('rematch')}>
-              {t.over.rematch}
-            </button>
-          )}
+          {/* The room is back in its lobby: close the results to set up the next game. */}
+          <button className="primary" disabled={room.phase !== 'lobby'} onClick={() => store.set({ lastResult: null })}>
+            {t.over.toLobby}
+          </button>
           <button onClick={() => void leaveRoom()}>{t.over.home}</button>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createGame, dataFor } from '../src';
+import { botActionFor, createGame, dataFor } from '../src';
 import { baseCharacters, D, G, has } from './helpers';
 
 function teams(chars: (string | null)[], team: number[]): G {
@@ -74,3 +74,60 @@ describe('surrender (Đầu hàng)', () => {
     expect(() => g.do({ type: 'surrender', player: 'p3' })).toThrow(/out/);
   });
 });
+
+describe('team surrender (cả đội đầu hàng)', () => {
+  const six = () => teams([null, null, null, null, null, null], [0, 1, 2, 0, 1, 2]);
+
+  it('needs every living member to agree; then the whole team leaves, tiles to the bank', () => {
+    const g = six().give('p1', ['P01']).give('p4', ['P03']);
+    const ev = g.do({ type: 'teamSurrender', player: 'p1', agree: true });
+    expect(has(ev, 'teamSurrenderProposed', { player: 'p1', team: 0 })).toBe(true);
+    expect(g.s.surrenderVotes).toEqual({ '0': ['p1'] });
+    expect(g.p('p1').bankrupt).toBe(false);
+    const ev2 = g.do({ type: 'teamSurrender', player: 'p4', agree: true });
+    expect(has(ev2, 'teamSurrendered', { team: 0 })).toBe(true);
+    expect(g.p('p1').bankrupt && g.p('p4').bankrupt).toBe(true);
+    expect(g.owner('P01')).toBeNull();
+    expect(g.s.surrenderVotes).toBeUndefined();
+    expect(g.s.status).toBe('playing');
+  });
+
+  it('one teammate saying no drops the proposal', () => {
+    const g = six();
+    g.do({ type: 'teamSurrender', player: 'p1', agree: true });
+    const ev = g.do({ type: 'teamSurrender', player: 'p4', agree: false });
+    expect(has(ev, 'teamSurrenderDeclined', { player: 'p4' })).toBe(true);
+    expect(g.s.surrenderVotes).toBeUndefined();
+    g.do({ type: 'teamSurrender', player: 'p4', agree: true });
+    expect(g.p('p1').bankrupt).toBe(false);
+  });
+
+  it('waits while a member is mid-decision, then goes through', () => {
+    const g = six();
+    g.setCurrent('p1').at('p1', D.ownables.P01.position - 3).roll('p1', 1, 2);
+    expect(g.s.pending).toMatchObject({ type: 'buy', player: 'p1' });
+    g.do({ type: 'teamSurrender', player: 'p4', agree: true });
+    g.do({ type: 'teamSurrender', player: 'p1', agree: true });
+    expect(g.p('p1').bankrupt).toBe(false);
+    g.do({ type: 'declineBuy', player: 'p1' });
+    expect(g.p('p1').bankrupt && g.p('p4').bankrupt).toBe(true);
+    // The auction goes on without them.
+    expect((g.s.pending as { eligible: string[] }).eligible).not.toContain('p4');
+  });
+
+  it('the last team standing wins; outside team games there is no team surrender', () => {
+    const g = teams([null, null, null, null], [0, 1, 0, 1]);
+    g.do({ type: 'teamSurrender', player: 'p2', agree: true });
+    g.do({ type: 'teamSurrender', player: 'p4', agree: true });
+    expect(g.s).toMatchObject({ status: 'over', winnerTeam: 0 });
+    expect(() => G.create([null, null]).do({ type: 'teamSurrender', player: 'p1', agree: true })).toThrow(/team/);
+  });
+
+  it('a bot teammate agrees', () => {
+    const g = six();
+    g.do({ type: 'teamSurrender', player: 'p1', agree: true });
+    expect(botActionFor(g.s, 'p4', g.d)).toEqual({ type: 'teamSurrender', player: 'p4', agree: true });
+    expect(botActionFor(g.s, 'p2', g.d)?.type).not.toBe('teamSurrender');
+  });
+});
+

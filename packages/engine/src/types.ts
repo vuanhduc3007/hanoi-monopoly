@@ -212,6 +212,11 @@ export interface GameState {
    * shows the whole wallet; the engine folds members' changes back in after each step.
    */
   teamCash?: Record<string, number>;
+  /**
+   * Team games: a proposal to surrender as a team, keyed by team number — the members who
+   * agreed. The team leaves once every living member has agreed.
+   */
+  surrenderVotes?: Record<string, PlayerId[]>;
   ranking: { player: PlayerId; score: number }[] | null;
   /** Forced dice values (tests / replay). Consumed before the RNG. */
   riggedDice: number[];
@@ -264,6 +269,8 @@ export type Action =
   | { type: 'declareBankruptcy'; player: PlayerId }
   /** Leave the game for good (any time, unless a decision of his is waiting). */
   | { type: 'surrender'; player: PlayerId }
+  /** Team games: propose / agree to surrender as a whole team (agree: false declines or withdraws). */
+  | { type: 'teamSurrender'; player: PlayerId; agree: boolean }
   | { type: 'resolveMortgage'; player: PlayerId; unmortgage: boolean }
   | { type: 'endTurn'; player: PlayerId }
   /** Server: the active timer ran out; engine applies the default. */

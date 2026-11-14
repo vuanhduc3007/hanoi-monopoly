@@ -61,6 +61,16 @@ export const t = {
     confirm: 'Đầu hàng',
     cancel: 'Chơi tiếp',
     busy: 'Xong quyết định đang chờ rồi mới đầu hàng được',
+    alone: 'Mình tôi rời ván',
+    team: 'Đề nghị cả đội đầu hàng',
+    bodyTeamChoice:
+      'Rời ván một mình: đất và thẻ của bạn ở lại với đồng đội, ví chung vẫn của đội. Hoặc đề nghị cả đội đầu hàng: chỉ khi mọi đồng đội còn trụ đều đồng ý thì cả đội mới thua (tiền và đất về ngân hàng).',
+    proposed: (names: string, agreed: number, total: number) => `${names} muốn cả đội đầu hàng (${agreed}/${total} đồng ý)`,
+    waitingMates: (agreed: number, total: number) => `Bạn đã đồng ý cả đội đầu hàng — chờ đồng đội (${agreed}/${total})`,
+    waitingDecision: 'Cả đội đã đồng ý — đội sẽ đầu hàng ngay khi xong quyết định đang chờ',
+    agree: 'Đồng ý',
+    decline: 'Không, chơi tiếp',
+    withdraw: 'Rút lại',
   },
 
   lobby: {
@@ -281,7 +291,8 @@ export const t = {
     flashPickNoComplete: '🏷 Bấm vào một ô chưa có chủ trên bàn cờ để mua giảm giá — trừ ô làm bạn đủ nhóm màu.',
     flashCancel: 'Thôi',
     chooseBuyout: 'Chọn ô lẻ của đối thủ để mua đứt (trả cho chủ)',
-    noBuyout: 'Chưa có ô nào mua đứt được: cần một ô đối thủ giữ lẻ trong nhóm (họ không có ô nào khác cùng nhóm), chưa có nhà, không thế chấp, và đủ tiền',
+    noBuyout:
+      'Chưa có ô nào mua đứt được: cần một ô đối thủ giữ lẻ trong nhóm (họ không có ô nào khác cùng nhóm), chưa có nhà, không thế chấp, mua xong bạn chưa đủ nhóm màu, và đủ tiền',
     scholarship: (name: string, amount: string, fund: boolean) => `${name} (+${amount}${fund ? ' từ Quỹ' : ' từ ngân hàng'})`,
     chooseRaise: 'Chọn ô để tăng giá phòng',
     raised: (n: number, max: number) => `đã tăng ${n}/${max}`,
@@ -338,6 +349,11 @@ export const t = {
     utility: 'Tiện ích',
     buildHotel: 'Lên khách sạn',
     teammateTile: (name: string) => `ô của đồng đội ${name}`,
+    stock: (houses: number, maxHouses: number, hotels: number, maxHotels: number) =>
+      `🏦 Ngân hàng còn ${houses}/${maxHouses} nhà · ${hotels}/${maxHotels} khách sạn (nhà và khách sạn tính riêng; lên khách sạn thì trả nhà về ngân hàng)`,
+    housesOn: (who: string) => `nhà đang nằm trên đất của ${who}`,
+    holder: (name: string, n: number) => `${name} (${n})`,
+    noHotelCharacter: 'Nhân vật của bạn không được lên khách sạn',
     rulesTitle: 'Khi nào được xây nhà?',
     rules: (housesForHotel: number) => [
       'Phải sở hữu ĐỦ cả nhóm màu (ví dụ cả 2 ô nâu, hoặc cả 3 ô hồng). Mua thêm hoặc đổi đất với người khác để gom đủ nhóm. Chế độ đội: đất của cả đội tính chung — cả đội đủ nhóm thì ai trong đội cũng xây được trên mọi ô của nhóm.',
@@ -376,7 +392,7 @@ export const t = {
     bestTile: 'Ô sinh lời nhất',
     rentPaid: 'Tổng thuê đã trả',
     rentEarned: 'Tổng thuê đã thu',
-    rematch: 'Chơi lại',
+    toLobby: 'Về phòng chờ',
     home: 'Về trang chủ',
     bankruptAt: 'Phá sản',
   },
@@ -421,9 +437,13 @@ export const t = {
         body: [
           `Mỗi lượt bạn tung 2 xúc xắc và đi theo số bước. Mỗi lần đi qua ${p.start} bạn nhận lương ${money(n(p.salary))}.`,
           'Mua đất, thu tiền thuê khi người khác dừng trên đất của bạn, gom đủ nhóm màu để xây nhà cho tiền thuê tăng vọt.',
-          p.quick
-            ? `Ván Nhanh: hết ${p.minutes} phút, ai có tổng tài sản cao nhất thì thắng (hoặc sớm hơn nếu những người khác phá sản).`
-            : 'Ai phá sản thì bị loại; người cuối cùng còn trụ lại là người thắng.',
+          p.team
+            ? p.quick
+              ? `Ván Nhanh theo đội: hết ${p.minutes} phút, đội có tổng tài sản cao nhất thắng (hoặc sớm hơn nếu các đội khác phá sản).`
+              : 'Đội nào hết tiền mà không xoay nổi thì cả đội bị loại; đội cuối cùng còn trụ lại là đội thắng.'
+            : p.quick
+              ? `Ván Nhanh: hết ${p.minutes} phút, ai có tổng tài sản cao nhất thì thắng (hoặc sớm hơn nếu những người khác phá sản).`
+              : 'Ai phá sản thì bị loại; người cuối cùng còn trụ lại là người thắng.',
           'Hướng dẫn sẽ hiện dần theo ván chơi. Bật/tắt bất cứ lúc nào bằng nút 🎓 ở trên.',
         ],
       }),
@@ -432,6 +452,8 @@ export const t = {
         body: [
           'Người cùng đội có cùng nhãn đội cạnh tên. Cả đội dùng chung một ví và chung đất: bạn xây, bán, thế chấp được cả ô của đồng đội (mở Tài sản). Dừng trên đất của đồng đội thì không mất tiền thuê.',
           'Ví hết mà không xoay nổi thì cả đội cùng phá sản. Đội thắng khi mọi đội khác phá sản hết.',
+          'Giao dịch là giữa các đội (không giao dịch với đồng đội): đề nghị gửi tới đội bạn thì ai trong đội cũng trả lời được.',
+          'Nút 🏳: rời ván một mình (đất ở lại với đội) hoặc đề nghị cả đội đầu hàng — chỉ khi mọi đồng đội đồng ý.',
         ],
       }),
       roll: () => ({
@@ -509,7 +531,7 @@ export const t = {
         ],
       }),
       incomingTrade: (p: P) => ({
-        title: `${p.from} muốn giao dịch với bạn`,
+        title: p.team ? `${p.from} muốn giao dịch với đội bạn` : `${p.from} muốn giao dịch với bạn`,
         body: [
           'Bấm Giao dịch (nút có số đỏ) để xem họ đưa gì và đòi gì, rồi Chấp nhận hoặc Từ chối.',
           'Đề nghị tự hủy sau ít giây nếu bạn không trả lời.',
@@ -525,7 +547,7 @@ export const t = {
       built: (p: P) => ({
         title: 'Có nhà rồi — xây tiếp',
         body: [
-          `Tiền thuê tăng theo từng nhà. Xây đều các ô trong nhóm; đủ ${p.hotelAt} nhà trên mọi ô thì Lên khách sạn.`,
+          `Tiền thuê tăng theo từng nhà. Xây đều các ô trong nhóm; đủ ${p.hotelAt} nhà trên mọi ô thì Lên khách sạn — lên khách sạn thì ${p.hotelAt} nhà của ô đó trả về ngân hàng.`,
           'Cần tiền gấp thì bán nhà lại cho ngân hàng ở Tài sản (được một nửa giá xây).',
         ],
       }),
@@ -590,13 +612,18 @@ export const t = {
         body: [
           `Đất xếp theo nhóm màu. Xây: thêm một nhà (cần đủ nhóm, xây đều các ô); đủ ${p.hotelAt} nhà thì Lên khách sạn.`,
           `Bán: bán nhà lại cho ngân hàng được ${p.sellRate}% giá xây. Thế chấp: nhận ngay ${p.rate}% giá đất, ô đó ngưng thu tiền thuê. Chuộc: trả lại tiền thế chấp cộng ${p.interest}% lãi.`,
+          ...(p.stock
+            ? ['Ngân hàng có hạn số nhà và số khách sạn (dòng 🏦 ở trên, hai kho riêng). Hết nhà thì không ai xây thêm nhà được cho tới khi có người bán nhà hoặc lên khách sạn.']
+            : []),
           `Chỉ thao tác được trong lượt của bạn. Mở bảng này được cộng thêm ${p.minutes} phút vào đồng hồ (một lần mỗi quyết định).`,
         ],
       }),
       tradeIntro: (p: P) => ({
         title: 'Giao dịch',
         body: [
-          'Chọn người ở ô Với. Cột Bạn đưa: chọn đất và nhập tiền bạn đưa; cột Bạn nhận: những gì bạn muốn lấy. Rồi bấm Gửi đề nghị.',
+          p.team
+            ? 'Chọn đội ở ô Với đội. Cột Đội bạn đưa: đất (của bất kỳ ai trong đội) và tiền từ ví chung; cột Đội bạn nhận: những gì muốn lấy của đội kia. Rồi bấm Gửi đề nghị — cả đội kia đều thấy.'
+            : 'Chọn người ở ô Với. Cột Bạn đưa: chọn đất và nhập tiền bạn đưa; cột Bạn nhận: những gì bạn muốn lấy. Rồi bấm Gửi đề nghị.',
           `Gửi được cả khi không phải lượt mình. Đồng hồ của bạn tạm dừng khi bảng này mở; đề nghị tự hủy sau ${p.sec} giây nếu không được trả lời.`,
         ],
       }),
@@ -801,9 +828,9 @@ export function describeTrait(e: Effect): string {
     case 'travel':
       return `Thay cho tung xúc xắc: chọn một ô bất kỳ rồi đi thẳng tới đó (qua ${D.board[0].name} vẫn nhận lương); dừng ở ô nào xử lý như bình thường. Không dùng khi đang ở Bãi giữ xe`;
     case 'buyout':
-      return `Mua đứt 1 ô lẻ của đối thủ (họ không giữ ô nào khác cùng nhóm, nhóm chưa có nhà, ô không thế chấp), trả chủ ${pct(
-        e.premium,
-      )} giá đất`;
+      return `Mua đứt 1 ô lẻ của đối thủ (họ không giữ ô nào khác cùng nhóm, nhóm chưa có nhà, ô không thế chấp${
+        e.completesGroup === false ? ', không được mua ô làm bạn đủ nhóm màu' : ''
+      }), trả chủ ${pct(e.premium)} giá đất`;
     case 'scholarship':
       return `Rút tối đa ${money(e.maxAmount)} từ Quỹ khuyến học; Quỹ trống hoặc tắt thì ngân hàng cấp ${money(e.fallbackAmount)}`;
     // ---- C13–C17
@@ -1096,6 +1123,14 @@ export function formatEvent(e: GameEvent, who: Who): string | null {
       return `${p} được miễn thẻ "${cardName(e.cardId as string)}"`;
     case 'surrendered':
       return e.heir ? `${p} đầu hàng, rời ván — đất về tay đồng đội ${name(e.heir as string)}` : `${p} đầu hàng, rời ván`;
+    case 'teamSurrenderProposed':
+      return `${p} đề nghị cả đội đầu hàng`;
+    case 'teamSurrenderAgreed':
+      return `${p} đồng ý cả đội đầu hàng`;
+    case 'teamSurrenderDeclined':
+      return `${p} không đồng ý đầu hàng — đội chơi tiếp`;
+    case 'teamSurrendered':
+      return `${teamName(e.team as number)} đầu hàng, rời ván`;
     case 'bankrupt':
       return `${p} phá sản!`;
     case 'skillUsed':
@@ -1133,6 +1168,6 @@ export const ENGINE_EVENT_TYPES_HANDLED = [
   'paymentSkipped', 'gain', 'rentBonus', 'commission', 'fundCollected', 'fundDeposit', 'cardDrawn', 'cardKept',
   'cardEffect', 'cardDrawing', 'deckEmpty', 'effectStarted', 'effectExpired', 'jailed', 'leftJail', 'stayedInJail',
   'goToJailIgnored', 'built', 'buildingSold', 'mortgaged', 'unmortgaged', 'tradeProposed', 'tradeAccepted',
-  'tradeRejected', 'tradeCancelled', 'debt', 'loan', 'cardImmune', 'bailout', 'surrendered', 'bankrupt', 'skillUsed', 'skillTriggered', 'skillReady', 'decisionRequired', 'sicbo', 'sicboOpened', 'betPlaced', 'sicboRolled',
+  'tradeRejected', 'tradeCancelled', 'debt', 'loan', 'cardImmune', 'bailout', 'surrendered', 'teamSurrenderProposed', 'teamSurrenderAgreed', 'teamSurrenderDeclined', 'teamSurrendered', 'bankrupt', 'skillUsed', 'skillTriggered', 'skillReady', 'decisionRequired', 'sicbo', 'sicboOpened', 'betPlaced', 'sicboRolled',
   'gameCreated', 'gameOver',
 ];

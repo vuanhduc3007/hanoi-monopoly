@@ -182,8 +182,20 @@ function attach(r: Room, secret: string = mySecret()): void {
   r.onMessage('room', (m: RoomView) =>
     store.set((s) =>
       m.phase === 'lobby' && s.room?.phase !== 'lobby'
-        ? { room: m, game: null, clock: null, log: [], gameOver: null, turnOrder: null, lastCard: null }
-        : { room: m },
+        ? {
+            room: m,
+            game: null,
+            clock: null,
+            log: [],
+            gameOver: null,
+            turnOrder: null,
+            lastCard: null,
+            // A game just ended: keep its results to show over the lobby.
+            lastResult: s.gameOver ? { over: s.gameOver, state: s.game?.state ?? null } : null,
+          }
+        : m.phase !== 'lobby' && s.lastResult
+          ? { room: m, lastResult: null }
+          : { room: m },
     ),
   );
   r.onMessage('game', receiveGame);

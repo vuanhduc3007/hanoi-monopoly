@@ -8,6 +8,38 @@ import type { RoomView } from '../net/protocol';
 import { Coach } from './Coach';
 import { Modal } from './Modal';
 
+/**
+ * What the bank still has to build with (when the room limits buildings). Houses and hotels
+ * are separate stocks: a hotel puts its houses back, so a board of hotels can still have
+ * every house out on tiles that stop at 1–4 houses — the list says whose.
+ */
+function BankStock({ state, room }: { state: PublicState; room: RoomView }) {
+  if (!state.config.buildingLimit) return null;
+  const H = hotelLevel(state);
+  const limit = D.economy.buildingLimit;
+  let houses = 0;
+  let hotels = 0;
+  const holders: Record<string, number> = {};
+  for (const o of Object.values(state.ownables)) {
+    if (o.level === H) hotels++;
+    else if (o.level > 0 && o.owner) {
+      houses += o.level;
+      holders[o.owner] = (holders[o.owner] ?? 0) + o.level;
+    }
+  }
+  const left = Math.max(0, limit.houses - houses);
+  const who = Object.entries(holders)
+    .sort((a, b) => b[1] - a[1])
+    .map(([id, n]) => t.assets.holder(nameOf(room, id), n))
+    .join(', ');
+  return (
+    <p className={`bank-stock${left === 0 ? ' bank-stock-out' : ''}`}>
+      {t.assets.stock(left, limit.houses, Math.max(0, limit.hotels - hotels), limit.hotels)}
+      {left === 0 && who && <span className="muted"> — {t.assets.housesOn(who)}</span>}
+    </p>
+  );
+}
+
 /** S8 — build, sell, mortgage, unmortgage by colour group. The server checks the rules. */
 export function Assets({ state, room, onClose }: { state: PublicState; room: RoomView; onClose: () => void }) {
   const self = me(room, state);
@@ -28,6 +60,7 @@ export function Assets({ state, room, onClose }: { state: PublicState; room: Roo
           ))}
         </ul>
       </details>
+      <BankStock state={state} room={room} />
       {!canManage && <p className="muted">{t.assets.onlyYourTurn}</p>}
       {shown.length === 0 && <p className="muted">{t.assets.nothing}</p>}
       {groupedOwnables(shown).map(({ key, ids }) => (
@@ -84,7 +117,9 @@ export function Assets({ state, room, onClose }: { state: PublicState; room: Roo
                     </button>
                   )}
                 </span>
-                {block && block !== 'notYourTurn' && block !== 'maxLevel' && <span className="asset-why">{t.assets.why[block]}</span>}
+                {block && block !== 'notYourTurn' && (block !== 'maxLevel' || own.level < H) && (
+                  <span className="asset-why">{block === 'maxLevel' ? t.assets.noHotelCharacter : t.assets.why[block]}</span>
+                )}
               </div>
             );
           })}
